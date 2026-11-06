@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libui.flags"
+  name: "require_gralloc4_or_newer"
+  state: ENABLED
+  permission: READ_ONLY
+}

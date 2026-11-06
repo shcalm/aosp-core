@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "compute_ime_parent_null_ime_window"
+  state: ENABLED
+  permission: READ_WRITE
+}

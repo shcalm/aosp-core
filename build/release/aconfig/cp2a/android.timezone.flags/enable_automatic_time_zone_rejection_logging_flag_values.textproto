@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.timezone.flags"
+  name: "enable_automatic_time_zone_rejection_logging"
+  state: ENABLED
+  permission: READ_ONLY
+}

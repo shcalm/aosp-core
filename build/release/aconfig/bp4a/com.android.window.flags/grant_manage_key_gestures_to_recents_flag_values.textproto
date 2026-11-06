@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "grant_manage_key_gestures_to_recents"
+  state: ENABLED
+  permission: READ_ONLY
+}

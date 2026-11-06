@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "enable_new_display_name_apis"
+  state: ENABLED
+  permission: READ_WRITE
+}

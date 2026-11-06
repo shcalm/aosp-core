@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "enable_voice_access_key_gestures"
+  state: ENABLED
+  permission: READ_ONLY
+}

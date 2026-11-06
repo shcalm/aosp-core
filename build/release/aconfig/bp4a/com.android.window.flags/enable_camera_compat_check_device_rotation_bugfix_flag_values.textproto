@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_camera_compat_check_device_rotation_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

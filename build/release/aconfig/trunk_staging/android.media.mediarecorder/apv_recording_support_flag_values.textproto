@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.mediarecorder"
+  name: "apv_recording_support"
+  state: ENABLED
+  permission: READ_WRITE
+}

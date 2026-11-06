@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "location_indicator_get_uid_importance_fallback"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.base.core.jni.flags"
+  name: "force_gc_after_many_frozen_state_callbacks"
+  state: ENABLED
+  permission: READ_ONLY
+}

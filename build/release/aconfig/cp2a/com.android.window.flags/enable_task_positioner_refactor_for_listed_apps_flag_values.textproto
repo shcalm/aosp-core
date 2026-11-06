@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_task_positioner_refactor_for_listed_apps"
+  state: ENABLED
+  permission: READ_ONLY
+}

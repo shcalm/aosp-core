@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "hearing_devices_granular_output_routing"
+  state: ENABLED
+  permission: READ_ONLY
+}

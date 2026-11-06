@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.adservices.flags"
+  name: "ui_enable_set_ads_personalization_status"
+  state: ENABLED
+  permission: READ_ONLY
+}

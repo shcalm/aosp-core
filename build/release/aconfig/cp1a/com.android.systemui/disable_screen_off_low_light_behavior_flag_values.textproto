@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "disable_screen_off_low_light_behavior"
+  state: ENABLED
+  permission: READ_ONLY
+}

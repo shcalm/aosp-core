@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "disable_transparent_region_hint"
+  state: ENABLED
+  permission: READ_WRITE
+}

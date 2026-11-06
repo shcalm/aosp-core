@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "choosing_visible_as_wallpaper_target"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_FRAMEWORK_CONNECTIVITY_SHRINKING"
+value {
+  bool_value: true
+}

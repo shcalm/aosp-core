@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "idempotent_wct_resolution"
+  state: ENABLED
+  permission: READ_ONLY
+}

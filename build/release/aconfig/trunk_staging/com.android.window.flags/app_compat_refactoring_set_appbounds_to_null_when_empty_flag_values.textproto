@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "app_compat_refactoring_set_appbounds_to_null_when_empty"
+  state: ENABLED
+  permission: READ_WRITE
+}

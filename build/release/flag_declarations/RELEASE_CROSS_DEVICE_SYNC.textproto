@@ -1,0 +1,11 @@
+name: "RELEASE_CROSS_DEVICE_SYNC"
+namespace: "wear_frameworks"
+description: "Control if the CrossDeviceSync APK should be added to system image."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

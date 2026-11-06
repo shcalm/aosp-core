@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_bug_fixes_for_secondary_display"
+  state: ENABLED
+  permission: READ_WRITE
+}

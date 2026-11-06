@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "get_svc_uuids_bugfix"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wallpaper"
+  name: "creative_wallpaper_field_collection_wallpaper"
+  state: ENABLED
+  permission: READ_ONLY
+}

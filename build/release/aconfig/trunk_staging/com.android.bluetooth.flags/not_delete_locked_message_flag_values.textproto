@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "not_delete_locked_message"
+  state: ENABLED
+  permission: READ_WRITE
+}

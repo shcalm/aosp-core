@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.btaudio.hal.flags"
+  name: "leaudio_sw_offload"
+  state: ENABLED
+  permission: READ_ONLY
+}

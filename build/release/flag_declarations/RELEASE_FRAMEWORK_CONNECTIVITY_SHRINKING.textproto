@@ -1,0 +1,5 @@
+name: "RELEASE_FRAMEWORK_CONNECTIVITY_SHRINKING"
+namespace: "android_core_networking"
+description: "If true, then framework-connectivity is compiled with R8 enabled (Shrinking only)"
+workflow: LAUNCH
+containers: "com.android.tethering"

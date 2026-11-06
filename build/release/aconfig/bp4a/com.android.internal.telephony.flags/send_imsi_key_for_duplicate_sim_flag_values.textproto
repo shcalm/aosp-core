@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "send_imsi_key_for_duplicate_sim"
+  state: ENABLED
+  permission: READ_ONLY
+}

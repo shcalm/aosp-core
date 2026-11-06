@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "buffer_clone_preserve_read_iter"
+  state: ENABLED
+  permission: READ_ONLY
+}

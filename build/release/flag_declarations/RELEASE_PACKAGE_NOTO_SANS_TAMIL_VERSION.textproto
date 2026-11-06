@@ -1,0 +1,9 @@
+name: "RELEASE_PACKAGE_NOTO_SANS_TAMIL_VERSION"
+namespace: "text"
+description: "Version of the Noto Sans Tamil font."
+value: {
+  string_value: "2.001"
+}
+workflow: PREBUILT
+containers: "system"
+

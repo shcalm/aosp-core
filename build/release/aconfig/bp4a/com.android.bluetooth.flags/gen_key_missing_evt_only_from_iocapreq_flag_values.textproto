@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "gen_key_missing_evt_only_from_iocapreq"
+  state: ENABLED
+  permission: READ_ONLY
+}

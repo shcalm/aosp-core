@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "expressive_fill_dialog"
+  state: ENABLED
+  permission: READ_ONLY
+}

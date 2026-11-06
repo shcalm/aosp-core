@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "support_per_phone_account_ringtone"
+  state: ENABLED
+  permission: READ_ONLY
+}

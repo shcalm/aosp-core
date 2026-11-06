@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "use_transition_for_screenshot_window_additions"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "max_advertising_power"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.flags"
+  name: "art_managed_install_files_validation_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

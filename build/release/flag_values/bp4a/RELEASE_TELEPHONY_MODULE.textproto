@@ -1,0 +1,4 @@
+name: "RELEASE_TELEPHONY_MODULE"
+value {
+  bool_value: true
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_BLUETOOTH_LPP_SERVICE_INSTANCE"
+value {
+  bool_value: true
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "remove_starting_in_transition"
+  state: ENABLED
+  permission: READ_ONLY
+}

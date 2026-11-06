@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "bulk_state_update_call"
+  state: ENABLED
+  permission: READ_ONLY
+}

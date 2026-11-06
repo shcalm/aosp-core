@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "system_server_no_longer_provide_process_exemption"
+  state: ENABLED
+  permission: READ_ONLY
+}

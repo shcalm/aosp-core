@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "fix_widget_single_ptr_resize"
+  state: ENABLED
+  permission: READ_WRITE
+}

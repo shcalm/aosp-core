@@ -1,0 +1,8 @@
+name:  "RELEASE_ADBD_OPEN_VSOCK_PORT"
+namespace:  "adb"
+description:  "Enabling this flag opens a vsock port for adbd as default"
+workflow:  LAUNCH
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

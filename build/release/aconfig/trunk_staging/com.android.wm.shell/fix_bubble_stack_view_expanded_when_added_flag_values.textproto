@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubble_stack_view_expanded_when_added"
+  state: ENABLED
+  permission: READ_WRITE
+}

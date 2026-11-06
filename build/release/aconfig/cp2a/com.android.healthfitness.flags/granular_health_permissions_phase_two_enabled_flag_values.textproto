@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "granular_health_permissions_phase_two_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

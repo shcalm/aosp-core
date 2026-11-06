@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "release_pending_sco_after_role_switch"
+  state: ENABLED
+  permission: READ_WRITE
+}

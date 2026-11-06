@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "restrict_assist_structure_screen_content_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

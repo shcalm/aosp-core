@@ -1,0 +1,15 @@
+# Bug component: 819107
+# Mainline modularization team
+
+gurpreetgs@google.com
+harshitmahajan@google.com
+mast@google.com
+oyalcin@google.com
+pedroql@google.com
+psych@google.com
+rpl@google.com
+scianciulli@google.com
+include platform/frameworks/base:/SDK_OWNERS
+
+# Escalations
+robertogil@google.com

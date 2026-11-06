@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "launch_internet_details"
+  state: ENABLED
+  permission: READ_ONLY
+}

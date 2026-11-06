@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "keyboard_backlight_shortcuts"
+  state: ENABLED
+  permission: READ_WRITE
+}

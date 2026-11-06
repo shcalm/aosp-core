@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "battery_stats_log_combined_display_state"
+  state: ENABLED
+  permission: READ_ONLY
+}

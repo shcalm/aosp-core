@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "prevent_redundant_location_permission_grant_and_revoke"
+  state: ENABLED
+  permission: READ_WRITE
+}

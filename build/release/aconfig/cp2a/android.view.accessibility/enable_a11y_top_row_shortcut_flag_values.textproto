@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "enable_a11y_top_row_shortcut"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.optimization"
+  name: "uid_parent_attribution_prevent_overwrite"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,11 @@
+name: "RELEASE_BETTERTOGETHER_MODULE"
+namespace: "bettertogether"
+description: "If true, then bettertogether module is enabled as an apex"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

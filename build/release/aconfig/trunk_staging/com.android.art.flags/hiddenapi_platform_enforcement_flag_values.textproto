@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.flags"
+  name: "hiddenapi_platform_enforcement"
+  state: ENABLED
+  permission: READ_ONLY
+}

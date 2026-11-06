@@ -1,0 +1,8 @@
+name: "RELEASE_ACONFIG_ENABLE_INT_FLAG"
+namespace: "core_experiments_team_internal"
+description: "Control usage of integer type aconfig flags."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

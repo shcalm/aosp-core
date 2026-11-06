@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audioserver"
+  name: "enable_strict_port_routing_checks"
+  state: ENABLED
+  permission: READ_WRITE
+}

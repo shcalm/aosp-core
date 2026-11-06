@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "launcher_app_display_progress_update_on_visibility_change"
+  state: ENABLED
+  permission: READ_WRITE
+}

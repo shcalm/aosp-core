@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_desktop_task_limit_separate_transition"
+  state: ENABLED
+  permission: READ_ONLY
+}

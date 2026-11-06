@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "clear_lock_task_when_task_end"
+  state: ENABLED
+  permission: READ_ONLY
+}

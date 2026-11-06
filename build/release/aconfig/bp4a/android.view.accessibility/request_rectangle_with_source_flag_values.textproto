@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "request_rectangle_with_source"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "hsu_allowlist_activities"
+  state: ENABLED
+  permission: READ_WRITE
+}

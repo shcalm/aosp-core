@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "remove_set_wake_ready_immediately"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "use_experimental_jank_classification"
+  state: ENABLED
+  permission: READ_ONLY
+}

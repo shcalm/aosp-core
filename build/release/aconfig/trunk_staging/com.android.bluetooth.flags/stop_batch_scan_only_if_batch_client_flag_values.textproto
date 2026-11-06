@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "stop_batch_scan_only_if_batch_client"
+  state: ENABLED
+  permission: READ_WRITE
+}

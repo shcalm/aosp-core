@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "port_window_size_animation"
+  state: ENABLED
+  permission: READ_WRITE
+}

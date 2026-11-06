@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hogp_mtu_exchange"
+  state: ENABLED
+  permission: READ_ONLY
+}

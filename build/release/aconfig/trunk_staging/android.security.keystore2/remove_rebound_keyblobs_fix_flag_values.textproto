@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security.keystore2"
+  name: "remove_rebound_keyblobs_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

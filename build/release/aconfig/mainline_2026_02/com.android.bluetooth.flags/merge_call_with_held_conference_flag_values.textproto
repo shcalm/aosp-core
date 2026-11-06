@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "merge_call_with_held_conference"
+  state: ENABLED
+  permission: READ_ONLY
+}

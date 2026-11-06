@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.printspooler.flags"
+  name: "grayscale_preview"
+  state: ENABLED
+  permission: READ_ONLY
+}

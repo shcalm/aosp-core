@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.ueventd.flags"
+  name: "enable_threadpool_coldboot"
+  state: ENABLED
+  permission: READ_ONLY
+}

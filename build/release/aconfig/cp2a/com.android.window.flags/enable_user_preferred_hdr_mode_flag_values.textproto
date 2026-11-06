@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_user_preferred_hdr_mode"
+  state: ENABLED
+  permission: READ_ONLY
+}

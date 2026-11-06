@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "use_unified_resources"
+  state: ENABLED
+  permission: READ_WRITE
+}

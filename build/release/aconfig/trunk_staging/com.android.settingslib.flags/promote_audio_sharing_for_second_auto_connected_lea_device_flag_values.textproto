@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "promote_audio_sharing_for_second_auto_connected_lea_device"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mediasession.flags"
+  name: "filter_session_audio_playback_by_usage"
+  state: ENABLED
+  permission: READ_ONLY
+}

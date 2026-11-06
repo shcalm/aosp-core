@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "explicit_uuid_transport_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_WLAN_CT3_FW_DIR"
+value {
+  string_value: "103_10_407_48"
+}

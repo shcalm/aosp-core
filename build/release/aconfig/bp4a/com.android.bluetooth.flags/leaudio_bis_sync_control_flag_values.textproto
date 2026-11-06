@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_bis_sync_control"
+  state: ENABLED
+  permission: READ_ONLY
+}

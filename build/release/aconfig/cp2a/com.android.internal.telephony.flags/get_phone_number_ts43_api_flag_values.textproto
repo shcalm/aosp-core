@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "get_phone_number_ts43_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

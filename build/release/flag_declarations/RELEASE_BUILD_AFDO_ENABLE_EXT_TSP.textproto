@@ -1,0 +1,11 @@
+name: "RELEASE_BUILD_AFDO_ENABLE_EXT_TSP"
+namespace: "llvm_and_toolchains"
+description: "Enable Ext-TSP block placement optimization"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

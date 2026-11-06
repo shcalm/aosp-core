@@ -1,0 +1,245 @@
+// Copyright 2019 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package java
+
+import (
+	"maps"
+
+	"android/soong/android"
+	"android/soong/dexpreopt"
+
+	"github.com/google/blueprint/depset"
+)
+
+type DeviceHostConverter struct {
+	android.ModuleBase
+	android.DefaultableModuleBase
+
+	properties DeviceHostConverterProperties
+
+	headerJars                    android.Paths
+	implementationJars            android.Paths
+	implementationAndResourceJars android.Paths
+	resourceJars                  android.Paths
+	kSnapshotFiles                map[string]android.Path
+
+	srcJarArgs []string
+	srcJarDeps android.Paths
+
+	combinedHeaderJar         android.Path
+	combinedImplementationJar android.Path
+}
+
+type DeviceHostConverterProperties struct {
+	// List of modules whose contents will be visible to modules that depend on this module.
+	Libs []string
+}
+
+type DeviceForHost struct {
+	DeviceHostConverter
+}
+
+// java_device_for_host makes the classes.jar output of a device java_library module available to host
+// java_library modules.
+//
+// It is rarely necessary, and its usage is restricted to a few allowed projects.
+func DeviceForHostFactory() android.Module {
+	module := &DeviceForHost{}
+
+	module.AddProperties(&module.properties)
+
+	InitJavaModule(module, android.HostSupported)
+	return module
+}
+
+type HostForDevice struct {
+	DeviceHostConverter
+}
+
+// java_host_for_device makes the classes.jar output of a host java_library module available to device
+// java_library modules.
+//
+// It is rarely necessary, and its usage is restricted to a few allowed projects.
+func HostForDeviceFactory() android.Module {
+	module := &HostForDevice{}
+
+	module.AddProperties(&module.properties)
+
+	InitJavaModule(module, android.DeviceSupported)
+	return module
+}
+
+var deviceHostConverterDepTag = dependencyTag{name: "device_host_converter"}
+
+func (d *DeviceForHost) DepsMutator(ctx android.BottomUpMutatorContext) {
+	ctx.AddFarVariationDependencies(ctx.Config().AndroidCommonTarget.Variations(),
+		deviceHostConverterDepTag, d.properties.Libs...)
+}
+
+func (d *HostForDevice) DepsMutator(ctx android.BottomUpMutatorContext) {
+	ctx.AddFarVariationDependencies(ctx.Config().BuildOSCommonTarget.Variations(),
+		deviceHostConverterDepTag, d.properties.Libs...)
+}
+
+func (d *DeviceHostConverter) GenerateAndroidBuildActions(ctx android.ModuleContext) {
+	if len(d.properties.Libs) < 1 {
+		ctx.PropertyErrorf("libs", "at least one dependency is required")
+	}
+	d.kSnapshotFiles = make(map[string]android.Path)
+
+	var transitiveHeaderJars []depset.DepSet[android.Path]
+	var transitiveImplementationJars []depset.DepSet[android.Path]
+	var transitiveResourceJars []depset.DepSet[android.Path]
+
+	ctx.VisitDirectDepsProxyWithTag(deviceHostConverterDepTag, func(m android.ModuleProxy) {
+		if dep, ok := android.OtherModuleProvider(ctx, m, JavaInfoProvider); ok {
+			d.headerJars = append(d.headerJars, dep.HeaderJars...)
+			d.implementationJars = append(d.implementationJars, dep.ImplementationJars...)
+			d.implementationAndResourceJars = append(d.implementationAndResourceJars, dep.ImplementationAndResourcesJars...)
+			d.resourceJars = append(d.resourceJars, dep.ResourceJars...)
+
+			d.srcJarArgs = append(d.srcJarArgs, dep.SrcJarArgs...)
+			d.srcJarDeps = append(d.srcJarDeps, dep.SrcJarDeps...)
+
+			transitiveHeaderJars = append(transitiveHeaderJars, dep.TransitiveStaticLibsHeaderJars)
+			transitiveImplementationJars = append(transitiveImplementationJars, dep.TransitiveStaticLibsImplementationJars)
+			transitiveResourceJars = append(transitiveResourceJars, dep.TransitiveStaticLibsResourceJars)
+			maps.Copy(d.kSnapshotFiles, dep.KSnapshotFiles)
+		} else {
+			ctx.PropertyErrorf("libs", "module %q cannot be used as a dependency", ctx.OtherModuleName(m))
+		}
+	})
+
+	jarName := ctx.ModuleName() + ".jar"
+
+	if len(d.implementationAndResourceJars) > 1 {
+		outputFile := android.PathForModuleOut(ctx, "combined", jarName)
+		TransformJarsToJar(ctx, outputFile, "combine", d.implementationAndResourceJars,
+			android.OptionalPath{}, false, nil, nil)
+		d.combinedImplementationJar = outputFile
+		d.addKSnapshot(ctx, outputFile)
+	} else if len(d.implementationAndResourceJars) == 1 {
+		d.combinedImplementationJar = d.implementationAndResourceJars[0]
+	}
+
+	if len(d.headerJars) > 1 {
+		outputFile := android.PathForModuleOut(ctx, "turbine-combined", jarName)
+		TransformJarsToJar(ctx, outputFile, "turbine combine", d.headerJars,
+			android.OptionalPath{}, false, nil, []string{"META-INF/TRANSITIVE"})
+		d.combinedHeaderJar = outputFile
+	} else if len(d.headerJars) == 1 {
+		d.combinedHeaderJar = d.headerJars[0]
+	}
+
+	javaInfo := &JavaInfo{
+		HeaderJars:                             d.headerJars,
+		LocalHeaderJars:                        d.headerJars,
+		TransitiveStaticLibsHeaderJars:         depset.New(depset.PREORDER, nil, transitiveHeaderJars),
+		TransitiveStaticLibsImplementationJars: depset.New(depset.PREORDER, nil, transitiveImplementationJars),
+		TransitiveStaticLibsResourceJars:       depset.New(depset.PREORDER, nil, transitiveResourceJars),
+		KSnapshotFiles:                         d.kSnapshotFiles,
+		ImplementationAndResourcesJars:         d.implementationAndResourceJars,
+		ImplementationJars:                     d.implementationJars,
+		ResourceJars:                           d.resourceJars,
+		SrcJarArgs:                             d.srcJarArgs,
+		SrcJarDeps:                             d.srcJarDeps,
+		StubsLinkType:                          Implementation,
+		// TODO: Not sure if aconfig flags that have been moved between device and host variants
+		// make sense.
+	}
+	setExtraJavaInfo(ctx, d, javaInfo)
+	android.SetProvider(ctx, JavaInfoProvider, javaInfo)
+
+	if ctx.Os() != android.Windows { // Make does not support Windows Java modules
+		if d.combinedImplementationJar != nil {
+			ctx.CheckbuildFile(d.combinedImplementationJar)
+		}
+		if d.combinedHeaderJar != nil {
+			ctx.CheckbuildFile(d.combinedHeaderJar)
+		}
+	}
+
+	moduleInfoJSON := ctx.ModuleInfoJSON()
+	moduleInfoJSON.Class = []string{"JAVA_LIBRARIES"}
+	if d.combinedImplementationJar != nil {
+		moduleInfoJSON.ClassesJar = []string{d.combinedImplementationJar.String()}
+	}
+	moduleInfoJSON.SystemSharedLibs = []string{"none"}
+
+	if d.Os() == android.Windows {
+		// Make does not support Windows Java modules
+		d.HideFromMake()
+	}
+}
+
+func (d *DeviceHostConverter) addKSnapshot(ctx android.ModuleContext, jarFile android.Path) {
+	if jarFile == nil {
+		return
+	}
+	if _, exists := d.kSnapshotFiles[jarFile.String()]; !exists {
+		snapshot := SnapshotJarForKotlin(ctx, jarFile.(android.WritablePath))
+		d.kSnapshotFiles[jarFile.String()] = snapshot
+	}
+}
+
+func (d *DeviceHostConverter) HeaderJars() android.Paths {
+	return d.headerJars
+}
+
+func (d *DeviceHostConverter) ImplementationAndResourcesJars() android.Paths {
+	return d.implementationAndResourceJars
+}
+
+func (d *DeviceHostConverter) DexJarBuildPath(ctx android.ModuleErrorfContext) android.Path {
+	return nil
+}
+
+func (d *DeviceHostConverter) DexJarInstallPath() android.Path {
+	return nil
+}
+
+func (d *DeviceHostConverter) AidlIncludeDirs() android.Paths {
+	return nil
+}
+
+func (d *DeviceHostConverter) ClassLoaderContexts() dexpreopt.ClassLoaderContextMap {
+	return nil
+}
+
+func (d *DeviceHostConverter) PrepareAndroidMKProviderInfo(config android.Config) *android.AndroidMkProviderInfo {
+	info := &android.AndroidMkProviderInfo{}
+	info.PrimaryInfo = android.AndroidMkInfo{
+		Class:      "JAVA_LIBRARIES",
+		OutputFile: android.OptionalPathForPath(d.combinedImplementationJar),
+		Include:    "$(BUILD_SYSTEM)/soong_java_prebuilt.mk",
+	}
+	info.PrimaryInfo.SetBool("LOCAL_UNINSTALLABLE_MODULE", true)
+	if d.combinedHeaderJar != nil {
+		info.PrimaryInfo.SetPath("LOCAL_SOONG_HEADER_JAR", d.combinedHeaderJar)
+	}
+	if d.combinedImplementationJar != nil {
+		info.PrimaryInfo.SetPath("LOCAL_SOONG_CLASSES_JAR", d.combinedImplementationJar)
+	}
+
+	return info
+}
+
+// implement the following interface for IDE completion.
+var _ android.IDEInfo = (*DeviceHostConverter)(nil)
+
+func (d *DeviceHostConverter) IDEInfo(ctx android.BaseModuleContext, ideInfo *android.IdeInfo) {
+	ideInfo.Deps = append(ideInfo.Deps, d.properties.Libs...)
+	ideInfo.Libs = append(ideInfo.Libs, d.properties.Libs...)
+}

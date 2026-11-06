@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.swcodec.flags"
+  name: "dataspace_v0_gralloc4"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "ipc_data_cache_testmode_apis"
+  state: ENABLED
+  permission: READ_ONLY
+}

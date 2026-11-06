@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "fix_set_adjacent_task_fragments_with_params"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hidd_handle_set_protocol_before_interrupt_connected"
+  state: ENABLED
+  permission: READ_ONLY
+}

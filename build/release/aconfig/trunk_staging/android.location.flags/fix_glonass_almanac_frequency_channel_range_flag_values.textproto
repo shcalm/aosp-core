@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "fix_glonass_almanac_frequency_channel_range"
+  state: ENABLED
+  permission: READ_WRITE
+}

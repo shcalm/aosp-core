@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.alarm"
+  name: "acquire_wakelock_before_send"
+  state: ENABLED
+  permission: READ_WRITE
+}

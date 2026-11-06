@@ -1,0 +1,4 @@
+name: "RELEASE_LIBBINDER_FREEZE_USE_FLUSH_EAGERLY"
+value {
+  bool_value: true
+}

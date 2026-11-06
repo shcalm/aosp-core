@@ -1,0 +1,8 @@
+name: "RELEASE_AVF_ENABLE_UDS_CERTS_IN_VM_ATTESTATION"
+namespace: "virtualization"
+description: "Enable UdsCerts provisioning in VM Attestation"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

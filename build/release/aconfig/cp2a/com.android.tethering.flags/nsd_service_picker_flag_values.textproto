@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "nsd_service_picker"
+  state: ENABLED
+  permission: READ_ONLY
+}

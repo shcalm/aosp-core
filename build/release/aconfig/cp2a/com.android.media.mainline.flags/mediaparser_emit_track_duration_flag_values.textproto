@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mainline.flags"
+  name: "mediaparser_emit_track_duration"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.rkpd.flags"
+  name: "report_device_reset"
+  state: ENABLED
+  permission: READ_WRITE
+}

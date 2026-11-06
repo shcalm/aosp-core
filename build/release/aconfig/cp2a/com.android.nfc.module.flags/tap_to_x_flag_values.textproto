@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.module.flags"
+  name: "tap_to_x"
+  state: ENABLED
+  permission: READ_ONLY
+}

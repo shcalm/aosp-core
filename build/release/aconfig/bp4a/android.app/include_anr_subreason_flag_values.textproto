@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "include_anr_subreason"
+  state: ENABLED
+  permission: READ_ONLY
+}

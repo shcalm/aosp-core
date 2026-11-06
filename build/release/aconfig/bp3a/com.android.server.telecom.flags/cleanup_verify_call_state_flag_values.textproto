@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "cleanup_verify_call_state"
+  state: ENABLED
+  permission: READ_ONLY
+}

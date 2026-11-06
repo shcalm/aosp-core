@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "reparent_desk_leaf_tasks_if_relaunched"
+  state: ENABLED
+  permission: READ_ONLY
+}

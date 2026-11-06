@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.appwidget.flags"
+  name: "play_store_pin_widgets"
+  state: ENABLED
+  permission: READ_ONLY
+}

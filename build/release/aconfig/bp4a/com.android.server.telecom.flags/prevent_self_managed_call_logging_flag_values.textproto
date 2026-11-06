@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "prevent_self_managed_call_logging"
+  state: ENABLED
+  permission: READ_ONLY
+}

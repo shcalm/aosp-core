@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "virtual_display_can_create_system_application_overlay"
+  state: ENABLED
+  permission: READ_ONLY
+}

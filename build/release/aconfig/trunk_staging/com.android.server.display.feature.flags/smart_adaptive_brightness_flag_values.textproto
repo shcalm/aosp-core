@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "smart_adaptive_brightness"
+  state: ENABLED
+  permission: READ_WRITE
+}

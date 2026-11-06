@@ -1,0 +1,9 @@
+name: "RELEASE_PACKAGE_NOTO_NASKH_ARABIC_VERSION"
+namespace: "text"
+description: "Version of the Noto Naskh Arabic font."
+value: {
+  string_value: "1.070"
+}
+workflow: PREBUILT
+containers: "system"
+

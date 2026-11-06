@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.optimization"
+  name: "report_out_of_order_battery_history_events"
+  state: ENABLED
+  permission: READ_ONLY
+}

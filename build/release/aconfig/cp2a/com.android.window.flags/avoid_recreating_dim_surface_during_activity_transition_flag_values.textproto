@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "avoid_recreating_dim_surface_during_activity_transition"
+  state: ENABLED
+  permission: READ_ONLY
+}

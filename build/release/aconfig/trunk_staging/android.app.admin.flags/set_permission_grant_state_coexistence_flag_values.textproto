@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "set_permission_grant_state_coexistence"
+  state: ENABLED
+  permission: READ_WRITE
+}

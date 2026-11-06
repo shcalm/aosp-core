@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "enable_fix_for_route_visibility"
+  state: ENABLED
+  permission: READ_ONLY
+}

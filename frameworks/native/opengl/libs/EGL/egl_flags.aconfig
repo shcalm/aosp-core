@@ -1,0 +1,21 @@
+package: "com.android.graphics.egl.flags"
+container: "system"
+
+flag {
+  name: "multifile_blobcache_configurable_entry_limit"
+  namespace: "gpu"
+  description: "This flag controls usage of readonly properies to configure multifile blobcache entry limit"
+  bug: "466445745"
+  is_fixed_read_only: true
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+    name: "egl_get_native_client_buffer"
+    namespace: "gpu"
+    description: "This flag enables the eglGetNativeClientBuffer Java wrapper."
+    bug: "124863878"
+    is_exported: true
+}

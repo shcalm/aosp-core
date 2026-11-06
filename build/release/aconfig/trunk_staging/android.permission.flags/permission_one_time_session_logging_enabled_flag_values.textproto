@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "permission_one_time_session_logging_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

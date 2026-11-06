@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.shared"
+  name: "cursor_hot_corner"
+  state: ENABLED
+  permission: READ_ONLY
+}

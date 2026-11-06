@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.module.flags"
+  name: "deprecate_antenna_info"
+  state: ENABLED
+  permission: READ_ONLY
+}

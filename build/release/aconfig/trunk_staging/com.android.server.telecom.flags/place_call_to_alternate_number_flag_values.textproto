@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "place_call_to_alternate_number"
+  state: ENABLED
+  permission: READ_WRITE
+}

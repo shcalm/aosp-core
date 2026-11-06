@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "validate_connection_policy_before_accepting_connection"
+  state: ENABLED
+  permission: READ_ONLY
+}

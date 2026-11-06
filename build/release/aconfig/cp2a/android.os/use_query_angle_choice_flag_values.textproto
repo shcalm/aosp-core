@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "use_query_angle_choice"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.voice.flags"
+  name: "set_invocation_effect_enabled_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "update_task_min_dimensions_with_root_activity"
+  state: ENABLED
+  permission: READ_ONLY
+}

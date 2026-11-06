@@ -1,0 +1,12 @@
+name: "RELEASE_SUPER_PARTITION_ERROR_LIMIT_IS_SIZE"
+description: "Set superpartion error limit to the full size of the superpartition"
+namespace: "build"
+value: {
+  bool_value: false
+}
+workflow: MANUAL_BUILD_VARIANT
+bugs: "428178183"
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

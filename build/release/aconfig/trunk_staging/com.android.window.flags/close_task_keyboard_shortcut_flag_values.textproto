@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "close_task_keyboard_shortcut"
+  state: ENABLED
+  permission: READ_WRITE
+}

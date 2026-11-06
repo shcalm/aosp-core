@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "net_capability_prioritize_unified_communications"
+  state: ENABLED
+  permission: READ_WRITE
+}

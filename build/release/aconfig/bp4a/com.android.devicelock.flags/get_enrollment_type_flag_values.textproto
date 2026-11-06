@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.devicelock.flags"
+  name: "get_enrollment_type"
+  state: ENABLED
+  permission: READ_ONLY
+}

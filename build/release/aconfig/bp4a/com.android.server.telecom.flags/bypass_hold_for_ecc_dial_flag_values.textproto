@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "bypass_hold_for_ecc_dial"
+  state: ENABLED
+  permission: READ_ONLY
+}

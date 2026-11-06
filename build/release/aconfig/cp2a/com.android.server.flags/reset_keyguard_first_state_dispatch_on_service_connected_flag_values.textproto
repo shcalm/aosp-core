@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.flags"
+  name: "reset_keyguard_first_state_dispatch_on_service_connected"
+  state: ENABLED
+  permission: READ_ONLY
+}

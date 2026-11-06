@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "enable_data_stall_recovery_randomization"
+  state: ENABLED
+  permission: READ_ONLY
+}

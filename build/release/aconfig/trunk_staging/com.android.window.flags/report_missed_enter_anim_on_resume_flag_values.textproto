@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "report_missed_enter_anim_on_resume"
+  state: ENABLED
+  permission: READ_WRITE
+}

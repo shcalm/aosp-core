@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_non_existent_qualified_id_join"
+  state: ENABLED
+  permission: READ_ONLY
+}

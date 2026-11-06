@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "fused_telecom_route_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

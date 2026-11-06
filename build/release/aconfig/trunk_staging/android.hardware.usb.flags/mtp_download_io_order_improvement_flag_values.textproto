@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.usb.flags"
+  name: "mtp_download_io_order_improvement"
+  state: ENABLED
+  permission: READ_WRITE
+}

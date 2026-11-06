@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "md_degrade_hdr"
+  state: ENABLED
+  permission: READ_ONLY
+}

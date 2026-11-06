@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libvulkan.flags"
+  name: "present_timing_ext"
+  state: ENABLED
+  permission: READ_ONLY
+}

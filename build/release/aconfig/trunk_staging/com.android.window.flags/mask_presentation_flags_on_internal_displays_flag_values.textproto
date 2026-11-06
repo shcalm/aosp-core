@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "mask_presentation_flags_on_internal_displays"
+  state: ENABLED
+  permission: READ_WRITE
+}

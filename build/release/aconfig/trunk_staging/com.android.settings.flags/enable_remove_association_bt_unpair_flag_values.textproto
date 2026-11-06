@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "enable_remove_association_bt_unpair"
+  state: ENABLED
+  permission: READ_WRITE
+}

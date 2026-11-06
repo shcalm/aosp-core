@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "step_tracking_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

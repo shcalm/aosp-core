@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.server"
+  name: "enable_theme_service"
+  state: ENABLED
+  permission: READ_WRITE
+}

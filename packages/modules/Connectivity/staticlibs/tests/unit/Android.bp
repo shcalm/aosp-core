@@ -1,0 +1,87 @@
+//########################################################################
+// Build NetworkStaticLibTests package
+//########################################################################
+
+package {
+    default_team: "trendy_team_fwk_core_networking",
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+android_library {
+    name: "NetworkStaticLibTestsLib",
+    srcs: [
+        "src/**/*.java",
+        "src/**/*.kt",
+    ],
+    min_sdk_version: "31",
+    defaults: ["framework-connectivity-test-defaults"],
+    static_libs: [
+        "androidx.test.rules",
+        "mockito-kotlin2",
+        "mockito-target-extended-minus-junit4",
+        "netd-client",
+        "net-tests-utils",
+        "net-utils-framework-common",
+        "net-utils-device-common-async",
+        "net-utils-device-common-bpf",
+        "net-utils-device-common-ip",
+        "net-utils-device-common-struct-base",
+        "net-utils-device-common-wear",
+        "net-utils-service-connectivity",
+        "truth",
+    ],
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
+    ],
+    visibility: [
+        "//frameworks/base/packages/Tethering/tests/integration",
+        "//packages/modules/Connectivity/tests:__subpackages__",
+        "//packages/modules/Connectivity/Tethering/tests:__subpackages__",
+        "//packages/modules/NetworkStack/tests/integration",
+    ],
+    lint: {
+        strict_updatability_linting: true,
+        test: true,
+    },
+}
+
+android_test {
+    name: "NetworkStaticLibTests",
+    certificate: "platform",
+    static_libs: [
+        "NetworkStaticLibTestsLib",
+    ],
+    jni_libs: [
+        // For mockito extended
+        "libdexmakerjvmtiagent",
+        "libstaticjvmtiagent",
+        "libcom_android_net_moduletests_util_jni_CommonConnectivityJni",
+    ],
+    jarjar_rules: "jarjar-rules.txt",
+    test_suites: ["device-tests"],
+    lint: {
+        strict_updatability_linting: true,
+    },
+}
+
+python_test_host {
+    name: "NetworkStaticLibHostPythonTests",
+    srcs: [
+        "host/python/*.py",
+    ],
+    main: "host/python/run_tests.py",
+    libs: [
+        "absl-py",
+        "mobly",
+        "net-tests-utils-host-python-common",
+    ],
+    test_config: "host/python/test_config.xml",
+    test_suites: [
+        "general-tests",
+    ],
+    // MoblyBinaryHostTest doesn't support unit_test.
+    test_options: {
+        unit_test: false,
+    },
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mediasession.flags"
+  name: "deprecate_platform_mediasession2_apis"
+  state: ENABLED
+  permission: READ_WRITE
+}

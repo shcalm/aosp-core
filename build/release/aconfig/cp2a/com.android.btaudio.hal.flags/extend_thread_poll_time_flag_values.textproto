@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.btaudio.hal.flags"
+  name: "extend_thread_poll_time"
+  state: ENABLED
+  permission: READ_ONLY
+}

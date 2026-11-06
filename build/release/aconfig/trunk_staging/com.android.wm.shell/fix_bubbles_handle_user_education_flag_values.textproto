@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubbles_handle_user_education"
+  state: ENABLED
+  permission: READ_WRITE
+}

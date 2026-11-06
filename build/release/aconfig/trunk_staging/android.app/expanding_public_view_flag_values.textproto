@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "expanding_public_view"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "skip_pending_msg_if_communication_device_set"
+  state: ENABLED
+  permission: READ_WRITE
+}

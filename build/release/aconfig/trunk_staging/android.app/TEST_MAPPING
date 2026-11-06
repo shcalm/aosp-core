@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "frameworks/base/core/java/android/app"
+    },
+    {
+      "path": "frameworks/base/services/core/java/com/android/server/notification"
+    },
+    {
+      "path": "cts/tests/tests/notification"
+    }
+  ]
+}

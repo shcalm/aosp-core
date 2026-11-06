@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.appprediction.flags"
+  name: "fix_callback_synchronization"
+  state: ENABLED
+  permission: READ_ONLY
+}

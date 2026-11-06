@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "refactor_persistent_data_store"
+  state: ENABLED
+  permission: READ_WRITE
+}

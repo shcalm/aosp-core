@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "external_data_access"
+  state: ENABLED
+  permission: READ_ONLY
+}

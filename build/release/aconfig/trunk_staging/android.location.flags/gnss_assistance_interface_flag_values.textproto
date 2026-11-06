@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "gnss_assistance_interface"
+  state: ENABLED
+  permission: READ_WRITE
+}

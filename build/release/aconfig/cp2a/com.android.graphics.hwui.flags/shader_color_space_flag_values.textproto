@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.hwui.flags"
+  name: "shader_color_space"
+  state: ENABLED
+  permission: READ_ONLY
+}

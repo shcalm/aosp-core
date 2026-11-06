@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.shared"
+  name: "brightness_dialog_on_system_user"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,8 @@
+name: "RELEASE_AVF_FORWARD_ROOT_OF_TRUST_PROPS_TO_SECURITY_VM"
+namespace: "virtualization"
+description: "Enables forwarding root of trust system properties to the security VM"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

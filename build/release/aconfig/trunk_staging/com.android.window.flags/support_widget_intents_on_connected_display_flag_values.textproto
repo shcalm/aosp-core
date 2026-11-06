@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "support_widget_intents_on_connected_display"
+  state: ENABLED
+  permission: READ_ONLY
+}

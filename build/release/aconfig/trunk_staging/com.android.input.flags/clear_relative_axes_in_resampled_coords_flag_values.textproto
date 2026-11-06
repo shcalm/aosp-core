@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "clear_relative_axes_in_resampled_coords"
+  state: ENABLED
+  permission: READ_WRITE
+}

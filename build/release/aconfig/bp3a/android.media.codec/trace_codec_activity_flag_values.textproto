@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.codec"
+  name: "trace_codec_activity"
+  state: ENABLED
+  permission: READ_ONLY
+}

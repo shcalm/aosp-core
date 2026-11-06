@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bips.flags"
+  name: "mopria_26q2_fixes"
+  state: ENABLED
+  permission: READ_ONLY
+}

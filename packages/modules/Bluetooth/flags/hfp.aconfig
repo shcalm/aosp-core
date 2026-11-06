@@ -1,0 +1,168 @@
+package: "com.android.bluetooth.flags"
+container: "com.android.bt"
+
+flag {
+    name: "sco_state_machine_cleanup"
+    namespace: "bluetooth"
+    description: "Cleanup SCO SM if headset disconnected during opening."
+    bug: "391090332"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "non_conference_call_hangup"
+    namespace: "bluetooth"
+    description: "Active call hangup when conference call is in holding state "
+    bug: "388159341"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "enable_battery_level_update_only_through_hf_indicator"
+    namespace: "bluetooth"
+    description: "Flag to ignore vendor specific battery level update when HF indicator support is enabled."
+    bug: "385870861"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "merge_call_with_held_conference"
+    namespace: "bluetooth"
+    description: "Merge the active call with held conference call"
+    bug: "397374535"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "hold_conference_call_from_remote"
+    namespace: "bluetooth"
+    description: "hold conference call from remote"
+    bug: "422315662"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "sco_state_machine_update_revision"
+    namespace: "bluetooth"
+    description: "Flag check correction for ag/33454932"
+    bug: "459353324"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "call_end_codec_negotiation"
+    namespace: "bluetooth"
+    description: "Close SCO when end call during codec negotiation"
+    bug: "461739981"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "deprecate_connect_audio"
+    namespace: "bluetooth"
+    is_exported: true
+    description: "Deprecate methods that will not be used for Audio managed by Sco"
+    bug: "456541678"
+}
+
+flag {
+    name: "hangup_callstate_simulated_ringing"
+    namespace: "bluetooth"
+    description: "Reject to hang up call that is STATE_SIMULATED_RINGING state"
+    bug: "460640390"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "fix_sco_type_mask_check"
+    namespace: "bluetooth"
+    description: "Masking for excepting sco packets correctly"
+    bug: "467252341"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "hfp_avoid_deadlock"
+    namespace: "bluetooth"
+    description: "do the task outside synchronized to avoid deadlock with Audio Fwk"
+    bug: "462377292"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "hfp_get_codec_api"
+    namespace: "bluetooth"
+    is_exported: true
+    description: "Add api support for get hfp connection codec type"
+    bug: "464401354"
+}
+
+flag {
+    name: "microphone_mute_gain_retain"
+    namespace: "bluetooth"
+    description: "Retain the mic gain value between MUTE and UNMUTE"
+    bug: "468985625"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "hfp_ag_rfc_race_condition_random_timer"
+    namespace: "bluetooth"
+    description: "Resolve HFP RFCOMM race condition in bta_ag_rfc_acp_open using random timer"
+    bug: "473274758"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "release_pending_sco_after_role_switch"
+    namespace: "bluetooth"
+    description: "Trigger a check for pending SCO connections once link re-encryption follows a role switch to avoid missing simultaneous SCO requests"
+    bug: "475076252"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "disconnect_sco_if_not_allowed"
+    namespace: "bluetooth"
+    description: "Disconnect SCO if not allowed during connection"
+    bug: "475315385"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "sco_close_after_rfcomm_disconnect"
+    namespace: "bluetooth"
+    description: "Inform to BTA_AV about SCO closed after rfcomm disconnected"
+    bug: "476898825"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}

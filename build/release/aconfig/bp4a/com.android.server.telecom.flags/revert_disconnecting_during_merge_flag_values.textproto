@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "revert_disconnecting_during_merge"
+  state: ENABLED
+  permission: READ_ONLY
+}

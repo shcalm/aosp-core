@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "login_add_user_enforcement"
+  state: ENABLED
+  permission: READ_WRITE
+}

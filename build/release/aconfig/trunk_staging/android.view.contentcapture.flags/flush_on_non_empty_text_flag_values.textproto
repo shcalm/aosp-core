@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.contentcapture.flags"
+  name: "flush_on_non_empty_text"
+  state: ENABLED
+  permission: READ_WRITE
+}

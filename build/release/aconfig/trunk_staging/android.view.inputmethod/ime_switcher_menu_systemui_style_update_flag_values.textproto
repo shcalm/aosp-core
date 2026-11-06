@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "ime_switcher_menu_systemui_style_update"
+  state: ENABLED
+  permission: READ_WRITE
+}

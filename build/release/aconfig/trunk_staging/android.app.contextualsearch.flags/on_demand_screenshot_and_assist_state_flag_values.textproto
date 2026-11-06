@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.contextualsearch.flags"
+  name: "on_demand_screenshot_and_assist_state"
+  state: ENABLED
+  permission: READ_WRITE
+}

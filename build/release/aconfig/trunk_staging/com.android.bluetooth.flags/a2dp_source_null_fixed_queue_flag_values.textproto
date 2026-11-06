@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "a2dp_source_null_fixed_queue"
+  state: ENABLED
+  permission: READ_WRITE
+}

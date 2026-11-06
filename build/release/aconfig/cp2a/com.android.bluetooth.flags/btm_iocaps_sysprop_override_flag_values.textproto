@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "btm_iocaps_sysprop_override"
+  state: ENABLED
+  permission: READ_ONLY
+}

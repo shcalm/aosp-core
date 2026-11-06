@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "map_use_new_message_api"
+  state: ENABLED
+  permission: READ_WRITE
+}

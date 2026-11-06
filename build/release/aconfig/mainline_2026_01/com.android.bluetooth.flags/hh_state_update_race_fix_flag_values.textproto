@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hh_state_update_race_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

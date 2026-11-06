@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "default_speaker_on_wired_headset_disconnect"
+  state: ENABLED
+  permission: READ_WRITE
+}

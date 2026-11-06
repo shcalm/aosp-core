@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "increase_watch_strong_auth_timeout"
+  state: ENABLED
+  permission: READ_WRITE
+}

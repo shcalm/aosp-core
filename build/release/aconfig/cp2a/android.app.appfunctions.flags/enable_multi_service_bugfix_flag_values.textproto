@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.appfunctions.flags"
+  name: "enable_multi_service_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

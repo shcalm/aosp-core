@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_verify_bubble_task_id_on_removal"
+  state: ENABLED
+  permission: READ_WRITE
+}

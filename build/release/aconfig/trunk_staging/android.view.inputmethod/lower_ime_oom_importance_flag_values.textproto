@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "lower_ime_oom_importance"
+  state: ENABLED
+  permission: READ_ONLY
+}

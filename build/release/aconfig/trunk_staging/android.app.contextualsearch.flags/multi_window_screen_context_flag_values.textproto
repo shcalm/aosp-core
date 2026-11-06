@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.contextualsearch.flags"
+  name: "multi_window_screen_context"
+  state: ENABLED
+  permission: READ_WRITE
+}

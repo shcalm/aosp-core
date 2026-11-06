@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "gnss_capability_restart_engine_after_power_mode_change"
+  state: ENABLED
+  permission: READ_ONLY
+}

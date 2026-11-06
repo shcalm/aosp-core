@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.flags"
+  name: "enable_content_provider_client_anr_on_cancel"
+  state: ENABLED
+  permission: READ_ONLY
+}

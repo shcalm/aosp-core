@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_improve_state_machine_invalid_status"
+  state: ENABLED
+  permission: READ_ONLY
+}

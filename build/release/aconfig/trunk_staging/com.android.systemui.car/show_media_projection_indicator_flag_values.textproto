@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.car"
+  name: "show_media_projection_indicator"
+  state: ENABLED
+  permission: READ_WRITE
+}

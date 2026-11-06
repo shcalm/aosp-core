@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.tv.flags"
+  name: "tunnel_mode_2"
+  state: ENABLED
+  permission: READ_WRITE
+}

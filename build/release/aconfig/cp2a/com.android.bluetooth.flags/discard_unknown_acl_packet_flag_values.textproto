@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "discard_unknown_acl_packet"
+  state: ENABLED
+  permission: READ_ONLY
+}

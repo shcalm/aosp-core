@@ -1,0 +1,42 @@
+/*
+ * Copyright (C) 2021 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// The resulting .o needs to load on Android S+
+#define NETBPFLOAD_MINAPI_VER NETBPFLOAD_S_VER
+#define BPF_OBJ_NAME "test"
+#define DEFAULT_BPF_PIN_SUBDIR "tethering"
+
+// This is non production code, only used for testing
+// Needed because the bitmap array definition is non-kosher for pre-T OS devices.
+#define THIS_BPF_PROGRAM_IS_FOR_TEST_PURPOSES_ONLY
+
+#include "bpf_net_helpers.h"
+#include "offload.h"
+
+// Used only by TetheringPrivilegedTests, not by production code.
+DEFINE_BPF_MAP_GRW(tether_downstream6_map, HASH, TetherDownstream6Key, Tether6Value, 16,
+                   AID_NETWORK_STACK)
+DEFINE_BPF_MAP_GRW(tether2_downstream6_map, HASH, TetherDownstream6Key, Tether6Value, 16,
+                   AID_NETWORK_STACK)
+DEFINE_BPF_MAP_GRW(tether3_downstream6_map, HASH, TetherDownstream6Key, Tether6Value, 16,
+                   AID_NETWORK_STACK)
+// ----- Kernel Stats -----
+DEFINE_BPF_MAP_GRW(kernel_stats_map, ARRAY, uint32_t, uint32_t, 2, AID_NETWORK_STACK)
+
+// Used only by BpfBitmapTest, not by production code.
+DEFINE_BPF_MAP_GRW(bitmap, ARRAY, int, uint64_t, 2, AID_NETWORK_STACK)
+
+LICENSE("Apache 2.0");

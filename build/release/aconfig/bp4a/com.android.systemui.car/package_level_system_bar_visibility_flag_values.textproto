@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.car"
+  name: "package_level_system_bar_visibility"
+  state: ENABLED
+  permission: READ_ONLY
+}

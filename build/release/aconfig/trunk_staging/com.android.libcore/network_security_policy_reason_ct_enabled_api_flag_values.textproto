@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.libcore"
+  name: "network_security_policy_reason_ct_enabled_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

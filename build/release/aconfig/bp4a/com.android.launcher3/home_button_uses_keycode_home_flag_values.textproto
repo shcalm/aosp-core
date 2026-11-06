@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "home_button_uses_keycode_home"
+  state: ENABLED
+  permission: READ_ONLY
+}

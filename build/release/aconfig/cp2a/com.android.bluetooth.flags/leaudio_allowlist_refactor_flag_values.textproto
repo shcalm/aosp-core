@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_allowlist_refactor"
+  state: ENABLED
+  permission: READ_ONLY
+}

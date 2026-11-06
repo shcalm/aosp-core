@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "pm_compile_verbose_logging"
+  state: ENABLED
+  permission: READ_WRITE
+}

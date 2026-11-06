@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell.automotive"
+  name: "enable_auto_visibility_barrier"
+  state: ENABLED
+  permission: READ_WRITE
+}

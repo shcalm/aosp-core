@@ -1,0 +1,4 @@
+name: "RELEASE_RUST_USE_ARM_TARGET_ARCH_VARIANT"
+value {
+  bool_value: true
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "use_event_display_id_for_key_wakeup"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telecom.flags"
+  name: "voip_background_activity_launch_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

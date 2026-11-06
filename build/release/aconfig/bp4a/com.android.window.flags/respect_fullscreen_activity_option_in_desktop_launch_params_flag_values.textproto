@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "respect_fullscreen_activity_option_in_desktop_launch_params"
+  state: ENABLED
+  permission: READ_ONLY
+}

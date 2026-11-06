@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "update_desktop_scrim_when_locked_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

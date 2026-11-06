@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.usb.flags"
+  name: "enable_camera_policy_check"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "disable_edt_for_autofill_inline_view"
+  state: ENABLED
+  permission: READ_ONLY
+}

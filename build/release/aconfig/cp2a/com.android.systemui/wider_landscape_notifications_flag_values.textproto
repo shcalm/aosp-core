@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "wider_landscape_notifications"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,5 @@
+{
+  "env_default": {
+    "SOONG_NINJA": "siso"
+  }
+}

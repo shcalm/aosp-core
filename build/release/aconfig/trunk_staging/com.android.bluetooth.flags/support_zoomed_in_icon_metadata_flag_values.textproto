@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "support_zoomed_in_icon_metadata"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_non_default_display_split"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_ACONFIG_INCLUDE_CONTACTS_PICKER_APP"
+value {
+  bool_value: true
+}

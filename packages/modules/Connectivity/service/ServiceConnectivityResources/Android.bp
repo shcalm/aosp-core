@@ -1,0 +1,95 @@
+//
+// Copyright (C) 2021 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+// APK to hold all the wifi overlayable resources.
+package {
+    default_team: "trendy_team_fwk_core_networking",
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+java_defaults {
+    name: "ServiceConnectivityResourcesDefaults",
+    sdk_version: "module_current",
+    min_sdk_version: "31",
+    resource_dirs: [
+        "res",
+    ],
+    srcs: [
+        "src/**/*.java",
+    ],
+    libs: [
+        "framework-annotations-lib",
+        "framework-bluetooth.stubs.module_lib",
+        "framework-connectivity.stubs.module_lib",
+        "framework-connectivity-t.stubs.module_lib",
+        "framework-location.stubs.module_lib",
+    ],
+    static_libs: [
+        "androidx.appcompat_appcompat",
+        "androidx.fragment_fragment",
+        "service-connectivity-resources-aidl",
+    ],
+}
+
+android_library {
+    name: "ServiceConnectivityResourcesLib",
+    defaults: ["ServiceConnectivityResourcesDefaults"],
+    visibility: ["//packages/modules/Connectivity:__subpackages__"],
+}
+
+filegroup {
+    name: "preinstalled-packages-com.android.connectivity.resources.xml",
+    srcs: ["preinstalled-packages-com.android.connectivity.resources.xml"],
+}
+
+android_app {
+    name: "ServiceConnectivityResources",
+    defaults: ["ServiceConnectivityResourcesDefaults"],
+    privileged: true,
+    export_package_resources: true,
+    updatable: true,
+    certificate: ":com.android.connectivity.resources.certificate",
+    preinstall_allowlist: ":preinstalled-packages-com.android.connectivity.resources.xml",
+    apex_available: [
+        "com.android.tethering",
+    ],
+    optimize: {
+        ignore_warnings: false,
+    },
+}
+
+java_library {
+    name: "service-connectivity-resources-aidl",
+    sdk_version: "module_current",
+    min_sdk_version: "31",
+    srcs: ["aidl/**/*.aidl"],
+    aidl: {
+        include_dirs: [
+            "packages/modules/Connectivity/framework/aidl-export",
+        ],
+        local_include_dirs: ["aidl/"],
+    },
+    libs: [
+        "framework-connectivity-t.stubs.module_lib",
+    ],
+    visibility: ["//packages/modules/Connectivity:__subpackages__"],
+    apex_available: ["com.android.tethering"],
+}
+
+android_app_certificate {
+    name: "com.android.connectivity.resources.certificate",
+    certificate: "resources-certs/com.android.connectivity.resources",
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "repository_based_persistence"
+  state: ENABLED
+  permission: READ_ONLY
+}

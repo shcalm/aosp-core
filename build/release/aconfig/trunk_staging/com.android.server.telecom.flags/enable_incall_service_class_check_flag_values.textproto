@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "enable_incall_service_class_check"
+  state: ENABLED
+  permission: READ_WRITE
+}

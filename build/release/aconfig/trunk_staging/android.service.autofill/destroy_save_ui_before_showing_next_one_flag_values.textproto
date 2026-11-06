@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "destroy_save_ui_before_showing_next_one"
+  state: ENABLED
+  permission: READ_WRITE
+}

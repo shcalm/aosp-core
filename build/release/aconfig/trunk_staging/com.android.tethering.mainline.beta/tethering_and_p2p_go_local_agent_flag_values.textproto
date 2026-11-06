@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.mainline.beta"
+  name: "tethering_and_p2p_go_local_agent"
+  state: ENABLED
+  permission: READ_WRITE
+}

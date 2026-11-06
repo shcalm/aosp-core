@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_app_handle_tracking"
+  state: ENABLED
+  permission: READ_WRITE
+}

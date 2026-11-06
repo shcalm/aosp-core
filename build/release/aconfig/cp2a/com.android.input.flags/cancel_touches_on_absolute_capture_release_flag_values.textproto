@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "cancel_touches_on_absolute_capture_release"
+  state: ENABLED
+  permission: READ_ONLY
+}

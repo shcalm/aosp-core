@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.flags"
+  name: "use_new_observe_mode_cmd"
+  state: ENABLED
+  permission: READ_WRITE
+}

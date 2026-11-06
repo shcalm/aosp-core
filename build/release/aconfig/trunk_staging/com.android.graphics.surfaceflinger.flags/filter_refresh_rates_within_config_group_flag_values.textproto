@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "filter_refresh_rates_within_config_group"
+  state: ENABLED
+  permission: READ_WRITE
+}

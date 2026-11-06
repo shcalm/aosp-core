@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mediasession.flags"
+  name: "add_wiu_allowlisting_to_media_button_receiver_holder_send"
+  state: ENABLED
+  permission: READ_ONLY
+}

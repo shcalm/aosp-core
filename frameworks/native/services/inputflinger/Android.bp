@@ -1,0 +1,296 @@
+// Copyright (C) 2013 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Default flags to be used throughout all libraries in inputflinger.
+package {
+    default_team: "trendy_team_input_framework",
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "frameworks_native_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["frameworks_native_license"],
+}
+
+inputflinger_tidy_checks = [
+    "android-*",
+]
+
+cc_defaults {
+    name: "inputflinger_defaults",
+    host_supported: true,
+    cflags: [
+        "-DANDROID_UTILS_REF_BASE_DISABLE_IMPLICIT_CONSTRUCTION",
+        "-Wall",
+        "-Werror",
+        "-Werror=reorder-init-list",
+        "-Wextra",
+        "-Wno-unused-parameter",
+        "-Wshadow",
+        "-Wshadow-field-in-constructor-modified",
+        "-Wshadow-uncaptured-local",
+        "-Wthread-safety",
+    ],
+    sanitize: {
+        misc_undefined: [
+            "bounds",
+        ],
+    },
+    afdo: true,
+    tidy: true,
+    tidy_checks: [
+        "-*", // Disable all checks not explicitly enabled for now
+    ] + inputflinger_tidy_checks,
+    tidy_checks_as_errors: inputflinger_tidy_checks,
+    target: {
+        host: {
+            sanitize: {
+                address: true,
+                diag: {
+                    cfi: true,
+                    integer_overflow: true,
+                    memtag_heap: true,
+                    undefined: true,
+                    misc_undefined: [
+                        "all",
+                        "bounds",
+                    ],
+                },
+            },
+            include_dirs: [
+                "bionic/libc/kernel/android/uapi/",
+                "bionic/libc/kernel/uapi",
+            ],
+            cflags: [
+                "-D__ANDROID_HOST__",
+            ],
+        },
+    },
+}
+
+/////////////////////////////////////////////////
+// libinputflinger
+/////////////////////////////////////////////////
+
+filegroup {
+    name: "libinputflinger_sources",
+    srcs: [
+        "InputCommonConverter.cpp",
+        "InputDeviceMetricsCollector.cpp",
+        "InputFilter.cpp",
+        "InputFilterCallbacks.cpp",
+        "InteractionReporter.cpp",
+        "InputProcessor.cpp",
+        "PointerChoreographer.cpp",
+        "PreferStylusOverTouchBlocker.cpp",
+        "UnwantedInteractionBlocker.cpp",
+        "InputDeviceMetricsSource.cpp",
+        "InputListener.cpp",
+        "InputReaderBase.cpp",
+        "InputThread.cpp",
+        "NotifyArgs.cpp",
+        "VibrationElement.cpp",
+        "trace/InputTracingPerfettoBackend.cpp",
+        "trace/InputTracingThreadedBackend.cpp",
+    ],
+}
+
+cc_defaults {
+    name: "libinputflinger_defaults",
+    srcs: [":libinputflinger_sources"],
+    shared_libs: [
+        "android.hardware.input.processor-V1-ndk",
+        "attentionmanager_native_aidl-cpp",
+        "com.android.server.inputflinger-ndk",
+        "libattention_native",
+        "libbase",
+        "libbinder",
+        "libbinder_ndk",
+        "libchrome",
+        "libcrypto",
+        "libcutils",
+        "libhidlbase",
+        "libinput",
+        "libkll",
+        "liblog",
+        "libprocessgroup",
+        "libprotobuf-cpp-lite",
+        "libprotolog",
+        "libstatslog_inputflinger",
+        "libstatspull",
+        "libstatssocket",
+        "libutils",
+        "packagemanager_aidl-cpp",
+        "server_configurable_flags",
+    ],
+    static_libs: [
+        "libattestation",
+        "libpalmrejection",
+        "libperfetto_client_experimental",
+        "libui-types",
+        "perfetto_winscope_extensions_zero",
+    ],
+    generated_headers: [
+        "cxx-bridge-header",
+        "inputflinger_rs_bootstrap_bridge_header",
+    ],
+    header_libs: [
+        "inputflinger_rs_bootstrap_cxx_headers",
+        "libbatteryservice_headers",
+        "libinputflinger_headers",
+    ],
+    generated_sources: ["inputflinger_rs_bootstrap_bridge_code"],
+    whole_static_libs: ["libinputflinger_rs"],
+    export_shared_lib_headers: ["com.android.server.inputflinger-ndk"],
+    target: {
+        android: {
+            shared_libs: [
+                "libgui",
+            ],
+        },
+    },
+}
+
+cc_library_shared {
+    name: "libinputflinger",
+    host_supported: true,
+    defaults: [
+        "inputflinger_defaults",
+        "libinputflinger_defaults",
+        "libinputreader_defaults",
+    ],
+    srcs: [
+        "InputManager.cpp",
+        // other sources are added via "defaults"
+    ],
+    cflags: [
+        // TODO(b/23084678): Move inputflinger to its own process and mark it hidden
+        //-fvisibility=hidden
+    ],
+    shared_libs: [
+        // This should consist only of dependencies from inputflinger. Other dependencies should be
+        // in cc_defaults so that they are included in the tests.
+        "libinputreporter",
+    ],
+    static_libs: [
+        "libPlatformProperties",
+        "libinputdispatcher",
+    ],
+    export_static_lib_headers: [
+        "libinputdispatcher",
+        "libperfetto_client_experimental",
+    ],
+    export_header_lib_headers: [
+        "libinputflinger_headers",
+    ],
+}
+
+/////////////////////////////////////////////////
+// libinputflinger_base
+/////////////////////////////////////////////////
+
+cc_library_headers {
+    name: "libinputflinger_headers",
+    host_supported: true,
+    export_include_dirs: [
+        ".",
+        "include",
+        "trace",
+    ],
+    header_libs: [
+        "libchrome-gestures_headers",
+    ],
+    export_header_lib_headers: [
+        "libchrome-gestures_headers",
+    ],
+}
+
+// This target will build everything 'input-related'. This could be useful for
+// large refactorings of the input code. This is similar to 'm checkbuild', but
+// just for input code.
+// Use 'm checkinput' to build, and then (optionally) use 'm installclean' to
+// remove any of the installed artifacts that you may not want on your actual
+// build.
+phony {
+    name: "checkinput",
+    required: [
+        "Bug-115739809",
+        "CtsHardwareTestCases",
+        "CtsInputTestCases",
+        "CtsSecurityBulletinHostTestCases",
+        "CtsSecurityTestCases",
+        "CtsViewTestCases",
+        "CtsWidgetTestCases",
+        "CtsWindowManagerDeviceWindow",
+        "FrameworksCoreTests",
+        "FrameworksServicesTests",
+        "InputTests",
+        "StructLayout_test",
+        "inputflinger_benchmarks",
+        "inputflinger_blocking_queue_fuzzer",
+        "inputflinger_cursor_input_fuzzer",
+        "inputflinger_input_classifier_fuzzer",
+        "inputflinger_input_dispatcher_fuzzer",
+        "inputflinger_input_reader_fuzzer",
+        "inputflinger_keyboard_input_fuzzer",
+        "inputflinger_latencytracker_fuzzer",
+        "inputflinger_multitouch_input_fuzzer",
+        "inputflinger_switch_input_fuzzer",
+        "inputflinger_tests",
+        "inputflinger_touchpad_input_fuzzer",
+        "libandroid_runtime",
+        "libgui_test",
+        "libinput",
+        "libinput_rust_test",
+        "libinput_tests",
+        "libinputflinger",
+        "libinputservice_test",
+        "libpalmrejection_test",
+        "libservices.core",
+        "monkey_test",
+    ],
+}
+
+cc_library_shared {
+    name: "libstatslog_inputflinger",
+    host_supported: true,
+    generated_sources: ["statslog_inputflinger.cpp"],
+    generated_headers: ["statslog_inputflinger.h"],
+    export_generated_headers: ["statslog_inputflinger.h"],
+    shared_libs: [
+        "libstatspull",
+        "libstatssocket",
+    ],
+}
+
+genrule {
+    name: "statslog_inputflinger.h",
+    tools: ["stats-log-api-gen"],
+    cmd: "$(location stats-log-api-gen) --header $(genDir)/statslog_inputflinger.h" +
+        " --module input --namespace android,inputflinger,stats",
+    out: [
+        "statslog_inputflinger.h",
+    ],
+}
+
+genrule {
+    name: "statslog_inputflinger.cpp",
+    tools: ["stats-log-api-gen"],
+    cmd: "$(location stats-log-api-gen) --cpp $(genDir)/statslog_inputflinger.cpp" +
+        " --module input --namespace android,inputflinger,stats" +
+        " --importHeader statslog_inputflinger.h",
+    out: [
+        "statslog_inputflinger.cpp",
+    ],
+}

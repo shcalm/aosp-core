@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "reduce_window_traversal_on_entering"
+  state: ENABLED
+  permission: READ_WRITE
+}

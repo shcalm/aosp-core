@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "back_disposition_controls_back_interception"
+  state: ENABLED
+  permission: READ_ONLY
+}

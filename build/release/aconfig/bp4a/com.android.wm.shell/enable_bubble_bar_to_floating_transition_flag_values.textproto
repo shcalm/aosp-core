@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "enable_bubble_bar_to_floating_transition"
+  state: ENABLED
+  permission: READ_ONLY
+}

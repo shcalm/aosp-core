@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "set_ptr_null_after_free"
+  state: ENABLED
+  permission: READ_ONLY
+}

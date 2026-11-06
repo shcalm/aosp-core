@@ -1,0 +1,8 @@
+name: "RELEASE_ACONFIG_GENERATE_CHECKS_SDK_ANNOTATION"
+namespace: "android_sdk"
+description: "Control if @ChecksSdkIntAtLeast annotation is generated for finalized flags."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

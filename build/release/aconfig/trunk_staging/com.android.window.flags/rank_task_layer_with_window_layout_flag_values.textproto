@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "rank_task_layer_with_window_layout"
+  state: ENABLED
+  permission: READ_WRITE
+}

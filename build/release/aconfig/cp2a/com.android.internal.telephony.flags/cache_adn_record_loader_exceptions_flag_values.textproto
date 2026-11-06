@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "cache_adn_record_loader_exceptions"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,31 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+aidl_interface {
+    name: "bluetooth_constants",
+    host_supported: true,
+    unstable: true,
+    srcs: [
+        "bluetooth/constants/*.aidl",
+        "bluetooth/constants/aics/*.aidl",
+    ],
+    backend: {
+        java: {
+            min_sdk_version: "36",
+            sdk_version: "module_current",
+            apex_available: ["com.android.bt"],
+        },
+        cpp: {
+            min_sdk_version: "36",
+            apex_available: ["com.android.bt"],
+        },
+        ndk: {
+            enabled: false,
+        },
+    },
+    visibility: [
+        "//packages/modules/Bluetooth:__subpackages__",
+        "//system/tools/aidl/build",
+    ],
+}

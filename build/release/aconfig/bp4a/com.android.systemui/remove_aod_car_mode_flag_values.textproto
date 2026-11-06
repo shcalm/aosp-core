@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "remove_aod_car_mode"
+  state: ENABLED
+  permission: READ_ONLY
+}

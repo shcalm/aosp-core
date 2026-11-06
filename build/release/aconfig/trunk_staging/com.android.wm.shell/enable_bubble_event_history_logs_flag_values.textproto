@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "enable_bubble_event_history_logs"
+  state: ENABLED
+  permission: READ_WRITE
+}

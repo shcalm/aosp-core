@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "detect_bondloss_legacy_bredr_pairing"
+  state: ENABLED
+  permission: READ_ONLY
+}

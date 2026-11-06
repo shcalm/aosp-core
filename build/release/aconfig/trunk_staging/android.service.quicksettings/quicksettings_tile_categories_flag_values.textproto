@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.quicksettings"
+  name: "quicksettings_tile_categories"
+  state: ENABLED
+  permission: READ_WRITE
+}

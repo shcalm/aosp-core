@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "enable_compose_external_display_dialog"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "consistent_max_users"
+  state: ENABLED
+  permission: READ_ONLY
+}

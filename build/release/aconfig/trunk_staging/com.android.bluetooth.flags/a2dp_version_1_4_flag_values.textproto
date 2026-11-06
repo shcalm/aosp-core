@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "a2dp_version_1_4"
+  state: ENABLED
+  permission: READ_WRITE
+}

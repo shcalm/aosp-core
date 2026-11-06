@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hidd_bump_version_to_111"
+  state: ENABLED
+  permission: READ_ONLY
+}

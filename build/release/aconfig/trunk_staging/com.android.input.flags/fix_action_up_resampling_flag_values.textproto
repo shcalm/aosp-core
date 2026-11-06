@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "fix_action_up_resampling"
+  state: ENABLED
+  permission: READ_WRITE
+}

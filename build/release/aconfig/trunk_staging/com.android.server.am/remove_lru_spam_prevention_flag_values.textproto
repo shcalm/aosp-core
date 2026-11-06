@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "remove_lru_spam_prevention"
+  state: ENABLED
+  permission: READ_ONLY
+}

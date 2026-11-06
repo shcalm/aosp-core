@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "managed_esim_outgoing_transfer_policy"
+  state: ENABLED
+  permission: READ_WRITE
+}

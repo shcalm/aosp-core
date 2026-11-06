@@ -1,0 +1,8 @@
+name: "RELEASE_MEDIA3_MIGRATION_FOR_MEDIAPARSER"
+namespace: "media_solutions"
+description: "Controls the migration of MediaParser from ExoPlayer v2 to Media3."
+value: {
+    bool_value: false
+}
+workflow: LAUNCH
+containers: "com.android.media"

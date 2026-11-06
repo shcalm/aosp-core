@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_upscaling_size_compat_on_exiting_desktop_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

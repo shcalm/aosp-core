@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security.keystore2"
+  name: "faster_rebind_cleanup"
+  state: ENABLED
+  permission: READ_ONLY
+}

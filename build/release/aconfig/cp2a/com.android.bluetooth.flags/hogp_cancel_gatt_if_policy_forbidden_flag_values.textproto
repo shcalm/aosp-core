@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hogp_cancel_gatt_if_policy_forbidden"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.bluetooth.platform.flags"
+  name: "strict_configuration_in_system_server"
+  state: ENABLED
+  permission: READ_ONLY
+}

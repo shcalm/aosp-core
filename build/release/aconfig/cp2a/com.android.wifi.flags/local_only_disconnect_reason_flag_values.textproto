@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "local_only_disconnect_reason"
+  state: ENABLED
+  permission: READ_ONLY
+}

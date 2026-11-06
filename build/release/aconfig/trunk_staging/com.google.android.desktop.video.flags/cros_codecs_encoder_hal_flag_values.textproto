@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.google.android.desktop.video.flags"
+  name: "cros_codecs_encoder_hal"
+  state: ENABLED
+  permission: READ_WRITE
+}

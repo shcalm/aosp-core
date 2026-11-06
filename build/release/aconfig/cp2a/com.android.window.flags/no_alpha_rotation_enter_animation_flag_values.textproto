@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "no_alpha_rotation_enter_animation"
+  state: ENABLED
+  permission: READ_ONLY
+}

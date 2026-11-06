@@ -1,0 +1,4 @@
+name: "RELEASE_SOONG_ONLY_FRANKEL"
+value {
+  bool_value: true
+}

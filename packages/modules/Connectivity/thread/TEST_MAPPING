@@ -1,0 +1,24 @@
+{
+  "presubmit": [
+    {
+      "name": "CtsThreadNetworkTestCases"
+    },
+    {
+      "name": "ThreadNetworkUnitTests"
+    },
+    {
+      "name": "ThreadNetworkIntegrationTests"
+    },
+    {
+      "name": "ThreadBorderRouterIntegrationTests"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "ThreadNetworkMultiDeviceTests"
+    },
+    {
+      "name": "ThreadNetworkTrelDisabledTests"
+    }
+  ]
+}

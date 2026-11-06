@@ -1,0 +1,8 @@
+name: "RELEASE_ACONFIG_INCLUDE_CONTACTS_PICKER_APP"
+namespace: "profile_experiences"
+description: "Enables preinstallation of the system ContactsPicker app."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

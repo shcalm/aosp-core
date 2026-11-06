@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "supports_secure_passenger_users"
+  state: ENABLED
+  permission: READ_WRITE
+}

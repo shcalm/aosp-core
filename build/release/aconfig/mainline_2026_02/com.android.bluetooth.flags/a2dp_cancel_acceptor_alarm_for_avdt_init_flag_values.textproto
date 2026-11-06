@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "a2dp_cancel_acceptor_alarm_for_avdt_init"
+  state: ENABLED
+  permission: READ_ONLY
+}

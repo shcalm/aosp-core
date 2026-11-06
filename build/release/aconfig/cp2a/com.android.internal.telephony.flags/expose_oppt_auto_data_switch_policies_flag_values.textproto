@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "expose_oppt_auto_data_switch_policies"
+  state: ENABLED
+  permission: READ_ONLY
+}

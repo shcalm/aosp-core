@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hfp_ag_rfc_race_condition_random_timer"
+  state: ENABLED
+  permission: READ_WRITE
+}

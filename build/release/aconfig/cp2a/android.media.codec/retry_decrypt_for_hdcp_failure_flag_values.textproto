@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.codec"
+  name: "retry_decrypt_for_hdcp_failure"
+  state: ENABLED
+  permission: READ_ONLY
+}

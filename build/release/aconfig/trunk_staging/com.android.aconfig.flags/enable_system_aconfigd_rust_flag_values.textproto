@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.aconfig.flags"
+  name: "enable_system_aconfigd_rust"
+  state: ENABLED
+  permission: READ_ONLY
+}

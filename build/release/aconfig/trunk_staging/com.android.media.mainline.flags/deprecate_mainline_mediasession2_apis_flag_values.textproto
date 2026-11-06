@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mainline.flags"
+  name: "deprecate_mainline_mediasession2_apis"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "cat_service_creation_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

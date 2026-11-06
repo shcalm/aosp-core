@@ -1,0 +1,8 @@
+name: "RELEASE_AVF_ENABLE_ADVANCE_MULTITENANCY"
+namespace: "virtualization"
+description: "Support for multiple payloads to share the pVM environment while preserving the security boundary between them (b/416251610)"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

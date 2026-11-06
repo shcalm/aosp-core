@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "show_stacked_mirroring_display_connected_display_setting"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "disable_adaptive_auth_counter_lock"
+  state: ENABLED
+  permission: READ_WRITE
+}

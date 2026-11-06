@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_gesture_nav_horizontal_touch_slop"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "synchronize_codec_preferences_and_priority"
+  state: ENABLED
+  permission: READ_ONLY
+}

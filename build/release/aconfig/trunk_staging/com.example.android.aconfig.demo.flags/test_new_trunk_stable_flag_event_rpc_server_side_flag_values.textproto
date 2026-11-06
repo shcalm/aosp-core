@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.example.android.aconfig.demo.flags"
+  name: "test_new_trunk_stable_flag_event_rpc_server_side"
+  state: ENABLED
+  permission: READ_WRITE
+}

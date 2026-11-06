@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.tv.flags"
+  name: "hdmi_control_collect_physical_address"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "fix_multi_window_task_focus_change"
+  state: ENABLED
+  permission: READ_WRITE
+}

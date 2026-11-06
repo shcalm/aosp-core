@@ -1,0 +1,4 @@
+name: "RELEASE_APEX_USE_EROFS_PREINSTALLED"
+value {
+  bool_value: true
+}

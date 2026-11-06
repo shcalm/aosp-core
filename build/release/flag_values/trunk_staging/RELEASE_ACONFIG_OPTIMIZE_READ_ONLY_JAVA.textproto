@@ -1,0 +1,4 @@
+name: "RELEASE_ACONFIG_OPTIMIZE_READ_ONLY_JAVA"
+value {
+  bool_value: true
+}

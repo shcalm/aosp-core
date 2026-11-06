@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "notification_smart_replies_edit_before_sending"
+  state: ENABLED
+  permission: READ_WRITE
+}

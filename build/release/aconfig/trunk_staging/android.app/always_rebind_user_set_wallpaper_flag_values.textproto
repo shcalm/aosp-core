@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "always_rebind_user_set_wallpaper"
+  state: ENABLED
+  permission: READ_WRITE
+}

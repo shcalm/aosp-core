@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.feature.flags"
+  name: "shutdown_system_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

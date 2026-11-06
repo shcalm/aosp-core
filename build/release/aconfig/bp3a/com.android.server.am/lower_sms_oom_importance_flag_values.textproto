@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "lower_sms_oom_importance"
+  state: ENABLED
+  permission: READ_ONLY
+}

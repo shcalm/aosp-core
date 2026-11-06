@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "intercept_motion_from_move_to_cancel"
+  state: ENABLED
+  permission: READ_ONLY
+}

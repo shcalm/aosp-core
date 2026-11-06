@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "ignore_service_change_indication"
+  state: ENABLED
+  permission: READ_ONLY
+}

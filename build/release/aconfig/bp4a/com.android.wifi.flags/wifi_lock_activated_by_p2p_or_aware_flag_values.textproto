@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "wifi_lock_activated_by_p2p_or_aware"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.tracing"
+  name: "protolog_async_init"
+  state: ENABLED
+  permission: READ_WRITE
+}

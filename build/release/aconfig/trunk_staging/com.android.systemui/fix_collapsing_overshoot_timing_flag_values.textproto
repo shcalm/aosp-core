@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fix_collapsing_overshoot_timing"
+  state: ENABLED
+  permission: READ_WRITE
+}

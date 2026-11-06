@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "mcc_mnc_locale_resolution"
+  state: ENABLED
+  permission: READ_WRITE
+}

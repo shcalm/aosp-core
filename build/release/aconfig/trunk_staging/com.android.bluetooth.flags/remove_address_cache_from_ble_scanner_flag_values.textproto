@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "remove_address_cache_from_ble_scanner"
+  state: ENABLED
+  permission: READ_WRITE
+}

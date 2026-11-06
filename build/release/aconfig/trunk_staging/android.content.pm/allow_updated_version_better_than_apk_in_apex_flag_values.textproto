@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "allow_updated_version_better_than_apk_in_apex"
+  state: ENABLED
+  permission: READ_WRITE
+}

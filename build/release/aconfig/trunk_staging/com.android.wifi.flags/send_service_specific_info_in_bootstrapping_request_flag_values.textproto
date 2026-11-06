@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "send_service_specific_info_in_bootstrapping_request"
+  state: ENABLED
+  permission: READ_WRITE
+}

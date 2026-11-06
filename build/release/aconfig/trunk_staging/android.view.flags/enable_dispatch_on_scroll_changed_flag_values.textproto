@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.flags"
+  name: "enable_dispatch_on_scroll_changed"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "retry_ime_animation_on_leash_ready"
+  state: ENABLED
+  permission: READ_ONLY
+}

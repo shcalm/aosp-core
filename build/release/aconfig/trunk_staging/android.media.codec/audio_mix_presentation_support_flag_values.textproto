@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.codec"
+  name: "audio_mix_presentation_support"
+  state: ENABLED
+  permission: READ_ONLY
+}

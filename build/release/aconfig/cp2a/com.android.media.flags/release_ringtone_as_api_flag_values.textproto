@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "release_ringtone_as_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

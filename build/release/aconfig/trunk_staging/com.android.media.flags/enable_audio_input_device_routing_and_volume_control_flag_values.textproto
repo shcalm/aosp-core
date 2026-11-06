@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "enable_audio_input_device_routing_and_volume_control"
+  state: ENABLED
+  permission: READ_WRITE
+}

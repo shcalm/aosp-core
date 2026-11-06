@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.biometrics"
+  name: "get_biometric_sensor_strengths"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,132 @@
+// Copyright 2018 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package xml
+
+import (
+	"android/soong/android"
+	"android/soong/etc"
+
+	"github.com/google/blueprint"
+	"github.com/google/blueprint/proptools"
+)
+
+// prebuilt_etc_xml installs an xml file under <partition>/etc/<subdir>.
+// It also optionally validates the xml file against the schema.
+
+var (
+	pctx    = android.NewPackageContext("android/soong/xml")
+	xmlLint = pctx.HostTool("xmllint")
+
+	xmllintDtd = pctx.AndroidStaticRule("xmllint-dtd",
+		blueprint.RuleParams{
+			Command2: blueprint.NewCommand(
+				xmlLint, ` --dtdvalid $dtd $in > /dev/null && `, android.Touch, ` -a $out`),
+			Restat: true,
+		},
+		"dtd")
+
+	xmllintXsd = pctx.AndroidStaticRule("xmllint-xsd",
+		blueprint.RuleParams{
+			Command2: blueprint.NewCommand(
+				xmlLint, ` --schema $xsd $in > /dev/null && `, android.Touch, ` -a $out`),
+			Restat: true,
+		},
+		"xsd")
+
+	xmllintMinimal = pctx.AndroidStaticRule("xmllint-minimal",
+		blueprint.RuleParams{
+			Command2: blueprint.NewCommand(
+				xmlLint, ` $in > /dev/null && `, android.Touch, ` -a $out`),
+			Restat: true,
+		})
+)
+
+func init() {
+	pctx.Import("android/soong/android")
+	registerXmlBuildComponents(android.InitRegistrationContext)
+}
+
+func registerXmlBuildComponents(ctx android.RegistrationContext) {
+	ctx.RegisterModuleType("prebuilt_etc_xml", PrebuiltEtcXmlFactory)
+}
+
+type prebuiltEtcXmlProperties struct {
+	// Optional DTD that will be used to validate the xml file.
+	Schema *string `android:"path"`
+}
+
+type prebuiltEtcXml struct {
+	etc.PrebuiltEtc
+
+	properties prebuiltEtcXmlProperties
+}
+
+func (p *prebuiltEtcXml) timestampFilePath(ctx android.ModuleContext) android.WritablePath {
+	return android.PathForModuleOut(ctx, p.PrebuiltEtc.SourceFilePath(ctx).Base()+"-timestamp")
+}
+
+func (p *prebuiltEtcXml) GenerateAndroidBuildActions(ctx android.ModuleContext) {
+	if p.properties.Schema != nil {
+		schema := android.PathForModuleSrc(ctx, proptools.String(p.properties.Schema))
+
+		switch schema.Ext() {
+		case ".dtd":
+			ctx.Build(pctx, android.BuildParams{
+				Rule:        xmllintDtd,
+				Description: "xmllint-dtd",
+				Input:       p.PrebuiltEtc.SourceFilePath(ctx),
+				Output:      p.timestampFilePath(ctx),
+				Implicit:    schema,
+				Args: map[string]string{
+					"dtd": schema.String(),
+				},
+			})
+		case ".xsd":
+			ctx.Build(pctx, android.BuildParams{
+				Rule:        xmllintXsd,
+				Description: "xmllint-xsd",
+				Input:       p.PrebuiltEtc.SourceFilePath(ctx),
+				Output:      p.timestampFilePath(ctx),
+				Implicit:    schema,
+				Args: map[string]string{
+					"xsd": schema.String(),
+				},
+			})
+		default:
+			ctx.PropertyErrorf("schema", "not supported extension: %q", schema.Ext())
+		}
+	} else {
+		// when schema is not specified, just check if the xml is well-formed
+		ctx.Build(pctx, android.BuildParams{
+			Rule:        xmllintMinimal,
+			Description: "xmllint-minimal",
+			Input:       p.PrebuiltEtc.SourceFilePath(ctx),
+			Output:      p.timestampFilePath(ctx),
+		})
+	}
+
+	p.SetAdditionalDependencies([]android.Path{p.timestampFilePath(ctx)})
+
+	p.PrebuiltEtc.GenerateAndroidBuildActions(ctx)
+}
+
+func PrebuiltEtcXmlFactory() android.Module {
+	module := &prebuiltEtcXml{}
+	module.AddProperties(&module.properties)
+	etc.InitPrebuiltEtcModule(&module.PrebuiltEtc, "etc")
+	// This module is device-only
+	android.InitAndroidArchModule(module, android.DeviceSupported, android.MultilibFirst)
+	return module
+}

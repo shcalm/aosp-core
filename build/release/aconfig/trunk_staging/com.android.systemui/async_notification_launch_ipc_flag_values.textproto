@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "async_notification_launch_ipc"
+  state: ENABLED
+  permission: READ_WRITE
+}

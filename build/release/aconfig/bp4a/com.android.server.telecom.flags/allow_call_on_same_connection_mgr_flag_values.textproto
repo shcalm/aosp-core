@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "allow_call_on_same_connection_mgr"
+  state: ENABLED
+  permission: READ_ONLY
+}

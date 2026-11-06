@@ -1,0 +1,4 @@
+name: "RELEASE_REMOVE_APPFUNCTION_SIDECAR"
+value {
+  bool_value: true
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "set_max_data_length_for_lecoc"
+  state: ENABLED
+  permission: READ_ONLY
+}

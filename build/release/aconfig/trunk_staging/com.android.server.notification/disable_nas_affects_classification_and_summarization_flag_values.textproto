@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "disable_nas_affects_classification_and_summarization"
+  state: ENABLED
+  permission: READ_WRITE
+}

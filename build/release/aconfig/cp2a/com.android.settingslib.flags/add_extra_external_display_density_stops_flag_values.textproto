@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "add_extra_external_display_density_stops"
+  state: ENABLED
+  permission: READ_ONLY
+}

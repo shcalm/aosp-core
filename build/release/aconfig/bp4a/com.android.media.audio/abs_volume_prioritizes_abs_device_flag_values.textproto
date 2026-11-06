@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audio"
+  name: "abs_volume_prioritizes_abs_device"
+  state: ENABLED
+  permission: READ_ONLY
+}

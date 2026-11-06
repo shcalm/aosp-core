@@ -1,0 +1,11 @@
+# <<.M.Name>>
+
+<<setList .M.Name "_SRCS" "" (getAidlSources .CcInfo)>>
+
+<<setList .M.Name "_AIDLFLAGS" "" (getAidlInterface .CcInfo).Flags>>
+
+add_aidl_library(<<.M.Name>> <<(getAidlInterface .CcInfo).Lang>>
+    "${ANDROID_BUILD_TOP}/<<.Ctx.OtherModuleDir .M>>/<<(getAidlInterface .CcInfo).AidlRoot>>"
+    "${<<.M.Name>>_SRCS}"
+    "${<<.M.Name>>_AIDLFLAGS}")
+add_library(android::<<.M.Name>> ALIAS <<.M.Name>>)

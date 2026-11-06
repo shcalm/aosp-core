@@ -1,0 +1,4 @@
+name: "RELEASE_PACKAGE_HEBREW_FONT_VERSION"
+value {
+  string_value: "3.001"
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.example.android.aconfig.demo.flags"
+  name: "test_voyager_sync_hook"
+  state: ENABLED
+  permission: READ_WRITE
+}

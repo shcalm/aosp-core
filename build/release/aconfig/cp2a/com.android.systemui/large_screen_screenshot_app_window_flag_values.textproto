@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "large_screen_screenshot_app_window"
+  state: ENABLED
+  permission: READ_ONLY
+}

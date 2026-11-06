@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "notifications_hun_shared_animation_values"
+  state: ENABLED
+  permission: READ_WRITE
+}

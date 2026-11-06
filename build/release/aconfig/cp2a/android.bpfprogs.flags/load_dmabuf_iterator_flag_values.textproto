@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.bpfprogs.flags"
+  name: "load_dmabuf_iterator"
+  state: ENABLED
+  permission: READ_ONLY
+}

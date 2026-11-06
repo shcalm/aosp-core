@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "delay_focus_switch_for_bt_ics"
+  state: ENABLED
+  permission: READ_WRITE
+}

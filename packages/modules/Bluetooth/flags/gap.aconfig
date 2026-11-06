@@ -1,0 +1,151 @@
+package: "com.android.bluetooth.flags"
+container: "com.android.bt"
+
+flag {
+    name: "only_start_scan_during_ble_on"
+    namespace: "bluetooth"
+    description: "Instead of starting scan and gatt in ble_on, only start scan"
+    bug: "313335632"
+}
+
+flag {
+    name: "skip_unknown_robust_caching"
+    namespace: "bluetooth"
+    description: "skip initial DB lookup when robust caching support is UNKNOWN"
+    bug: "317128464"
+}
+
+flag {
+    name: "msft_addr_tracking_quirk"
+    namespace: "bluetooth"
+    description: "Scanning with MSFT paddress tracking for Realtek BT controllers"
+    bug: "332438857"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "fix_private_gatt_advertisement"
+    namespace: "bluetooth"
+    description: "Fix that private GATT advertising is handled as a normal GATT"
+    bug: "406124107"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "preload_gatt_database"
+    namespace: "bluetooth"
+    description: "Add API to allow apps to preload GATT databases to allow skipping service discovery on initial connection."
+    bug: "407051373"
+}
+
+flag {
+    name: "migrate_btm_scan_to_gd"
+    namespace: "bluetooth"
+    description: "Migrate btm scan logic to gd le scanning manager"
+    bug: "452239954"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "gatt_conn_settings"
+    namespace: "bluetooth"
+    description: "GATT connection settings & related APIs"
+    bug: "450085002"
+    is_exported: true
+}
+
+flag {
+    name: "irk_scanning_bond_check_update"
+    namespace: "bluetooth"
+    description: "Update bond state check during IRK scanning to cover all identity address types"
+    bug: "459303393"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "notify_unconditional_disconnect_le"
+    namespace: "bluetooth"
+    description: "Notify connecting clients of an unconditional disconnect to prevent a stuck connecting state"
+    bug: "458272298"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "rotate_address_when_connected"
+    namespace: "bluetooth"
+    description: "Rotate address whenever a BLE connection is made"
+    bug: "462281358"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "unify_device_type_verification_logic"
+    namespace: "bluetooth"
+    description: "Unify device type verification logic in GD and BTM"
+    bug: "471319424"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "use_address_type_from_batch_scan_result"
+    namespace: "bluetooth"
+    description: "Use the address type from batch scan result"
+    bug: "469914545"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "track_ad_type_flag_change"
+    namespace: "bluetooth"
+    description: "Track ad type flag value change in advertising reports during discovery"
+    bug: "475648435"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "convert_pseudo_address_to_identity"
+    namespace: "bluetooth"
+    description: "Convert pseudo address to identity address when used for APCF filters"
+    bug: "486698443"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "pause_clients_before_resolving_list_modification"
+    namespace: "bluetooth"
+    description: "Pause clients before adding or removing device from the resolving list"
+    bug: "488175554"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "fix_ppcp_behavior"
+    namespace: "bluetooth"
+    description: "Distinguish app-requested connection params from PPCP, and other behavior changes (go/fix-ppcp-behavior)"
+    bug: "491294532"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}

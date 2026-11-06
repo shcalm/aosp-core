@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "close_conn_socket_on_failure"
+  state: ENABLED
+  permission: READ_ONLY
+}

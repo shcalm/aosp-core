@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.text.flags"
+  name: "fix_paint_reset_inconsistency"
+  state: ENABLED
+  permission: READ_WRITE
+}

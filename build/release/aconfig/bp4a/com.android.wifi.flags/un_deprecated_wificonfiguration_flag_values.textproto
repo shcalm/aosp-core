@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "un_deprecated_wificonfiguration"
+  state: ENABLED
+  permission: READ_ONLY
+}

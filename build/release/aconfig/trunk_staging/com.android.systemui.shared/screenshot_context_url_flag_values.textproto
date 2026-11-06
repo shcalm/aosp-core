@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.shared"
+  name: "screenshot_context_url"
+  state: ENABLED
+  permission: READ_WRITE
+}

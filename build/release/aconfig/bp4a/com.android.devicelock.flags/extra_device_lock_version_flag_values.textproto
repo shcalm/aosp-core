@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.devicelock.flags"
+  name: "extra_device_lock_version"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_desktop_invisible_task_removal_cleanup_bugfix"
+  state: ENABLED
+  permission: READ_WRITE
+}

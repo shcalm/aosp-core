@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "factory_reset_at_bluetooth_start"
+  state: ENABLED
+  permission: READ_ONLY
+}

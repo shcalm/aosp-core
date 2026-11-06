@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "read_rssi_throttling"
+  state: ENABLED
+  permission: READ_ONLY
+}

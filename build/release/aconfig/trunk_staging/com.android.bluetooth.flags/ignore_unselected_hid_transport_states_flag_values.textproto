@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "ignore_unselected_hid_transport_states"
+  state: ENABLED
+  permission: READ_WRITE
+}

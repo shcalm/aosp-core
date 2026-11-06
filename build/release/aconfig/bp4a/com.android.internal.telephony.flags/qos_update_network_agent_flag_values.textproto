@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "qos_update_network_agent"
+  state: ENABLED
+  permission: READ_ONLY
+}

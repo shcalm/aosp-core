@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "enable_moving_content_into_private_space"
+  state: ENABLED
+  permission: READ_ONLY
+}

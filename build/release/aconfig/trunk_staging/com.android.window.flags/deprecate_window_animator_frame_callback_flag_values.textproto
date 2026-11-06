@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "deprecate_window_animator_frame_callback"
+  state: ENABLED
+  permission: READ_WRITE
+}

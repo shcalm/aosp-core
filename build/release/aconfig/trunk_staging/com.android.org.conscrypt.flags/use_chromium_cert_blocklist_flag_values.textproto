@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.org.conscrypt.flags"
+  name: "use_chromium_cert_blocklist"
+  state: ENABLED
+  permission: READ_ONLY
+}

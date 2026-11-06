@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "enable_magnification_cursor_following_dialog"
+  state: ENABLED
+  permission: READ_ONLY
+}

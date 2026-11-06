@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.flags"
+  name: "enable_filesystem_configuration_v2"
+  state: ENABLED
+  permission: READ_WRITE
+}

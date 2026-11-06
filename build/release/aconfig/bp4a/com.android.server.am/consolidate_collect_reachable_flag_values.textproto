@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "consolidate_collect_reachable"
+  state: ENABLED
+  permission: READ_ONLY
+}

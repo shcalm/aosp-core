@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "hide_lskf_skip_during_suw"
+  state: ENABLED
+  permission: READ_ONLY
+}

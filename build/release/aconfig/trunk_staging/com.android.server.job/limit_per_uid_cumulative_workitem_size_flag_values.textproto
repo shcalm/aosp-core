@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.job"
+  name: "limit_per_uid_cumulative_workitem_size"
+  state: ENABLED
+  permission: READ_WRITE
+}

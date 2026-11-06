@@ -1,0 +1,4 @@
+name: "RELEASE_AVF_FORWARD_ROOT_OF_TRUST_PROPS_TO_SECURITY_VM"
+value {
+  bool_value: true
+}

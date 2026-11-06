@@ -1,0 +1,8 @@
+name: "RELEASE_APEX_MOUNT_BEFORE_DATA"
+namespace: "treble"
+description: "Mounts Data APEXes in apexd-bootstrap stage before /data partition"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

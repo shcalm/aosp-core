@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "interact_cellbroadcast_permission_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

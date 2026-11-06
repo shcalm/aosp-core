@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "conclude_le_pairing_immediately"
+  state: ENABLED
+  permission: READ_ONLY
+}

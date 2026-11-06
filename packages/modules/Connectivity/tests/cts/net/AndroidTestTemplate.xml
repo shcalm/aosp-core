@@ -1,0 +1,88 @@
+<!-- Copyright (C) 2015 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<configuration description="Test config for {MODULE}">
+    <option name="test-suite-tag" value="cts" />
+    <option name="config-descriptor:metadata" key="component" value="networking" />
+    <option name="config-descriptor:metadata" key="token" value="SIM_CARD" />
+    <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
+    <option name="config-descriptor:metadata" key="parameter" value="not_multi_abi" />
+    <option name="config-descriptor:metadata" key="parameter" value="secondary_user" />
+    <option name="config-descriptor:metadata" key="parameter" value="secondary_user_on_secondary_display" />
+
+    <option name="config-descriptor:metadata" key="mainline-param" value="CaptivePortalLoginGoogle.apk+NetworkStackGoogle.apk+com.google.android.resolv.apex+com.google.android.tethering.apex" />
+    <option name="config-descriptor:metadata" key="mainline-param" value="CaptivePortalLoginGoogle.apk+NetworkStackGoogle.apk" />
+    <option name="config-descriptor:metadata" key="mainline-param" value="com.google.android.tethering.apex" />
+    <option name="not-shardable" value="true" />
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
+        <option name="has-server-side-config" value="false" />
+        <option name="target" value="device" />
+        <option name="config-filename" value="{MODULE}" />
+        <option name="version" value="1.0" />
+    </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <option name="test-file-name" value="{MODULE}.apk" />
+        <option name="test-file-name" value="CtsCarrierServicePackage.apk" />
+    </target_preparer>
+    <target_preparer class="com.android.testutils.ConnectivityTestTargetPreparer">
+    </target_preparer>
+    <target_preparer class="com.android.testutils.DisableConfigSyncTargetPreparer">
+    </target_preparer>
+    <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="test-user-token" value="%TEST_USER%"/>
+        <!-- Used to test builds earlier than 26Q2. In 26Q2+, the ACCESS_LOCAL_NETWORK permission
+            is enforced regardless of dev opt-in. -->
+        <option name="run-command"
+            value="am compat enable RESTRICT_LOCAL_NETWORK android.net.cts.localnetnopermissions" />
+        <!-- Revoke in separate commands in case one of them fails. -->
+        <option name="run-command"
+            value="pm revoke --user %TEST_USER% android.net.cts.localnetnopermissions android.permission.ACCESS_LOCAL_NETWORK" />
+        <option name="run-command"
+            value="pm revoke --user %TEST_USER% android.net.cts.localnetnopermissions android.permission.NEARBY_WIFI_DEVICES" />
+    </target_preparer>
+    <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
+        <option name="package" value="{PACKAGE}" />
+        <option name="shell-timeout" value="1500s"/>
+        <option name="runtime-hint" value="9m4s" />
+        <option name="hidden-api-checks" value="false" />
+        <option name="isolated-storage" value="false" />
+        <option name="instrumentation-arg" key="test-module-name" value="{MODULE}" />
+        <option name="device-listeners" value="com.android.testutils.ConnectivityDiagnosticsCollector" />
+        <!-- Extra configuration specified in the build rules (.bp). In particular, they may specify
+         include-annotation filters to only run a subset of the test cases. -->
+        {EXTRA_TEST_RUNNER_CONFIGS}
+    </test>
+    <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <!-- Pattern matching the fileKey used by ConnectivityDiagnosticsCollector when calling addFileMetric -->
+        <option name="pull-pattern-keys" value="com.android.testutils.ConnectivityDiagnosticsCollector.*"/>
+        <option name="collect-on-run-ended-only" value="true" />
+    </metrics_collector>
+    <!-- When this test is run in a Mainline context (e.g. with `mts-tradefed`), only enable it if
+        one of the Mainline modules below is present on the device used for testing. -->
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.MainlineTestModuleController">
+        <!-- Tethering Module (internal version). -->
+        <option name="mainline-module-package-name" value="com.google.android.tethering" />
+        <!-- Tethering Module (AOSP version). -->
+        <option name="mainline-module-package-name" value="com.android.tethering" />
+        <!-- NetworkStack Module (internal version). Should always be installed with CaptivePortalLogin. -->
+        <option name="mainline-module-package-name" value="com.google.android.networkstack" />
+        <!-- NetworkStack Module (AOSP version). Should always be installed with CaptivePortalLogin. -->
+        <option name="mainline-module-package-name" value="com.android.networkstack" />
+        <!-- Resolver Module (internal version). -->
+        <option name="mainline-module-package-name" value="com.google.android.resolv" />
+        <!-- Resolver Module (AOSP version). -->
+        <option name="mainline-module-package-name" value="com.android.resolv" />
+    </object>
+</configuration>

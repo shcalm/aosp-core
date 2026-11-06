@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "use_unix_socket_inotify"
+  state: ENABLED
+  permission: READ_ONLY
+}

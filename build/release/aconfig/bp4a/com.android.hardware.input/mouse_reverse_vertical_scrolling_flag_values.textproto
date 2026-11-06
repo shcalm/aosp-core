@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "mouse_reverse_vertical_scrolling"
+  state: ENABLED
+  permission: READ_ONLY
+}

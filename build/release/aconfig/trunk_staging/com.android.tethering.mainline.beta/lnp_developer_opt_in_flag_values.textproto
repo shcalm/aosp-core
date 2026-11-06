@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.mainline.beta"
+  name: "lnp_developer_opt_in"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "link_status_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

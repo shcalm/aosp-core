@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "manage_assistant_audio_permission"
+  state: ENABLED
+  permission: READ_ONLY
+}

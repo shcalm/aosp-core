@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "cache_emergency_callback_mode"
+  state: ENABLED
+  permission: READ_WRITE
+}

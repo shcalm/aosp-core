@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "auto_transport_pairing"
+  state: ENABLED
+  permission: READ_WRITE
+}

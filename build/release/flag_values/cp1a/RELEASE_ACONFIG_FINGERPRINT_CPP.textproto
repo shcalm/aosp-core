@@ -1,0 +1,4 @@
+name: "RELEASE_ACONFIG_FINGERPRINT_CPP"
+value {
+  bool_value: true
+}

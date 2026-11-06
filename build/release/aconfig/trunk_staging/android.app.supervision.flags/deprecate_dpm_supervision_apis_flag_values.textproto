@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "deprecate_dpm_supervision_apis"
+  state: ENABLED
+  permission: READ_WRITE
+}

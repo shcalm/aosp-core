@@ -1,0 +1,7 @@
+# Bug component: 1075131
+
+include /services/surfaceflinger/OWNERS
+
+# Skia
+djsollen@google.com
+nscobie@google.com

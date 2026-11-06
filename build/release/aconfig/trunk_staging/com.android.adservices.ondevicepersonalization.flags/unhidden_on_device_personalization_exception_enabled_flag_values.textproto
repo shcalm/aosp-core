@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.adservices.ondevicepersonalization.flags"
+  name: "unhidden_on_device_personalization_exception_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

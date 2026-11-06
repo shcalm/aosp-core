@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audioserver"
+  name: "remove_stream_suspend"
+  state: ENABLED
+  permission: READ_ONLY
+}

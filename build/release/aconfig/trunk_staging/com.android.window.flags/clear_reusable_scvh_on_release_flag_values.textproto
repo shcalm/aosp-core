@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "clear_reusable_scvh_on_release"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.text.flags"
+  name: "insert_font_family"
+  state: ENABLED
+  permission: READ_ONLY
+}

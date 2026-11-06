@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.installd.flags"
+  name: "enable_set_inode_quotas"
+  state: ENABLED
+  permission: READ_ONLY
+}

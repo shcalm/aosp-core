@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_fix_stop_reconfiguration_timeout"
+  state: ENABLED
+  permission: READ_ONLY
+}

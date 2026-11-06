@@ -1,0 +1,477 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "frameworks_native_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["frameworks_native_license"],
+    default_team: "trendy_team_android_core_graphics_stack",
+}
+
+aconfig_declarations {
+    name: "surfaceflinger_flags",
+    package: "com.android.graphics.surfaceflinger.flags",
+    container: "system",
+    srcs: [
+        "surfaceflinger_flags.aconfig",
+        "surfaceflinger_flags_new.aconfig",
+    ],
+    exportable: true,
+}
+
+cc_aconfig_library {
+    name: "libsurfaceflingerflags",
+    host_supported: true,
+    aconfig_declarations: "surfaceflinger_flags",
+    vendor_available: true,
+    target: {
+        windows: {
+            enabled: true,
+        },
+    },
+}
+
+cc_defaults {
+    name: "surfaceflinger_defaults",
+    defaults: [
+        "no_bti",
+    ],
+    tidy: true,
+    tidy_flags: [
+        // Only check our headers
+        "-header-filter=^.*frameworks/native/services/surfaceflinger/.*.h$",
+    ],
+    tidy_checks: [
+        "-android-cloexec-dup",
+        "-android-cloexec-pipe",
+        "-bugprone-argument-comment",
+        "-bugprone-branch-clone",
+        "-bugprone-forward-declaration-namespace",
+        "-bugprone-incorrect-roundings",
+        "-bugprone-integer-division",
+        "-bugprone-lambda-function-name",
+        "-bugprone-misplaced-widening-cast",
+        "-bugprone-move-forwarding-reference",
+        "-bugprone-nondeterministic-pointer-iteration-order",
+        "-bugprone-switch-missing-default-case",
+        "-cert-dcl59-cpp",
+        "-cert-err34-c",
+        "-cert-int09-c",
+        "-cert-msc30-c",
+        "-cert-msc50-cpp",
+        "-cert-oop54-cpp",
+        "-clang-analyzer-core.CallAndMessage",
+        "-clang-analyzer-core.DivideZero",
+        "-clang-analyzer-deadcode.DeadStores",
+        "-clang-analyzer-optin.core.EnumCastOutOfRange",
+        "-clang-analyzer-optin.cplusplus.UninitializedObject",
+        "-clang-analyzer-optin.cplusplus.VirtualCall",
+        "-clang-analyzer-optin.performance.Padding",
+        "-clang-analyzer-security.ArrayBound",
+        "-clang-diagnostic-deprecated-declarations",
+        "-google-build-namespaces",
+        "-misc-include-cleaner",
+        "-misc-unused-using-decls",
+        "-misc-use-internal-linkage",
+        "-performance-enum-size",
+        "-performance-for-range-copy",
+        "-performance-inefficient-vector-operation",
+        "-performance-move-const-arg",
+        "-performance-unnecessary-copy-initialization",
+        "-performance-unnecessary-value-param",
+        "-portability-template-virtual-member-function",
+    ],
+    tidy_checks_as_errors: [
+        "abseil-*",
+        "android-*",
+        "bugprone-*",
+        "cert-*",
+        "clang-analyzer-*",
+        "google-*",
+        "misc-*",
+        "performance*",
+        "portability*",
+    ],
+    cflags: [
+        "-DANDROID_UTILS_REF_BASE_DISABLE_IMPLICIT_CONSTRUCTION",
+        "-DLOG_TAG=\"SurfaceFlinger\"",
+        "-DFMT_CPP_LIB_FILESYSTEM=0", // b/455625875
+        "-Wall",
+        "-Wconversion",
+        "-Werror",
+        "-Wextra",
+        "-Wformat",
+        "-Wthread-safety",
+        "-Wunreachable-code",
+        "-Wunused",
+    ],
+}
+
+cc_defaults {
+    name: "libsurfaceflinger_defaults",
+    defaults: [
+        "android.hardware.graphics.composer3-ndk_shared",
+        "librenderengine_deps",
+        "libsurfaceflinger_common_deps",
+        "libsurfaceflinger_proto_deps",
+        "libtimestats_deps",
+        "poweradvisor_deps",
+        "surfaceflinger_defaults",
+    ],
+    cflags: [
+        "-DEGL_EGLEXT_PROTOTYPES",
+        "-DGL_GLEXT_PROTOTYPES",
+    ],
+    shared_libs: [
+        "android.hardware.common-V2-ndk",
+        "android.hardware.common.fmq-V1-ndk",
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.allocator@3.0",
+        "android.hardware.graphics.common@1.2",
+        "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.composer@2.2",
+        "android.hardware.graphics.composer@2.3",
+        "android.hardware.graphics.composer@2.4",
+        "libEGL",
+        "libGLESv1_CM",
+        "libGLESv2",
+        "libSurfaceFlingerProp",
+        "libaconfig_storage_read_api_cc",
+        "libbase",
+        "libbinder",
+        "libbinder_ndk",
+        "libcutils",
+        "libfmq",
+        "libgui",
+        "libhidlbase",
+        "liblog",
+        "libnativewindow",
+        "libprocessgroup",
+        "libprotobuf-cpp-lite",
+        "libstatslog_surfaceflinger_bootstrap",
+        "libsync",
+        "libui",
+        "libutils",
+    ],
+    static_libs: [
+        "iinputflinger_aidl_lib_static",
+        "libaidlcommonsupport",
+        "libcompositionengine",
+        "libgui_aidl_static",
+        "libperfetto_client_experimental",
+        "librenderengine",
+        "libscheduler",
+        "libserviceutils",
+        "libshaders",
+        "libsurfaceflingerflags",
+        "libtimestats",
+        "libtonemap",
+    ],
+    header_libs: [
+        // TODO(b/445511672): clean up command-buffer versioning.
+        "android.hardware.graphics.composer3-command-buffer-V5",
+        "android.hardware.graphics.composer@2.1-command-buffer",
+        "android.hardware.graphics.composer@2.2-command-buffer",
+        "android.hardware.graphics.composer@2.3-command-buffer",
+        "android.hardware.graphics.composer@2.4-command-buffer",
+    ],
+    export_static_lib_headers: [
+        "libcompositionengine",
+        "librenderengine",
+        "libserviceutils",
+        "libtimestats",
+    ],
+    export_shared_lib_headers: [
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.allocator@3.0",
+        "android.hardware.graphics.common@1.2",
+        "android.hardware.graphics.composer@2.1",
+        "android.hardware.graphics.composer@2.2",
+        "android.hardware.graphics.composer@2.3",
+        "android.hardware.graphics.composer@2.4",
+        "libhidlbase",
+        "libpowermanager",
+    ],
+    // TODO (marissaw): this library is not used by surfaceflinger. This is here so
+    // the library compiled in a way that is accessible to system partition when running
+    // IMapper's VTS.
+    required: ["libgralloctypes"],
+}
+
+cc_defaults {
+    name: "libsurfaceflinger_production_defaults",
+    defaults: ["libsurfaceflinger_defaults"],
+    lto: {
+        thin: true,
+    },
+    whole_program_vtables: true, // Requires ThinLTO
+    afdo: true,
+    // TODO(b/131771163): Fix broken fuzzer support with LTO.
+    sanitize: {
+        fuzzer: false,
+    },
+}
+
+// libsurfaceflinger_backend_{headers|sources} are a step towards pulling out
+// the "backend" sources to clean up the dependency graph between
+// CompositionEngine and SurfaceFlinger. Completing the cleanup would require
+// moving the headers in particular so that the dependency can strictly be a
+// DAG. There would certainly be additional cleanups: VirtualDisplaySurface.cpp
+// and FrameBufferSurface.cpp likely belong in CompositionEngine for example.
+cc_library_headers {
+    name: "libsurfaceflinger_backend_headers",
+    export_include_dirs: ["."],
+    static_libs: ["libserviceutils"],
+    export_static_lib_headers: ["libserviceutils"],
+
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    export_shared_lib_headers: [
+        "libbinder_ndk",
+    ],
+}
+
+filegroup {
+    name: "libsurfaceflinger_backend_sources",
+    srcs: [
+        "DisplayHardware/AidlComposerHal.cpp",
+        "DisplayHardware/ComposerHal.cpp",
+        "DisplayHardware/FramebufferSurface.cpp",
+        "DisplayHardware/HwcSlotTracker.cpp",
+        "DisplayHardware/HWC2.cpp",
+        "DisplayHardware/HWComposer.cpp",
+        "DisplayHardware/HidlComposerHal.cpp",
+        "DisplayHardware/LegacyFramebufferSurface.cpp",
+        "DisplayHardware/VirtualDisplay/LegacyVirtualDisplaySurface.cpp",
+        "DisplayHardware/VirtualDisplay/SinkSurfaceHelper.cpp",
+        "DisplayHardware/VirtualDisplay/VirtualDisplaySurface.cpp",
+        "DisplayHardware/VirtualDisplay/VirtualDisplayThread.cpp",
+        "DisplayHardware/VirtualDisplay/VirtualDisplayThreadManager.cpp",
+        "PowerAdvisor/*.cpp",
+    ],
+}
+
+cc_library_headers {
+    name: "libsurfaceflinger_headers",
+    export_include_dirs: ["."],
+    static_libs: ["libserviceutils"],
+    export_static_lib_headers: ["libserviceutils"],
+}
+
+filegroup {
+    name: "libsurfaceflinger_sources",
+    srcs: [
+        ":libsurfaceflinger_backend_sources",
+        "ActivePictureTracker.cpp",
+        "BackgroundExecutor.cpp",
+        "Client.cpp",
+        "ClientCache.cpp",
+        "Display/DisplayIdentification.cpp",
+        "Display/DisplayModeController.cpp",
+        "Display/DisplaySnapshot.cpp",
+        "DisplayDevice.cpp",
+        "Effects/Daltonizer.cpp",
+        "FpsReporter.cpp",
+        "FrameTracer/FrameTracer.cpp",
+        "FrameTracker.cpp",
+        "FrontEnd/LayerCreationArgs.cpp",
+        "FrontEnd/LayerHandle.cpp",
+        "FrontEnd/LayerHierarchy.cpp",
+        "FrontEnd/LayerLifecycleManager.cpp",
+        "FrontEnd/LayerSnapshot.cpp",
+        "FrontEnd/LayerSnapshotBuilder.cpp",
+        "FrontEnd/RequestedLayerState.cpp",
+        "FrontEnd/TransactionHandler.cpp",
+        "FrontEnd/Caching/MergeableHierarchy.cpp",
+        "FrontEnd/Caching/MergeableHierarchyManager.cpp",
+        "FrontEnd/Caching/TexturePool.cpp",
+        "HdrLayerInfoReporter.cpp",
+        "HdrSdrRatioOverlay.cpp",
+        "RenderResourceCache.cpp",
+        "Jank/JankTracker.cpp",
+        "Layer.cpp",
+        "LayerFE.cpp",
+        "LayerProtoHelper.cpp",
+        "RefreshRateOverlay.cpp",
+        "RegionSamplingThread.cpp",
+        "Scheduler/EventThread.cpp",
+        "Scheduler/FrameRateOverrideMappings.cpp",
+        "Scheduler/FrameTimeline.cpp",
+        "Scheduler/LayerHistory.cpp",
+        "Scheduler/LayerInfo.cpp",
+        "Scheduler/MessageQueue.cpp",
+        "Scheduler/OneShotTimer.cpp",
+        "Scheduler/RefreshRateSelector.cpp",
+        "Scheduler/Scheduler.cpp",
+        "Scheduler/SmallAreaDetectionAllowMappings.cpp",
+        "Scheduler/VSyncDispatchTimerQueue.cpp",
+        "Scheduler/VSyncPredictor.cpp",
+        "Scheduler/VSyncReactor.cpp",
+        "Scheduler/VsyncConfiguration.cpp",
+        "Scheduler/VsyncModulator.cpp",
+        "Scheduler/VsyncSchedule.cpp",
+        "ScreenCaptureOutput.cpp",
+        "ShaderRegistry.cpp",
+        "SurfaceFlinger.cpp",
+        "SurfaceFlingerDefaultFactory.cpp",
+        "Tracing/LayerDataSource.cpp",
+        "Tracing/LayerTracing.cpp",
+        "Tracing/TransactionDataSource.cpp",
+        "Tracing/TransactionProtoParser.cpp",
+        "Tracing/TransactionTracing.cpp",
+        "Tracing/tools/LayerTraceGenerator.cpp",
+        "TransactionCallbackInvoker.cpp",
+        "TunnelModeEnabledReporter.cpp",
+        "Utils/FenceUtils.cpp",
+        "WindowInfosListenerInvoker.cpp",
+    ],
+}
+
+cc_defaults {
+    name: "libsurfaceflinger_binary",
+    defaults: [
+        "libsurfaceflinger_production_defaults",
+        "surfaceflinger_defaults",
+    ],
+    cflags: [
+        "-DLOG_TAG=\"SurfaceFlinger\"",
+    ],
+    shared_libs: [
+        "android.hardware.graphics.allocator@2.0",
+        "android.hardware.graphics.allocator@3.0",
+        "libbinder",
+        "libcutils",
+        "libhidlbase",
+        "liblog",
+        "libprocessgroup",
+        "libsync",
+        "libutils",
+    ],
+    static_libs: [
+        "libserviceutils",
+    ],
+}
+
+filegroup {
+    name: "surfaceflinger_binary_sources",
+    srcs: [
+        ":libsurfaceflinger_sources",
+        "main_surfaceflinger.cpp",
+    ],
+}
+
+cc_binary {
+    name: "surfaceflinger",
+    defaults: [
+        "libsurfaceflinger_binary",
+    ],
+    init_rc: ["surfaceflinger.rc"],
+    srcs: [
+        ":surfaceflinger_binary_sources",
+        // Note: SurfaceFlingerFactory is not in the filegroup so that it
+        // can be easily replaced.
+        "SurfaceFlingerFactory.cpp",
+    ],
+    shared_libs: [
+        "libSurfaceFlingerProp",
+    ],
+
+    logtags: ["surfaceflinger.logtags"],
+}
+
+subdirs = [
+    "layerproto",
+    "tests",
+]
+
+cc_library_shared {
+    name: "libSurfaceFlingerProp",
+    srcs: [
+        "SurfaceFlingerProperties.cpp",
+    ],
+    shared_libs: [
+        "android.hardware.graphics.common@1.2",
+        "libhidlbase",
+        "liblog",
+        "libui",
+        "libutils",
+    ],
+    static_libs: [
+        "libSurfaceFlingerProperties",
+    ],
+    export_shared_lib_headers: [
+        "android.hardware.graphics.common@1.2",
+        "libhidlbase",
+        "libui",
+    ],
+    export_static_lib_headers: [
+        "libSurfaceFlingerProperties",
+    ],
+}
+
+cc_library {
+    name: "libstatslog_surfaceflinger_bootstrap",
+    generated_sources: ["statslog_surfaceflinger_bootstrap.cpp"],
+    generated_headers: ["statslog_surfaceflinger_bootstrap.h"],
+    export_generated_headers: ["statslog_surfaceflinger_bootstrap.h"],
+    shared_libs: [
+        "android.os.statsbootstrap_aidl-cpp",
+        "libbinder",
+        "libstatsbootstrap",
+        "libutils",
+    ],
+}
+
+genrule {
+    name: "statslog_surfaceflinger_bootstrap.h",
+    tools: ["stats-log-api-gen"],
+    cmd: "$(location stats-log-api-gen) --header $(genDir)/statslog_surfaceflinger_bootstrap.h" +
+        " --module surfaceflinger --namespace android,surfaceflinger,stats --interface bootstrap",
+    out: [
+        "statslog_surfaceflinger_bootstrap.h",
+    ],
+}
+
+genrule {
+    name: "statslog_surfaceflinger_bootstrap.cpp",
+    tools: ["stats-log-api-gen"],
+    cmd: "$(location stats-log-api-gen) --cpp $(genDir)/statslog_surfaceflinger_bootstrap.cpp" +
+        " --module surfaceflinger --namespace android,surfaceflinger,stats" +
+        " --importHeader statslog_surfaceflinger_bootstrap.h --interface bootstrap",
+    out: [
+        "statslog_surfaceflinger_bootstrap.cpp",
+    ],
+}
+
+cc_library {
+    name: "libstatslog_surfaceflinger",
+    generated_sources: ["statslog_surfaceflinger.cpp"],
+    generated_headers: ["statslog_surfaceflinger.h"],
+    export_generated_headers: ["statslog_surfaceflinger.h"],
+    shared_libs: [
+        "libstatspull",
+        "libstatssocket",
+    ],
+}
+
+genrule {
+    name: "statslog_surfaceflinger.h",
+    tools: ["stats-log-api-gen"],
+    cmd: "$(location stats-log-api-gen) --header $(genDir)/statslog_surfaceflinger.h" +
+        " --module surfaceflinger --namespace android,surfaceflinger,stats",
+    out: [
+        "statslog_surfaceflinger.h",
+    ],
+}
+
+genrule {
+    name: "statslog_surfaceflinger.cpp",
+    tools: ["stats-log-api-gen"],
+    cmd: "$(location stats-log-api-gen) --cpp $(genDir)/statslog_surfaceflinger.cpp" +
+        " --module surfaceflinger --namespace android,surfaceflinger,stats" +
+        " --importHeader statslog_surfaceflinger.h",
+    out: [
+        "statslog_surfaceflinger.cpp",
+    ],
+}

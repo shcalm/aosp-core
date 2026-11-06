@@ -1,0 +1,5 @@
+name: "RELEASE_PROCESS_MEMORY_GUARDIAN_DAEMON"
+namespace: "system_performance"
+description: "Enables Process Memory Guardian in system image."
+workflow: LAUNCH
+containers: "system"

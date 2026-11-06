@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.intentresolver"
+  name: "sharesheet_esc_exit"
+  state: ENABLED
+  permission: READ_ONLY
+}

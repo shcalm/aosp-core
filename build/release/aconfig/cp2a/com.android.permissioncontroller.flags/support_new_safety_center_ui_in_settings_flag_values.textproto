@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.permissioncontroller.flags"
+  name: "support_new_safety_center_ui_in_settings"
+  state: ENABLED
+  permission: READ_ONLY
+}

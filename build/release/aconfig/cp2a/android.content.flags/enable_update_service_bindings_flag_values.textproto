@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.flags"
+  name: "enable_update_service_bindings"
+  state: ENABLED
+  permission: READ_ONLY
+}

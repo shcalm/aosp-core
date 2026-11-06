@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "sco_state_machine_cleanup"
+  state: ENABLED
+  permission: READ_ONLY
+}

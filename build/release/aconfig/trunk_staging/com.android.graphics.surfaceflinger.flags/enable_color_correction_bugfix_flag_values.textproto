@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "enable_color_correction_bugfix"
+  state: ENABLED
+  permission: READ_WRITE
+}

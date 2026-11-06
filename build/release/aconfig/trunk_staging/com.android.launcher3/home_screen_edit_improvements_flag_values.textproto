@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "home_screen_edit_improvements"
+  state: ENABLED
+  permission: READ_WRITE
+}

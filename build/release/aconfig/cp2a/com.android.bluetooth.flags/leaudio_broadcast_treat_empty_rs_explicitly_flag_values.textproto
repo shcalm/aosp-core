@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_broadcast_treat_empty_rs_explicitly"
+  state: ENABLED
+  permission: READ_ONLY
+}

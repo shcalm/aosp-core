@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "remove_start_mode_from_blocked_intents"
+  state: ENABLED
+  permission: READ_ONLY
+}

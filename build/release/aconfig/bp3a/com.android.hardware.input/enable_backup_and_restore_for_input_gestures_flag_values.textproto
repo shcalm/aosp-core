@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "enable_backup_and_restore_for_input_gestures"
+  state: ENABLED
+  permission: READ_ONLY
+}

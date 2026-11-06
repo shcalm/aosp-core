@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audio"
+  name: "audio_stream_bt_sco_cleanup"
+  state: ENABLED
+  permission: READ_ONLY
+}

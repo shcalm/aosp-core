@@ -1,0 +1,26 @@
+# Keep JNI registered methods
+-keepclasseswithmembers,includedescriptorclasses class * { native <methods>; }
+
+# Keep class's integer static field for MessageUtils to parsing their name.
+-keepclassmembers class com.android.server.**,android.net.**,com.android.networkstack.** {
+    static final % POLICY_*;
+    static final % NOTIFY_TYPE_*;
+    static final % TRANSPORT_*;
+    static final % CMD_*;
+    static final % EVENT_*;
+}
+
+# Ensure runtime-visible field annotations are kept when using R8 full mode.
+-keepattributes RuntimeVisibleAnnotations,AnnotationDefault
+-keep interface com.android.networkstack.tethering.util.Struct$Field {
+    *;
+}
+-keepclassmembers public class * extends com.android.networkstack.tethering.util.Struct {
+    *;
+}
+
+# The lite proto runtime uses reflection to access fields based on the names in
+# the schema, keep all the fields.
+-keepclassmembers class * extends com.android.networkstack.tethering.protobuf.MessageLite {
+    <fields>;
+}

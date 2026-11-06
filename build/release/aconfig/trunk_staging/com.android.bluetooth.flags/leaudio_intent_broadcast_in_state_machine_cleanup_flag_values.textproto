@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_intent_broadcast_in_state_machine_cleanup"
+  state: ENABLED
+  permission: READ_WRITE
+}

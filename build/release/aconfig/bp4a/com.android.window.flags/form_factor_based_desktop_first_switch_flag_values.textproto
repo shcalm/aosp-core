@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "form_factor_based_desktop_first_switch"
+  state: ENABLED
+  permission: READ_ONLY
+}

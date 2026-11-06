@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.profiling"
+  name: "notify_result_delivered"
+  state: ENABLED
+  permission: READ_ONLY
+}

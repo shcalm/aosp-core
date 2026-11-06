@@ -1,0 +1,8 @@
+name: "RELEASE_SOONG_UNCOMPRESSED_FONTS"
+namespace: "system_performance"
+description: "Enables uncompressed fonts in APKs produced by Soong"
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

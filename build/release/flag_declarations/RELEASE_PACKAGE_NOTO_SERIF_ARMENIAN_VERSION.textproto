@@ -1,0 +1,8 @@
+name: "RELEASE_PACKAGE_NOTO_SERIF_ARMENIAN_VERSION"
+namespace: "text"
+description: "Version of the Noto Serif Armenian font."
+value: {
+  string_value: "2.005"
+}
+workflow: PREBUILT
+containers: "system"

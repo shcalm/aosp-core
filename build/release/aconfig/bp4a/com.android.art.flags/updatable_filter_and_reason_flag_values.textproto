@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.flags"
+  name: "updatable_filter_and_reason"
+  state: ENABLED
+  permission: READ_ONLY
+}

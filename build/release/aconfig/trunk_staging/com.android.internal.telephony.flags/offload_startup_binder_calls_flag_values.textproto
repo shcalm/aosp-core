@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "offload_startup_binder_calls"
+  state: ENABLED
+  permission: READ_WRITE
+}

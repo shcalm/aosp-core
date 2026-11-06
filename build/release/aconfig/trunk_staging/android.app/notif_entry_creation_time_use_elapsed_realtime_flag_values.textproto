@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "notif_entry_creation_time_use_elapsed_realtime"
+  state: ENABLED
+  permission: READ_WRITE
+}

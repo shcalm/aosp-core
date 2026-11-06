@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "screenshot_disable_long_screenshot_for_system_shade"
+  state: ENABLED
+  permission: READ_WRITE
+}

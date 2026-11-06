@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "add_bond_loss_reason"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "stop_layer"
+  state: ENABLED
+  permission: READ_ONLY
+}

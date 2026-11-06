@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "collect_beta_metrics"
+  state: ENABLED
+  permission: READ_WRITE
+}

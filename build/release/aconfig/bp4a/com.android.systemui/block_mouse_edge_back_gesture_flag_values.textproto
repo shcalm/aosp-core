@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "block_mouse_edge_back_gesture"
+  state: ENABLED
+  permission: READ_ONLY
+}

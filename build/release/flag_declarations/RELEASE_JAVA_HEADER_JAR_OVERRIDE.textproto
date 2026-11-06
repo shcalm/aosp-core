@@ -1,0 +1,4 @@
+name: "RELEASE_JAVA_HEADER_JAR_OVERRIDE"
+namespace: "android_UNKNOWN"
+description: "whether to enable header_jar_override"
+workflow: MANUAL

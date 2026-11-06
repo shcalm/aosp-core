@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "vcp_skip_ignoring_volume_during_broadcast"
+  state: ENABLED
+  permission: READ_ONLY
+}

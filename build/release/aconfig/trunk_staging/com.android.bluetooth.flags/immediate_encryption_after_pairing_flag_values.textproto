@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "immediate_encryption_after_pairing"
+  state: ENABLED
+  permission: READ_WRITE
+}

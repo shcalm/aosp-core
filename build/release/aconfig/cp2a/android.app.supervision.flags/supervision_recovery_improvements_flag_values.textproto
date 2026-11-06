@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "supervision_recovery_improvements"
+  state: ENABLED
+  permission: READ_ONLY
+}

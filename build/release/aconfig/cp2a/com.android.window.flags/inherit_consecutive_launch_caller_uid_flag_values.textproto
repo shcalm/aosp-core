@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "inherit_consecutive_launch_caller_uid"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "cleanup_carrier_network_change_by_phoneid"
+  state: ENABLED
+  permission: READ_WRITE
+}

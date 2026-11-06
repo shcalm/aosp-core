@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "floating_menu_adjust_cutout_avoidance"
+  state: ENABLED
+  permission: READ_WRITE
+}

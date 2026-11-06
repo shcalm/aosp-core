@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "trigger_perfetto_on_traced_probes_disconnect"
+  state: ENABLED
+  permission: READ_ONLY
+}

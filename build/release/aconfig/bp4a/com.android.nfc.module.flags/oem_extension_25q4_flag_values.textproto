@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.module.flags"
+  name: "oem_extension_25q4"
+  state: ENABLED
+  permission: READ_ONLY
+}

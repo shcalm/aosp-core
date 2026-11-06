@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "health_connect_provide_device_data_permission_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

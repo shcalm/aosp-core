@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "keep_desk_active_on_keyguard_appear"
+  state: ENABLED
+  permission: READ_WRITE
+}

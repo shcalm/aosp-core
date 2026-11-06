@@ -1,0 +1,4 @@
+name: "RELEASE_APEX_CONTRIBUTIONS_TELEPHONY2"
+value: {
+  string_value: "telephonycore.go.google.contributions.prebuilt"
+}

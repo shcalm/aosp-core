@@ -1,0 +1,426 @@
+"""Utility functions for Wi-Fi tests."""
+
+from collections.abc import Mapping
+import contextlib
+import datetime
+import logging
+import time
+from typing import Any
+
+from mobly import asserts
+from mobly.controllers import android_device
+from mobly.controllers.android_device_lib import callback_handler_v2
+from mobly.snippet import errors
+
+from connection import constants
+from connection import test_utils
+from connection import ui_action_utils
+
+
+_NETWORK_CALLBACK = 'NetworkCallback'
+
+_ERROR_MSG_WIFI_SSID_NOT_FOUND = (
+    'Android device cannot discover the configured Wi-Fi SSID: {wifi_ssid}.'
+    ' Please check that:\n'
+    '1. Whether the configured Wi-Fi SSID "{wifi_ssid}" is correct in'
+    ' `WifiConnectionTestbed.yaml`.\n'
+    '2. Whether the configured Wi-Fi can be discovered by the Android device.'
+)
+
+_ERROR_MSG_CONFIGURED_WIFI_IS_OPEN = (
+    'This test requires a secured Wi-Fi network. However, the configured Wi-Fi'
+    ' network (SSID: "{wifi_ssid}") is an open network.'
+)
+
+_ERROR_MSG_NETWORK_PASSPHRASE_SECURITY_TYPE_NOT_SUPPORTED = (
+    'Unsupported Wi-Fi network security type. Please change a personal WPA2 or WPA3 Wi-Fi network.'
+)
+
+
+def wait_for_expected_wifi_discovered(
+    ad: android_device.AndroidDevice,
+    wifi_ssid: str,
+    wifi_bssid: str,
+    timeout: datetime.timedelta = constants.WIFI_SCAN_TIMEOUT,
+) -> Mapping[str, Any]:
+  """Waits for the Wi-Fi to be discovered."""
+  def find_wifi():
+    for wifi in ad.wifi.wifiScanAndGetResultsWithShellPermission():
+        if wifi['SSID'] == wifi_ssid and wifi['BSSID'] == wifi_bssid:
+            return wifi
+    return None
+
+  end_time = time.monotonic() + timeout.total_seconds()
+  while time.monotonic() < end_time:
+      result = find_wifi()
+      if result:
+          return result
+      time.sleep(1)
+  asserts.fail(f'Failed to discover AP {wifi_ssid} within {timeout}')
+
+
+def create_network_specifier(
+    password: str,
+    scan_result: Mapping[str, Any],
+    **kwargs,
+) -> constants.NetworkSpecifier:
+  """Creates the network specifier"""
+  psk = None
+  wpa3_passphrase = None
+  if _is_scan_result_for_wpa2_network(scan_result):
+    psk = password
+  elif _is_scan_result_for_wpa3_network(scan_result):
+    wpa3_passphrase = password
+  else:
+    raise ValueError(_ERROR_MSG_NETWORK_PASSPHRASE_SECURITY_TYPE_NOT_SUPPORTED)
+
+  return constants.NetworkSpecifier(
+      psk=psk,
+      wpa3_passphrase=wpa3_passphrase,
+      **kwargs,
+  )
+
+
+def create_network_suggestion(
+    ssid: str,
+    password: str,
+    scan_result: Mapping[str, Any],
+    **kwargs: Any
+) -> constants.NetworkSuggestion:
+  """Create network suggestion"""
+  psk = None
+  wpa3_passphrase = None
+  if _is_scan_result_for_wpa2_network(scan_result):
+    psk = password
+  elif _is_scan_result_for_wpa3_network(scan_result):
+    wpa3_passphrase = password
+  else:
+    raise ValueError(_ERROR_MSG_NETWORK_PASSPHRASE_SECURITY_TYPE_NOT_SUPPORTED)
+  return constants.NetworkSuggestion(
+      ssid=ssid,
+      psk=psk,
+      wpa3_passphrase=wpa3_passphrase,
+      **kwargs,
+  )
+
+
+def is_wifi_discovered(
+    ad: android_device.AndroidDevice, wifi_ssid: str, wifi_bssid: str
+) -> bool:
+  """Checks if Wi-Fi is discovered."""
+  for wifi in ad.wifi.wifiScanAndGetResultsWithShellPermission():
+    if (
+        wifi['SSID'] == wifi_ssid
+        and wifi['BSSID'] == wifi_bssid
+    ):
+      return True
+  return False
+
+
+def wait_until_network_expected_callback(
+    callback_handler: callback_handler_v2.CallbackHandlerV2,
+    expected_callback: str,
+    timeout: datetime.timedelta = constants.REQUEST_NETWORK_TIMEOUT,
+) -> None:
+  """Waits for the network to be expected callback.
+
+  Args:
+    callback_handler: A network callback handler.
+    expected_callback: An expected callback in constants.NetworkCallback.
+    timeout: The timeout for the callback event verification.
+  """
+  callback_handler.waitForEvent(
+      event_name=_NETWORK_CALLBACK,
+      predicate=lambda e: e.data['callbackName'] == expected_callback,
+      timeout=timeout.total_seconds(),
+  )
+  logging.info('Received event with callback: %s', expected_callback)
+
+
+# slipt lost out since snippet use a different callbackName only in lost event.
+def wait_until_network_lost_callback(
+    callback_handler: callback_handler_v2.CallbackHandlerV2,
+) -> None:
+  """Waits for the network lost callback."""
+  callback_handler.waitForEvent(
+      event_name=constants.NetworkCallback.CALLBACK_LOST,
+      predicate=lambda e: e.data['callbackName']
+      == constants.NetworkCallback.LOST,
+      timeout=constants.REQUEST_NETWORK_TIMEOUT.total_seconds(),
+  )
+  logging.info(
+      'Received event with callback: %s', constants.NetworkCallback.LOST
+  )
+
+
+def assert_no_network_callback_received_within_timeout(
+    callback_handler: callback_handler_v2.CallbackHandlerV2,
+    specific_callback: str,
+    timeout: datetime.timedelta = constants.WIFI_CONTINUOUSLY_CHECK_TIMEOUT,
+    error_msg: str | None = None,
+) -> None:
+  """Waits for the network to be not specific callback during within timeout."""
+  # NetworkCallback class uses different callback names.
+  # packages: com.google.snippet.wifi.aware.ConnectivityManagerSnippet
+  if specific_callback == constants.NetworkCallback.LOST:
+    event_name = constants.NetworkCallback.CALLBACK_LOST
+  else:
+    event_name = _NETWORK_CALLBACK
+  event = None
+  with contextlib.suppress(errors.CallbackHandlerTimeoutError):
+    event = callback_handler.waitForEvent(
+        event_name=event_name,
+        predicate=lambda e: e.data['callbackName'] == specific_callback,
+        timeout=timeout.total_seconds(),
+    )
+  if error_msg is None:
+    error_msg = (
+        f'Network lost event was received within {timeout.total_seconds()}'
+        f' seconds. Event: {event}'
+    )
+  asserts.assert_is_none(event, error_msg)
+
+
+def add_network_suggestions_and_assert_success(
+    ad: android_device.AndroidDevice,
+    network_suggestions: list[dict[str, str | int | bool]],
+) -> None:
+  """Adds network suggestion and asserts the process is successful."""
+  asserts.assert_equal(
+      ad.wifi.wifiAddNetworkSuggestions(network_suggestions),
+      constants.NetworkSuggestionStatus.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
+      f'{ad} failed to add Network suggestion to : {network_suggestions}.',
+  )
+
+
+def wait_for_expected_network_suggestion_listener_status(
+    callback_handler: callback_handler_v2.CallbackHandlerV2,
+    expected_status: int,
+) -> None:
+  """Waits for the network suggestion listener status to be expected."""
+  _ = callback_handler.waitForEvent(
+      event_name=constants.NetworkCallback.ON_USER_APPROVAL_STATUS_CHANGE,
+      predicate=lambda e: e.data['UserApprovalStatus'] == expected_status,
+      timeout=constants.REQUEST_NETWORK_TIMEOUT.total_seconds(),
+  )
+
+
+def assert_network_suggestions_are_expected(
+    ad: android_device.AndroidDevice,
+    expected_network_suggestions: list[dict[str, str | int | bool]],
+) -> None:
+  """Checks that the retrieved network suggestions match the expected list."""
+  retrieved_network_suggestions = ad.wifi.wifiGetNetworkSuggestions()
+  logging.debug(
+      'Network suggestions - Retrieved: %s, Expected: %s',
+      retrieved_network_suggestions,
+      expected_network_suggestions,
+  )
+  asserts.assert_equal(
+      len(retrieved_network_suggestions),
+      len(expected_network_suggestions),
+      'Retrieved list length is not equal to expected list.'
+  )
+
+  for expected, actual in zip(
+      expected_network_suggestions, retrieved_network_suggestions
+  ):
+    asserts.assert_equal(
+        expected['ssid'],
+        actual['ssid'],
+        '"ssid" does not match expected list.',
+    )
+    if 'bssid' in expected:
+      asserts.assert_equal(
+          expected['bssid'],
+          actual['bssid'],
+          '"bssid" does not match expected list.',
+      )
+
+
+def add_network_suggestions(
+    ad: android_device.AndroidDevice,
+    network_suggestions: list[dict[str, str | int | bool]],
+    network_request: constants.NetworkRequest,
+    hsv_output_path_when_failed: str | None = None,
+    allow_button_text: str | None = None,
+) -> callback_handler_v2.CallbackHandlerV2:
+  """Adds network suggestions and verify approval, asserts expected suggestions.
+
+  Args:
+    ad: An Android device.
+    network_suggestions: A list of network suggestions to add.
+    network_request: A network request to add.
+    hsv_output_path_when_failed: Path of hsv output when failed.
+    allow_button_text: The text of the allow button on the popup window when
+      adding new network suggestions.
+
+  Returns:
+    A network callback handler of an added networksuggestion.
+  """
+  if hsv_output_path_when_failed is None:
+    hsv_output_path_when_failed = ad.log_path
+
+  # Register the network callback to monitor the network status.
+  network_callback = ad.wifi.connectivityRegisterNetworkCallback(
+      network_request.to_dict()
+  )
+
+  # Add the network suggestion
+  add_network_suggestions_and_assert_success(ad, network_suggestions)
+  # Add the network suggestion user approval status listener.
+  network_suggestion_listener = (
+      ad.wifi.wifiAddSuggestionUserApprovalStatusListener()
+  )
+
+  # TODO: b/433456977 - Set up a unique resource-id to improve robustness.
+  ui_action_utils.allow_network_suggestion_in_dialog(
+      ad, hsv_output_path_when_failed, allow_button_text=allow_button_text
+  )
+
+  network_suggestion_listener.waitForEvent(
+      event_name=constants.NetworkCallback.ON_USER_APPROVAL_STATUS_CHANGE,
+      predicate=lambda e: e.data['UserApprovalStatus']
+      == constants.NetworkSuggestionUserApprovalStatus.STATUS_SUGGESTION_APPROVAL_APPROVED_BY_USER,
+      timeout=constants.REQUEST_NETWORK_TIMEOUT.total_seconds(),
+  )
+
+  assert_network_suggestions_are_expected(ad, network_suggestions)
+
+  return network_callback
+
+
+def assert_connecting_with_expected_connection(
+    ad: android_device.AndroidDevice,
+    wifi_info: constants.WifiInfo,
+    check_bssid: bool = False,
+) -> None:
+  """Checks that the connected network matches the expected Wi-Fi."""
+  asserts.assert_equal(
+      ad.wifi.wifiGetCurrentConnectionInfo()['ssid'],
+      wifi_info.ssid,
+      'The SSID of connected Wi-Fi is not expected.',
+  )
+  if check_bssid:
+    asserts.assert_equal(
+        ad.wifi.wifiGetCurrentConnectionInfo()['bssid'],
+        wifi_info.bssid,
+        'The BSSID of connected Wi-Fi is not expected.',
+    )
+
+
+def wait_until_network_capability_is_as_expected(
+    ad: android_device.AndroidDevice,
+    network_callback: callback_handler_v2.CallbackHandlerV2,
+    network_callback_id: int,
+    expected_capability: constants.NetworkCapabilities,
+    should_exist: bool,
+    timeout: datetime.timedelta = constants.CAPABILITIES_CHANGED_FOR_METERED_TIMEOUT,
+) -> None:
+  """Waits until the network contains the expected capability.
+
+  Args:
+    ad: An Android device.
+    network_callback: A network callback handler of an added networksuggestion.
+    network_callback_id: An unique network callback id.
+    expected_capability: An expected capability wants to be verified.
+    should_exist: Whether the capability should exist.
+    timeout: The timeout for the capability status verification.
+  """
+  end_time = time.monotonic() + timeout.total_seconds()
+
+  while time.monotonic() < end_time:
+    if (
+        ad.wifi.connectivityHasCapability(
+            network_callback_id, expected_capability.value
+        )
+        == should_exist
+    ):
+      return
+
+    try:
+      wait_until_network_expected_callback(
+          network_callback,
+          constants.NetworkCallback.ON_CAPABILITIES_CHANGED,
+          timeout=constants.CAPABILITIES_CHANGED_TIMEOUT,
+      )
+    except errors.CallbackHandlerTimeoutError:
+      logging.debug(
+          'Timeout waiting for ON_CAPABILITIES_CHANGED in this iteration.'
+      )
+
+  asserts.fail(
+      f'Failed to get network capability {expected_capability.name} to'
+      f' expected: {"exist" if should_exist else "not exist"} within'
+      f' {timeout.total_seconds()} seconds.'
+  )
+
+
+def remove_network_suggestion_and_assert_disconnection(
+    ad: android_device.AndroidDevice,
+    network_suggestions: list[dict[str, str | int | bool]],
+    network_callback: callback_handler_v2.CallbackHandlerV2,
+    check_on_lost_callback: bool = True,
+) -> None:
+  """Removes network suggestions and verifies the network is disconnected."""
+  # clear existing callback lost events.
+  network_callback.getAll(event_name=constants.NetworkCallback.CALLBACK_LOST)
+  # Remove the network suggestion and verify the process finished.
+  asserts.assert_equal(
+      ad.wifi.wifiRemoveNetworkSuggestions(network_suggestions),
+      constants.NetworkSuggestionStatus.STATUS_NETWORK_SUGGESTIONS_SUCCESS,
+      'Failed to remove Network suggestion',
+  )
+  # Verify the network is lost.
+  if check_on_lost_callback:
+    network_callback.waitForEvent(
+        event_name=constants.NetworkCallback.CALLBACK_LOST,
+        predicate=lambda e: e.data['callbackName']
+        == constants.NetworkCallback.LOST,
+        timeout=constants.WIFI_LOST_TIMEOUT.total_seconds(),
+    )
+
+
+def _is_scan_result_for_wpa2_network(scan_result: Mapping[str, Any]):
+  capabilities = scan_result['capabilities']
+  return 'PSK' in capabilities
+
+
+def _is_scan_result_for_wpa3_network(scan_result: Mapping[str, Any]):
+  capabilities = scan_result['capabilities']
+  return 'SAE' in capabilities
+
+
+def assert_configured_wifi_is_available(
+    ad: android_device.AndroidDevice,
+    wifi_ssid: str,
+    wifi_password: str,
+):
+  """Asserts that the configured Wifi is available to the Android device."""
+  expected_scan_result = None
+  ssid_found = False
+  for scan_result in ad.wifi.wifiScanAndGetResultsWithShellPermission():
+    if wifi_ssid != scan_result['SSID']:
+      continue
+    ssid_found = True
+    if (
+        _is_scan_result_for_wpa2_network(scan_result)
+        or _is_scan_result_for_wpa3_network(scan_result)
+    ):
+      expected_scan_result = scan_result
+      break
+
+  if expected_scan_result is None:
+    if ssid_found:
+      asserts.fail(
+          _ERROR_MSG_CONFIGURED_WIFI_IS_OPEN.format(wifi_ssid=wifi_ssid)
+      )
+    asserts.fail(
+        _ERROR_MSG_WIFI_SSID_NOT_FOUND.format(wifi_ssid=wifi_ssid)
+    )
+
+  return constants.WifiInfo(
+      ssid=expected_scan_result['SSID'],
+      password=wifi_password,
+      bssid=expected_scan_result['BSSID'],
+  )

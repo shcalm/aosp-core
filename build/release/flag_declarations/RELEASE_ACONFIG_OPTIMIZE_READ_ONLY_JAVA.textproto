@@ -1,0 +1,8 @@
+name: "RELEASE_ACONFIG_OPTIMIZE_READ_ONLY_JAVA"
+namespace: "system_performance"
+description: "When true, read-only Java flag reads will return their default value directly, bypassing any test override support."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

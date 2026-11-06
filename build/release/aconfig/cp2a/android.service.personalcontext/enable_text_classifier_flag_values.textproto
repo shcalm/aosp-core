@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.personalcontext"
+  name: "enable_text_classifier"
+  state: ENABLED
+  permission: READ_ONLY
+}

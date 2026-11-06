@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubble_bar_not_collapsed_if_animating_bubble"
+  state: ENABLED
+  permission: READ_WRITE
+}

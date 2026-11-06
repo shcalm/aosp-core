@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "broadcast_transport_type_on_reset"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.flags"
+  name: "root_view_changed_listener"
+  state: ENABLED
+  permission: READ_WRITE
+}

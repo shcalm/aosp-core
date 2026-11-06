@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "enable_logging_for_display_events"
+  state: ENABLED
+  permission: READ_WRITE
+}

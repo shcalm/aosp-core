@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "sco_managed_by_audio_remove_hfp_hal"
+  state: ENABLED
+  permission: READ_ONLY
+}

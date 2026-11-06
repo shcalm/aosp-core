@@ -1,0 +1,110 @@
+// Copyright (C) 2021 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_team: "trendy_team_fwk_core_networking",
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+java_library {
+    name: "net-tests-utils",
+    srcs: [
+        "devicetests/**/*.java",
+        "devicetests/**/*.kt",
+    ],
+    defaults: [
+        "framework-connectivity-test-defaults",
+    ],
+    libs: [
+        // TODO: is there a way to subclass MockContentResolver without depending on the impl?
+        "android.test.mock.impl",
+        "androidx.annotation_annotation",
+        "net-utils-device-common-bpf", // TestBpfMap extends IBpfMap.
+    ],
+    static_libs: [
+        "androidx.test.ext.junit",
+        "collector-device-lib",
+        "frameworks-base-testutils", // For FakeSettingsProvider.
+        "kotlin-reflect",
+        "libnanohttpd",
+        "mockito-target-minus-junit4",
+        "net-tests-utils-host-device-common",
+        "net-utils-connectivity-apks",
+        "net-utils-device-common-async",
+        "net-utils-device-common-netlink",
+        "net-utils-device-common-struct",
+        "net-utils-device-common-struct-base",
+        "net-utils-device-common-wear",
+        "modules-utils-build_system",
+    ],
+    lint: {
+        strict_updatability_linting: true,
+    },
+}
+
+java_library {
+    // Consider using net-tests-utils instead if writing device code.
+    // That library has a lot more useful tools into it for users that
+    // work on Android and includes this lib.
+    name: "net-tests-utils-host-device-common",
+    srcs: [
+        "hostdevice/**/*.java",
+        "hostdevice/**/*.kt",
+    ],
+    host_supported: true,
+    sdk_version: "module_current",
+    visibility: [
+        "//packages/modules/Connectivity/staticlibs/tests:__subpackages__",
+        "//packages/modules/Connectivity/staticlibs/client-libs/tests:__subpackages__",
+        "//packages/modules/Connectivity/tests/cts/hostside",
+        "//external/cronet:__subpackages__",
+    ],
+    libs: [
+        "jsr305",
+    ],
+    static_libs: [
+        "kotlin-test",
+    ],
+    lint: {
+        strict_updatability_linting: true,
+    },
+}
+
+java_test_host {
+    name: "net-tests-utils-host-common",
+    srcs: [
+        "host/java/**/*.java",
+        "host/java/**/*.kt",
+    ],
+    libs: ["tradefed"],
+    test_suites: [
+        "ats",
+        "automotive-general-tests",
+        "device-tests",
+        "general-tests",
+        "cts",
+        "mts-networking",
+        "mts-tethering",
+        "mcts-tethering",
+    ],
+    device_common_data: [":ConnectivityTestPreparer"],
+}
+
+python_library_host {
+    name: "net-tests-utils-host-python-common",
+    srcs: [
+        "host/python/*.py",
+    ],
+    pkg_path: "net_tests_utils",
+}

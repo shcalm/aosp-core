@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "fix_hfp_rfcomm_collision_state_machine_error"
+  state: ENABLED
+  permission: READ_WRITE
+}

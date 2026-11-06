@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.timezone.flags"
+  name: "enable_time_zone_transition_telemetry_logging"
+  state: ENABLED
+  permission: READ_ONLY
+}

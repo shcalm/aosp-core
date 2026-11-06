@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "force_color_fade"
+  state: ENABLED
+  permission: READ_ONLY
+}

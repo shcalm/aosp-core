@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "logout_user_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

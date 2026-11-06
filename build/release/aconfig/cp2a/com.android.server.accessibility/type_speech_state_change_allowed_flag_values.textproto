@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "type_speech_state_change_allowed"
+  state: ENABLED
+  permission: READ_ONLY
+}

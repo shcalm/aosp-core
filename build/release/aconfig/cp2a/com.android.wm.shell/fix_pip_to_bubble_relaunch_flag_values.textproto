@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_pip_to_bubble_relaunch"
+  state: ENABLED
+  permission: READ_ONLY
+}

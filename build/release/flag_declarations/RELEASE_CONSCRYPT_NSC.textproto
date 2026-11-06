@@ -1,0 +1,6 @@
+name: "RELEASE_CONSCRYPT_NSC"
+namespace: "network_security"
+description: "Build flag to control whether the NetworkSecurityConfig is provided by Conscrypt"
+workflow: LAUNCH
+containers: "com.android.conscrypt"
+containers: "system"

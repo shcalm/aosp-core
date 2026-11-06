@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "add_address_mapping_for_lecoc"
+  state: ENABLED
+  permission: READ_WRITE
+}

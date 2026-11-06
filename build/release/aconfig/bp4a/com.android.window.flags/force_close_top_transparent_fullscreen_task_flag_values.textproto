@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "force_close_top_transparent_fullscreen_task"
+  state: ENABLED
+  permission: READ_ONLY
+}

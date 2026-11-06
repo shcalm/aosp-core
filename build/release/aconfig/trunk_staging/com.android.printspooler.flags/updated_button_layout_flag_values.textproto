@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.printspooler.flags"
+  name: "updated_button_layout"
+  state: ENABLED
+  permission: READ_ONLY
+}

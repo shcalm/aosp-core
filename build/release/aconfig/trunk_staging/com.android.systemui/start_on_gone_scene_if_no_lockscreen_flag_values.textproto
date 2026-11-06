@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "start_on_gone_scene_if_no_lockscreen"
+  state: ENABLED
+  permission: READ_WRITE
+}

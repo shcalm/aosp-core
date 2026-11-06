@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "rate_limit_batched_note_op_async_callbacks_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

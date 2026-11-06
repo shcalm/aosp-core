@@ -1,0 +1,6 @@
+<configuration description="Config to run device_config_dump_parser_host unittests">
+    <test class="com.android.tradefed.testtype.python.PythonBinaryHostTest" >
+        <option name="par-file-name" value="device_config_dump_parser_test_host" />
+        <option name="test-timeout" value="1m" />
+    </test>
+</configuration>

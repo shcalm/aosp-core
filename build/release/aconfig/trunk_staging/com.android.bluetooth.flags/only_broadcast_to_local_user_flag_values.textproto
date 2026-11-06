@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "only_broadcast_to_local_user"
+  state: ENABLED
+  permission: READ_WRITE
+}

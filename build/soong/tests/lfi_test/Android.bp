@@ -1,0 +1,106 @@
+// Copyright 2026 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package {
+    default_visibility: ["//visibility:private"],
+}
+
+cc_defaults {
+    name: "lfi_test_defaults",
+
+    // LFI only supports arm64 at the moment
+    enabled: false,
+    target: {
+        android_arm64: {
+            enabled: true,
+        },
+    },
+}
+
+cc_binary {
+    name: "lfi_adder",
+    defaults: ["lfi_test_defaults"],
+    srcs: ["main.c"],
+    static_libs: [
+        "lfi_libadd",
+        "liblfi",
+    ],
+    shared_libs: [
+        "liblog",
+    ],
+    strip: {
+        none: true,
+    },
+    compile_multilib: "64",
+}
+
+cc_library_static {
+    name: "lfi_libadd",
+    defaults: ["lfi_test_defaults"],
+    stl: "none",
+    strip: {
+        none: true,
+    },
+    lfi_libs: [
+        "lfi_libadd_bin",
+    ],
+    static_libs: [
+        "liblfi",
+    ],
+    compile_multilib: "64",
+}
+
+cc_binary {
+    name: "lfi_libadd_bin",
+    defaults: ["lfi_test_defaults"],
+    whole_static_libs: [
+        "libadd",
+        "libboxrt_minimal",
+        "libc_lfi",
+        "libm_lfi",
+        "liballocator",
+    ],
+    lfi_supported: true,
+    lfi: {
+        enabled: true,
+    },
+    static_executable: true,
+    stl: "none",
+    system_shared_libs: [],
+    nocrt: true,
+    version_script: "symbols.map.txt",
+}
+
+cc_library_static {
+    name: "libadd",
+    srcs: ["add.c"],
+    lfi_supported: true,
+    stl: "none",
+    strip: {
+        none: true,
+    },
+    whole_static_libs: [
+        "libsub",
+    ],
+}
+
+cc_library_static {
+    name: "libsub",
+    srcs: ["sub.c"],
+    lfi_supported: true,
+    stl: "none",
+    strip: {
+        none: true,
+    },
+}

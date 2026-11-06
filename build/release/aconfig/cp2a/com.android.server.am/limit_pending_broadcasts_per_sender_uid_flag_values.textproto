@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "limit_pending_broadcasts_per_sender_uid"
+  state: ENABLED
+  permission: READ_ONLY
+}

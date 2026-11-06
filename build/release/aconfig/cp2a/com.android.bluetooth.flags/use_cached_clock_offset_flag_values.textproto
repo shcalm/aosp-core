@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "use_cached_clock_offset"
+  state: ENABLED
+  permission: READ_ONLY
+}

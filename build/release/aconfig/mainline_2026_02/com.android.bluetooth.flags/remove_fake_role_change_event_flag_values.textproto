@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "remove_fake_role_change_event"
+  state: ENABLED
+  permission: READ_ONLY
+}

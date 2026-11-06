@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "lea_asrc_rotate_burst_buffer"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.platform.flags"
+  name: "connectivity_service_destroy_socket"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "car_audio_volume_callback_registration_permission_enforced"
+  state: ENABLED
+  permission: READ_ONLY
+}

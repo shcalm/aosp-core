@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "synchronize_preset_can_timeout"
+  state: ENABLED
+  permission: READ_WRITE
+}

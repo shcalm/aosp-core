@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.printspooler.flags"
+  name: "printing_telemetry"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "rotate_address_when_connected"
+  state: ENABLED
+  permission: READ_ONLY
+}

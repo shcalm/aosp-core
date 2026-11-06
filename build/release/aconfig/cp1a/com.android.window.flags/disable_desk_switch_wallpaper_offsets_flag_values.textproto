@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "disable_desk_switch_wallpaper_offsets"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.job"
+  name: "use_perfetto_sdk_for_tracing"
+  state: ENABLED
+  permission: READ_WRITE
+}

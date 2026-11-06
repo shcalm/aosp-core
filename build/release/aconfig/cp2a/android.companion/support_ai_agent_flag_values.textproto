@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion"
+  name: "support_ai_agent"
+  state: ENABLED
+  permission: READ_ONLY
+}

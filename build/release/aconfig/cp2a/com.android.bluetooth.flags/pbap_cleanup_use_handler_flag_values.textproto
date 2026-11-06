@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "pbap_cleanup_use_handler"
+  state: ENABLED
+  permission: READ_ONLY
+}

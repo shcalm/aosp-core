@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "introduce_generic_provisioning_error"
+  state: ENABLED
+  permission: READ_WRITE
+}

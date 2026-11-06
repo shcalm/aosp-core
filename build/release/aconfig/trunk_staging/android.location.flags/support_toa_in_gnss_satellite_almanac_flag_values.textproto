@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "support_toa_in_gnss_satellite_almanac"
+  state: ENABLED
+  permission: READ_WRITE
+}

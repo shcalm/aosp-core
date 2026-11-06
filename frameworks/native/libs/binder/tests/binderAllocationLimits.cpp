@@ -1,0 +1,556 @@
+/*
+ * Copyright (C) 2020 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <../BuildFlags.h>
+#include <../observer/BinderStatsPusher.h>
+#include <../observer/BinderStatsUtils.h>
+#include <../observer/HistogramScale.h>
+
+#include <android-base/logging.h>
+#include <android/os/IServiceManager.h>
+#include <android_os_binder_flags.h>
+#include <binder/Binder.h>
+#include <binder/Functional.h>
+#include <binder/IServiceManager.h>
+#include <binder/Parcel.h>
+#include <binder/RpcServer.h>
+#include <binder/RpcSession.h>
+#include <cutils/trace.h>
+#include <gtest/gtest-spi.h>
+#include <gtest/gtest.h>
+#include <utils/CallStack.h>
+
+#include <malloc.h>
+#include <algorithm>
+#include <atomic>
+#include <functional>
+#include <numeric>
+#include <vector>
+
+using namespace android::binder::impl;
+
+static android::String8 gEmpty(""); // make sure first allocation from optimization runs
+#if defined(LIBBINDER_BINDER_OBSERVER_V2)
+constexpr bool kBinderStatsLatencyHistogram = android::os::binder::flags::binder_stats_v3();
+#endif
+
+struct State {
+    State(std::vector<size_t>&& expectedMallocs) : expectedMallocs(std::move(expectedMallocs)) {}
+    ~State() {
+        size_t num = numMallocs.load();
+        if (expectedMallocs.size() != num) {
+            ADD_FAILURE() << "Expected " << expectedMallocs.size() << " allocations, but got "
+                          << num;
+        }
+    }
+    const std::vector<size_t> expectedMallocs;
+    std::atomic<size_t> numMallocs;
+};
+
+struct DestructionAction {
+    DestructionAction(std::function<void()> f) : mF(std::move(f)) {}
+    ~DestructionAction() { mF(); };
+private:
+    std::function<void()> mF;
+};
+
+// Group of hooks
+struct MallocHooks {
+    decltype(__malloc_hook) malloc_hook;
+    decltype(__realloc_hook) realloc_hook;
+
+    static MallocHooks save() {
+        return {
+            .malloc_hook = __malloc_hook,
+            .realloc_hook = __realloc_hook,
+        };
+    }
+
+    void overwrite() const {
+        __malloc_hook = malloc_hook;
+        __realloc_hook = realloc_hook;
+    }
+};
+
+static const MallocHooks orig_malloc_hooks = MallocHooks::save();
+
+// When malloc is hit, executes lambda.
+namespace LambdaHooks {
+    using AllocationHook = std::function<void(size_t)>;
+    static std::vector<AllocationHook> lambdas = {};
+
+    static void* lambda_realloc_hook(void* ptr, size_t bytes, const void* arg);
+    static void* lambda_malloc_hook(size_t bytes, const void* arg);
+
+    static const MallocHooks lambda_malloc_hooks = {
+        .malloc_hook = lambda_malloc_hook,
+        .realloc_hook = lambda_realloc_hook,
+    };
+
+    static void* lambda_malloc_hook(size_t bytes, const void* arg) {
+        {
+            orig_malloc_hooks.overwrite();
+            lambdas.at(lambdas.size() - 1)(bytes);
+            lambda_malloc_hooks.overwrite();
+        }
+        return orig_malloc_hooks.malloc_hook(bytes, arg);
+    }
+
+    static void* lambda_realloc_hook(void* ptr, size_t bytes, const void* arg) {
+        {
+            orig_malloc_hooks.overwrite();
+            lambdas.at(lambdas.size() - 1)(bytes);
+            lambda_malloc_hooks.overwrite();
+        }
+        return orig_malloc_hooks.realloc_hook(ptr, bytes, arg);
+    }
+
+}
+
+// Action to execute when malloc is hit. Supports nesting. Malloc is not
+// restricted when the allocation hook is being processed.
+__attribute__((warn_unused_result)) DestructionAction OnMalloc(LambdaHooks::AllocationHook f) {
+    MallocHooks before = MallocHooks::save();
+    LambdaHooks::lambdas.emplace_back(std::move(f));
+    LambdaHooks::lambda_malloc_hooks.overwrite();
+    return DestructionAction([before]() {
+        before.overwrite();
+        LambdaHooks::lambdas.pop_back();
+    });
+}
+
+DestructionAction setExpectedMallocs(std::vector<size_t>&& expected) {
+    auto state = std::make_shared<State>(std::move(expected));
+    return OnMalloc([state = state](size_t bytes) {
+        size_t num = state->numMallocs.fetch_add(1);
+        if (num >= state->expectedMallocs.size() || state->expectedMallocs[num] != bytes) {
+            ADD_FAILURE() << "Unexpected allocation number " << num << " of size " << bytes
+                          << " bytes" << std::endl
+                          << android::CallStack::stackToString("UNEXPECTED ALLOCATION",
+                                                               android::CallStack::getCurrent(
+                                                                       4 /*ignoreDepth*/)
+                                                                       .get())
+                          << std::endl;
+        }
+    });
+}
+
+// exported symbol, to force compiler not to optimize away pointers we set here
+const void* imaginary_use;
+
+TEST(TestTheTest, OnMalloc) {
+    size_t mallocs = 0;
+    {
+        const auto on_malloc = OnMalloc([&](size_t bytes) {
+            mallocs++;
+            EXPECT_EQ(bytes, 40u);
+        });
+
+        imaginary_use = new int[10];
+    }
+    delete[] reinterpret_cast<const int*>(imaginary_use);
+    EXPECT_EQ(mallocs, 1u);
+}
+
+TEST(TestTheTest, OnMallocWithExpectedMallocs) {
+    std::vector<size_t> expectedMallocs = {
+            4,
+            16,
+            8,
+    };
+    {
+        const auto on_malloc = setExpectedMallocs(std::move(expectedMallocs));
+        imaginary_use = new int32_t[1];
+        delete[] reinterpret_cast<const int*>(imaginary_use);
+        imaginary_use = new int32_t[4];
+        delete[] reinterpret_cast<const int*>(imaginary_use);
+        imaginary_use = new int32_t[2];
+        delete[] reinterpret_cast<const int*>(imaginary_use);
+    }
+}
+
+TEST(TestTheTest, OnMallocWithExpectedMallocsWrongSize) {
+    std::vector<size_t> expectedMallocs = {
+            4,
+            16,
+            100000,
+    };
+    EXPECT_NONFATAL_FAILURE(
+            {
+                const auto on_malloc = setExpectedMallocs(std::move(expectedMallocs));
+                imaginary_use = new int32_t[1];
+                delete[] reinterpret_cast<const int*>(imaginary_use);
+                imaginary_use = new int32_t[4];
+                delete[] reinterpret_cast<const int*>(imaginary_use);
+                imaginary_use = new int32_t[2];
+                delete[] reinterpret_cast<const int*>(imaginary_use);
+            },
+            "Unexpected allocation number 2 of size 8 bytes");
+}
+
+__attribute__((warn_unused_result))
+DestructionAction ScopeDisallowMalloc() {
+    return OnMalloc([&](size_t bytes) {
+        FAIL() << "Unexpected allocation: " << bytes;
+        using android::CallStack;
+        std::cout << CallStack::stackToString("UNEXPECTED ALLOCATION",
+                                              CallStack::getCurrent(4 /*ignoreDepth*/).get())
+                  << std::endl;
+    });
+}
+
+using android::BBinder;
+using android::defaultServiceManager;
+using android::IBinder;
+using android::IServiceManager;
+using android::OK;
+using android::Parcel;
+using android::RpcServer;
+using android::RpcSession;
+using android::sp;
+using android::status_t;
+using android::statusToString;
+using android::String16;
+
+static sp<IBinder> GetRemoteBinder() {
+    // This gets binder representing the service manager
+    // the current IServiceManager API doesn't expose the binder, and
+    // I want to avoid adding usages of the AIDL generated interface it
+    // is using underneath, so to avoid people copying it.
+    sp<IBinder> binder = defaultServiceManager()->checkService(String16("manager"));
+    EXPECT_NE(nullptr, binder);
+    return binder;
+}
+
+TEST(BinderAllocation, ParcelOnStack) {
+    const auto m = ScopeDisallowMalloc();
+    Parcel p;
+    imaginary_use = p.data();
+}
+
+TEST(BinderAllocation, GetServiceManager) {
+    defaultServiceManager(); // first call may alloc
+    const auto m = ScopeDisallowMalloc();
+    defaultServiceManager();
+}
+
+// note, ping does not include interface descriptor
+TEST(BinderAllocation, PingTransaction) {
+    sp<IBinder> a_binder = GetRemoteBinder();
+    const auto m = ScopeDisallowMalloc();
+    a_binder->pingBinder();
+}
+
+// Return the max size of a string that will get the Small String Optimization
+// and avoid a heap allocation
+static size_t getSSOMaxSize() {
+    size_t mallocs = 0;
+    const auto on_malloc = OnMalloc([&](size_t /* bytes */) { mallocs++; });
+    for (int i = 1; true; i++) {
+        std::string s(i, 'a');
+        if (mallocs) return i - 1;
+    }
+}
+
+TEST(BinderAllocation, GetListOfStrings) {
+    sp<android::os::IServiceManager> sm =
+            android::interface_cast<android::os::IServiceManager>(GetRemoteBinder());
+    // 128 bytes Parcel::writeInterfaceToken -> writeInt32 (why 128 bytes?)
+    // 9480 Parcel::readUtf8VectorFromUtf16Vector -> readData -> c->resize(9480)
+    // then it's all readUtf8FromUtf16 calls from readUtf8VectorFromUtf16Vector
+    // Parcel::readUtf8VectorFromUtf16Vector -> readData -> readUtf8FromUtf16
+    const size_t numExtraMallocs = 2;
+    size_t mallocs = 0;
+    // Could save a single malloc by starting with a large enough vector,
+    // not worth doing without knowing the number of services.
+    std::vector<std::string> ret;
+    size_t maxSSOSize = getSSOMaxSize();
+
+    const auto on_malloc = OnMalloc([&](size_t /* bytes */) { mallocs++; });
+
+    ASSERT_TRUE(sm->listServices(android::IServiceManager::DUMP_FLAG_PRIORITY_ALL, &ret).isOk());
+    ASSERT_GT(ret.size(), 0u);
+
+    size_t numStringAllocations = std::ranges::count_if(ret, [maxSSOSize](const std::string& s) {
+        // In readUtf8FromUtf16 we resize with num chars + 1
+        return s.size() + 1 > maxSSOSize;
+    });
+
+    EXPECT_EQ(mallocs, numStringAllocations + numExtraMallocs)
+            << "Expecting " << numStringAllocations << " string allocs";
+}
+
+TEST(BinderAllocation, WriteListOfStrings) {
+    sp<android::os::IServiceManager> sm =
+            android::interface_cast<android::os::IServiceManager>(GetRemoteBinder());
+    std::vector<std::string> ret;
+    ASSERT_TRUE(sm->listServices(android::IServiceManager::DUMP_FLAG_PRIORITY_ALL, &ret).isOk());
+    ASSERT_GT(ret.size(), 0u);
+
+    size_t mallocs = 0;
+    const auto on_malloc = OnMalloc([&](size_t /* bytes */) { mallocs++; });
+
+    Parcel p;
+    EXPECT_EQ(OK, p.writeUtf8VectorAsUtf16Vector(ret));
+
+    EXPECT_EQ(mallocs, 1u);
+}
+
+TEST(BinderAllocation, MakeScopeGuard) {
+    const auto m = ScopeDisallowMalloc();
+    {
+        auto guard1 = make_scope_guard([] {});
+        guard1.release();
+
+        auto guard2 = make_scope_guard([&guard1, ptr = imaginary_use] {
+            if (ptr == nullptr) guard1.release();
+        });
+    }
+}
+
+TEST(BinderAllocation, InterfaceDescriptorTransaction) {
+    sp<IBinder> a_binder = GetRemoteBinder();
+
+    size_t mallocs = 0;
+    const auto on_malloc = OnMalloc([&](size_t bytes) {
+        mallocs++;
+        // Happens to be SM package length. We could switch to forking
+        // and registering our own service if it became an issue.
+#if defined(__LP64__)
+        EXPECT_EQ(bytes, 78u);
+#else
+        EXPECT_EQ(bytes, 70u);
+#endif
+    });
+
+    a_binder->getInterfaceDescriptor();
+    a_binder->getInterfaceDescriptor();
+    a_binder->getInterfaceDescriptor();
+
+    EXPECT_EQ(mallocs, 1u);
+}
+
+TEST(BinderAllocation, SmallTransaction) {
+    String16 empty_descriptor = String16("");
+    sp<IServiceManager> manager = defaultServiceManager();
+
+    size_t mallocs = 0;
+    const auto on_malloc = OnMalloc([&](size_t bytes) {
+        mallocs++;
+        // Parcel should allocate a small amount by default
+        EXPECT_EQ(bytes, 128u);
+    });
+    manager->checkService(empty_descriptor);
+
+    EXPECT_EQ(mallocs, 1u);
+}
+
+TEST(BinderAccessorAllocation, AddAccessorCheckService) {
+    // Need to call defaultServiceManager() before checking malloc because it
+    // will allocate an instance in the call_once
+    const auto sm = defaultServiceManager();
+    const std::string kInstanceName1 = "foo.bar.IFoo/default";
+    const std::string kInstanceName2 = "foo.bar.IFoo2/default";
+    const String16 kInstanceName16(kInstanceName1.c_str());
+    std::vector<size_t> expectedMallocs = {
+            // addAccessorProvider
+            112, // new AccessorProvider
+            16,  // new AccessorProviderEntry
+            // checkService
+            45,  // String8 from String16 in CppShim::checkService
+            128, // writeInterfaceToken
+            16,  // getInjectedAccessor, new AccessorProviderEntry
+            66,  // getInjectedAccessor, String16
+            45,  // String8 from String16 in AccessorProvider::provide
+    };
+    std::set<std::string> supportedInstances = {kInstanceName1, kInstanceName2};
+    auto onMalloc = setExpectedMallocs(std::move(expectedMallocs));
+
+    auto receipt =
+            android::addAccessorProvider(std::move(supportedInstances),
+                                         [&](const String16&) -> sp<IBinder> { return nullptr; });
+    EXPECT_FALSE(receipt.expired());
+
+    sp<IBinder> binder = sm->checkService(kInstanceName16);
+
+    (void)android::removeAccessorProvider(receipt);
+}
+
+TEST(RpcBinderAllocation, SetupRpcServer) {
+    std::string tmp = getenv("TMPDIR") ?: "/tmp";
+    std::string addr = tmp + "/binderRpcBenchmark";
+    (void)unlink(addr.c_str());
+    auto server = RpcServer::make();
+    server->setRootObject(sp<BBinder>::make());
+
+    ASSERT_EQ(OK, server->setupUnixDomainServer(addr.c_str()));
+
+    std::thread([server]() { server->join(); }).detach();
+
+    auto session = RpcSession::make();
+    status_t status = session->setupUnixDomainClient(addr.c_str());
+    ASSERT_EQ(status, OK) << "Could not connect: " << addr << ": " << statusToString(status).c_str();
+
+    auto remoteBinder = session->getRootObject();
+    ASSERT_NE(remoteBinder, nullptr);
+
+    size_t mallocs = 0, totalBytes = 0;
+    {
+        const auto on_malloc = OnMalloc([&](size_t bytes) {
+            mallocs++;
+            totalBytes += bytes;
+        });
+        ASSERT_EQ(OK, remoteBinder->pingBinder());
+    }
+    EXPECT_EQ(mallocs, 1u);
+    EXPECT_EQ(totalBytes, 40u);
+}
+
+// Helper function to create BinderCallData for tests
+android::BinderCallData createStatsData(uid_t uid, uint32_t code, const char* desc,
+                                        String16& aidlMethodName, int64_t startNanos,
+                                        int64_t endNanos) {
+    return {
+            .startTimeNanos = startNanos,
+            .endTimeNanos = endNanos,
+            .interfaceDescriptor = String16(desc),
+            .aidlMethodName = aidlMethodName,
+            .transactionCode = code,
+            .senderUid = static_cast<uint32_t>(uid),
+    };
+}
+
+TEST(BinderAllocation, BinderStatsPusher_aggregateStatsLocked) {
+    std::vector<android::BinderCallData> data;
+
+    int64_t currentTimeNanos = 9'100'000'000;
+    // Create enough data in the *same second* to trigger spam, far enough in the past
+    String16 myAidlMethod1(u"myAidlMethod1");
+    for (int i = 0; i < 150; ++i) { // More than kMinSpamCount (125)
+        data.push_back(createStatsData(1001, 1, "IFoo", myAidlMethod1,
+                                       currentTimeNanos - 8000'000'000,
+                                       currentTimeNanos - 8000'000'000 + 20));
+        data.push_back(createStatsData(1002, 1, "IFoo", myAidlMethod1,
+                                       currentTimeNanos - 8000'000'000,
+                                       currentTimeNanos - 8000'000'000 + 23));
+    }
+    android::BinderStatsPusher pusher;
+    auto service = pusher.getBinderStatsServiceLocked(currentTimeNanos / 1000'000'000);
+    EXPECT_NE(service, nullptr);
+    size_t mallocs = 0, totalBytes = 0;
+    auto addFn = pusher.getAddCallDataToBufferLockedFunction();
+    auto runAggregateWithOnMalloc = [&]() {
+        const auto on_malloc = OnMalloc([&](size_t bytes) {
+            mallocs++;
+            totalBytes += bytes;
+        });
+#if defined(LIBBINDER_BINDER_OBSERVER_V2)
+        pusher.sortAndAggregateStatsLocked(currentTimeNanos / 1000'000'000, data);
+#else // !defined(LIBBINDER_BINDER_OBSERVER_V2)
+        for (auto& datum : data) {
+            addFn(std::move(datum));
+        }
+        pusher.aggregateStatsLocked(currentTimeNanos / 1000'000'000);
+#endif
+    };
+    runAggregateWithOnMalloc();
+    data.clear();
+#if defined(LIBBINDER_BINDER_OBSERVER_V2)
+    if (kBinderStatsLatencyHistogram) {
+        EXPECT_EQ(mallocs, 29u);
+        EXPECT_EQ(totalBytes, 3654u);
+    } else {
+        EXPECT_EQ(mallocs, 9u);
+        EXPECT_EQ(totalBytes, 1162u);
+    }
+#else // !defined(LIBBINDER_BINDER_OBSERVER_V2)
+    EXPECT_EQ(mallocs, 22u);
+    EXPECT_EQ(totalBytes, 2854u);
+#endif
+    currentTimeNanos = 18'100'000'000;
+
+    // The following section is stress testing the code with
+    // an unrealistic count of data.
+    // The previous section is more indicative of 99.99 percentile usage.
+    for (int i = 0; i < 150; ++i) {     // More than kMinSpamCount (125)
+        for (int j = 0; j < 100; ++j) { // multiple txnCodes
+            String16 myAidlMethod(u"myAidlMethod");
+            myAidlMethod.append(String16(std::to_string(j).c_str()));
+            data.push_back(createStatsData(1003, j, "IFoo2", myAidlMethod,
+                                           currentTimeNanos - 8000'000'000 + 1,
+                                           currentTimeNanos - 8000'000'000 + i * 43));
+            data.push_back(createStatsData(1004, j, "IFoo2", myAidlMethod,
+                                           currentTimeNanos - 8000'000'000 + 1,
+                                           currentTimeNanos - 8000'000'000 + i * 531));
+            data.push_back(createStatsData(1005, j, "IFoo2", myAidlMethod,
+                                           currentTimeNanos - 8000'000'000 + 1,
+                                           currentTimeNanos - 8000'000'000 + i * 1089));
+        }
+    }
+    mallocs = 0;
+    totalBytes = 0;
+    runAggregateWithOnMalloc();
+#if defined(LIBBINDER_BINDER_OBSERVER_V2)
+    if (kBinderStatsLatencyHistogram) {
+        EXPECT_EQ(mallocs, 2769u);
+        EXPECT_EQ(totalBytes, 411856u);
+    } else {
+        EXPECT_EQ(mallocs, 63u);
+        EXPECT_EQ(totalBytes, 126952u);
+    }
+#else // !defined(LIBBINDER_BINDER_OBSERVER_V2)
+    EXPECT_EQ(mallocs, 1024u);
+    EXPECT_EQ(totalBytes, 281642u);
+#endif
+}
+
+TEST(HistogramAllocation, Basic) {
+    std::vector<uint8_t> result;
+    // Pre-reserve to avoid allocations during measurement if possible,
+    // or just acknowledge that it might allocate once.
+    result.reserve(6);
+    size_t mallocs = 0, totalBytes = 0;
+    {
+        const auto on_malloc = OnMalloc([&](size_t bytes) {
+            mallocs++;
+            totalBytes += bytes;
+        });
+        result.push_back(android::HistogramScale::getBinIndex(15000LL));
+        result.push_back(android::HistogramScale::getBinIndex(18000LL));
+        result.push_back(android::HistogramScale::getBinIndex(45000LL));
+        result.push_back(android::HistogramScale::getBinIndex(75000LL));
+        result.push_back(android::HistogramScale::getBinIndex(78000LL));
+        result.push_back(android::HistogramScale::getBinIndex(85000LL));
+    }
+    // With reserve(6), it should be 0 mallocs.
+    EXPECT_EQ(mallocs, 0u);
+}
+
+int main(int argc, char** argv) {
+    LOG(INFO) << "Priming static log variables for binderAllocationLimits.";
+    if (getenv("LIBC_HOOKS_ENABLE") == nullptr) {
+        CHECK(0 == setenv("LIBC_HOOKS_ENABLE", "1", true /*overwrite*/));
+        execv(argv[0], argv);
+        return 1;
+    }
+    ::testing::InitGoogleTest(&argc, argv);
+
+    // if tracing is enabled, take in one-time cost
+    (void)ATRACE_INIT();
+    (void)ATRACE_GET_ENABLED_TAGS();
+
+    return RUN_ALL_TESTS();
+}

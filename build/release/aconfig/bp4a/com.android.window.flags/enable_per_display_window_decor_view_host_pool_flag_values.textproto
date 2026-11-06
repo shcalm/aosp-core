@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_per_display_window_decor_view_host_pool"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "unify_skip_animation_once_with_initially_visible"
+  state: ENABLED
+  permission: READ_WRITE
+}

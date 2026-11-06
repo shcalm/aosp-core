@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "device_engagement_mode"
+  state: ENABLED
+  permission: READ_WRITE
+}

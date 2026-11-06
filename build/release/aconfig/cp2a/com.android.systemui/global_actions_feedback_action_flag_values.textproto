@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "global_actions_feedback_action"
+  state: ENABLED
+  permission: READ_ONLY
+}

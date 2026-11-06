@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.res"
+  name: "merge_idmap_binder_transactions"
+  state: ENABLED
+  permission: READ_WRITE
+}

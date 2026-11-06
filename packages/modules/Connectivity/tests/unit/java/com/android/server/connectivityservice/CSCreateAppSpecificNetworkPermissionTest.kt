@@ -1,0 +1,89 @@
+/*
+ * Copyright (C) 2025 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.server
+
+import android.content.pm.PackageManager.PERMISSION_DENIED
+import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.net.NetworkCapabilities.NET_CAPABILITY_LOCAL_NETWORK
+import android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED
+import android.net.NetworkCapabilities.TRANSPORT_WIFI_AWARE
+import android.net.NetworkRequest
+import android.net.NetworkStack
+import android.os.Build
+import android.os.Process
+import android.util.Range
+import com.android.testutils.DevSdkIgnoreRunner
+import com.android.testutils.TestableNetworkCallback
+import com.android.testutils.TestableNetworkCallback.Event.Available
+import com.android.testutils.TestableNetworkCallback.Event.CapabilitiesChanged
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(DevSdkIgnoreRunner::class)
+class CSCreateAppSpecificNetworkPermissionTest : CSTest() {
+    @Test
+    fun testRegisterNetworkAgent() {
+        deps.setBuildSdk(VERSION_25Q4)
+        context.setPermission(
+                android.Manifest.permission.NETWORK_FACTORY,
+                PERMISSION_DENIED
+        )
+        context.setPermission(
+                NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK,
+                PERMISSION_DENIED
+        )
+        context.setPermission(
+                android.Manifest.permission.CREATE_APP_SPECIFIC_NETWORK,
+                PERMISSION_GRANTED
+        )
+
+        val nc = nc(TRANSPORT_WIFI_AWARE)
+        nc.uids = null
+        nc.addCapability(NET_CAPABILITY_NOT_RESTRICTED)
+        nc.addCapability(NET_CAPABILITY_LOCAL_NETWORK)
+        val agent = Agent(nc = nc, score = keepConnectedScore())
+        // agent.connect() creates a request that expects NET_CAPABILITY_LOCAL_NETWORK, but
+        // CS strips this capability for app-specific networks, so built-in callback
+        // check will fail.
+        agent.connect(expectAvailable = false)
+
+        // Uid is set and NOT_RESTRICTED and LOCAL_NETWORK are removed
+        val myUid = Process.myUid()
+        val expectedUids = setOf(Range(myUid, myUid))
+        val cb = TestableNetworkCallback()
+        cm.registerNetworkCallback(NetworkRequest.Builder().clearCapabilities().build(), cb)
+        cb.eventuallyExpect<Available> { it.network == agent.network }
+        cb.eventuallyExpect<CapabilitiesChanged> {
+            it.network == agent.network &&
+                it.caps.uids!!.equals(expectedUids) &&
+                !it.caps.hasCapability(NET_CAPABILITY_NOT_RESTRICTED) &&
+                !it.caps.hasCapability(NET_CAPABILITY_LOCAL_NETWORK)
+        }
+
+        // Attempt to change uid and make network non-restricted or local is ignored
+        nc.setSingleUid(myUid + 1)
+        nc.addCapability(NET_CAPABILITY_NOT_RESTRICTED)
+        nc.addCapability(NET_CAPABILITY_LOCAL_NETWORK)
+        agent.sendNetworkCapabilities(nc)
+        cb.assertNoCallback() {
+            it is CapabilitiesChanged && it.network == agent.network && (
+                    !it.caps.uids!!.equals(expectedUids) ||
+                    it.caps.hasCapability(NET_CAPABILITY_NOT_RESTRICTED) ||
+                    it.caps.hasCapability(NET_CAPABILITY_LOCAL_NETWORK))
+        }
+    }
+}

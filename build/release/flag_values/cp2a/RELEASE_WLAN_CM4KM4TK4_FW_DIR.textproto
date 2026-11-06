@@ -1,0 +1,4 @@
+name: "RELEASE_WLAN_CM4KM4TK4_FW_DIR"
+value {
+  string_value: "103_511_77_13"
+}

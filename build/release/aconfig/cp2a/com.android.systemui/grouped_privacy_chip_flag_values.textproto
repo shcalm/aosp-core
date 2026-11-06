@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "grouped_privacy_chip"
+  state: ENABLED
+  permission: READ_ONLY
+}

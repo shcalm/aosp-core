@@ -1,0 +1,12 @@
+name: "RELEASE_UPROBESTATS_RUST"
+namespace: "system_performance"
+description: "If true, then uprobestats apex uses its rust implementation"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"
+containers: "com.android.uprobestats"

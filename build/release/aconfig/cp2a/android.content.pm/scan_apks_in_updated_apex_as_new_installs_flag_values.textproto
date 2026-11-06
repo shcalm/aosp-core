@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "scan_apks_in_updated_apex_as_new_installs"
+  state: ENABLED
+  permission: READ_ONLY
+}

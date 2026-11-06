@@ -1,0 +1,6 @@
+flag_value {
+  package: "vendor.vibrator.hal.flags"
+  name: "enable_pwle_v2"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "touchpad_gesture_tutorial_bug_fixes"
+  state: ENABLED
+  permission: READ_WRITE
+}

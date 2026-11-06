@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.contentcapture.flags"
+  name: "warm_up_background_thread_for_content_capture"
+  state: ENABLED
+  permission: READ_ONLY
+}

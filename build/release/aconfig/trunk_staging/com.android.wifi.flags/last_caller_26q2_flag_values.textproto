@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "last_caller_26q2"
+  state: ENABLED
+  permission: READ_WRITE
+}

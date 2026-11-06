@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "enable_display_topology_validation"
+  state: ENABLED
+  permission: READ_ONLY
+}

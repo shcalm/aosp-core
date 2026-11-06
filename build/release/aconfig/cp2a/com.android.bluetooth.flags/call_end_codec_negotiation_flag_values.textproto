@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "call_end_codec_negotiation"
+  state: ENABLED
+  permission: READ_ONLY
+}

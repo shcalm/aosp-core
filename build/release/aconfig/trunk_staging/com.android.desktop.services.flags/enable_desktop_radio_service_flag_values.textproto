@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.desktop.services.flags"
+  name: "enable_desktop_radio_service"
+  state: ENABLED
+  permission: READ_WRITE
+}

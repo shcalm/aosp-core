@@ -1,0 +1,4 @@
+name: "RELEASE_CROSS_DEVICE_SYNC"
+value {
+  bool_value: true
+}

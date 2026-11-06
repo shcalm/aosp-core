@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "secure_compilation"
+  state: ENABLED
+  permission: READ_WRITE
+}

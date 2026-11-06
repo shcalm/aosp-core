@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "package_as_admin_id"
+  state: ENABLED
+  permission: READ_ONLY
+}

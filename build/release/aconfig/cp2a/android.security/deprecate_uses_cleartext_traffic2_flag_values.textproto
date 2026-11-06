@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "deprecate_uses_cleartext_traffic2"
+  state: ENABLED
+  permission: READ_ONLY
+}

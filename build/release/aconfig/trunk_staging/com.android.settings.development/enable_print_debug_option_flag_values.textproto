@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.development"
+  name: "enable_print_debug_option"
+  state: ENABLED
+  permission: READ_WRITE
+}

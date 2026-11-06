@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.sdv.health_monitor.flags"
+  name: "enable_quality_of_service_monitoring"
+  state: ENABLED
+  permission: READ_WRITE
+}

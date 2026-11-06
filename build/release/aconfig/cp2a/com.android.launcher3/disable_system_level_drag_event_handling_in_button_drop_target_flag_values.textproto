@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "disable_system_level_drag_event_handling_in_button_drop_target"
+  state: ENABLED
+  permission: READ_ONLY
+}

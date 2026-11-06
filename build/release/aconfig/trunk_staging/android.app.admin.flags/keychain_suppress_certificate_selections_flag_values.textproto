@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "keychain_suppress_certificate_selections"
+  state: ENABLED
+  permission: READ_WRITE
+}

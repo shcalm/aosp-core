@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "rtt_busy_try_later_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

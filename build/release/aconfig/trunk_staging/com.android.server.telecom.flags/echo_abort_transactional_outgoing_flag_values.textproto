@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "echo_abort_transactional_outgoing"
+  state: ENABLED
+  permission: READ_WRITE
+}

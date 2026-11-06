@@ -1,0 +1,40 @@
+/*
+ * Copyright (C) 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <android/binder_interface_utils.h>
+#include <fuzzbinder/libbinder_ndk_driver.h>
+
+extern "C"
+{
+#include "utils/common.h"
+#include "utils/includes.h"
+#include "utils/wpa_debug.h"
+#include "wpa_supplicant_i.h"
+}
+
+using namespace android;
+using ndk::SharedRefBase;
+
+extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+    // The wpa_global pointer will usually be initialized by wpa_supplicant_init().
+    // However, wpa_supplicant_init cannot be called from the fuzzer, since it seems
+    // to initialize a separate thread. For now, we can pass a nullptr to indicate that
+    // core supplicant has not been initialized.
+
+    // TODO: Create an instance of MainlineSupplicant and fuzz using fuzzService.
+
+    return 0;
+}

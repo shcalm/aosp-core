@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "screenshot_announce_live_region"
+  state: ENABLED
+  permission: READ_ONLY
+}

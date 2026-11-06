@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.catalyst.flags"
+  name: "catalyst_use_key_parameters"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,5 @@
+name: "RELEASE_PACKAGE_COMPUTER_CONTROL"
+namespace: "virtual_devices"
+description: "Guards whether the (optional) Computer Control extensions should be included in a build"
+workflow: LAUNCH
+containers: "vendor"

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telecom.flags"
+  name: "disconnect_on_timeout_while_disconnecting"
+  state: ENABLED
+  permission: READ_ONLY
+}

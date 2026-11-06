@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "get_display_known_vsync_sample_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

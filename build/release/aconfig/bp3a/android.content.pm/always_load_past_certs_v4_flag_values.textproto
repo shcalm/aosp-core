@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "always_load_past_certs_v4"
+  state: ENABLED
+  permission: READ_ONLY
+}

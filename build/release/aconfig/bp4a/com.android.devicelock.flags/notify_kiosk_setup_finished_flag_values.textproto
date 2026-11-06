@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.devicelock.flags"
+  name: "notify_kiosk_setup_finished"
+  state: ENABLED
+  permission: READ_ONLY
+}

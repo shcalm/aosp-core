@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.flags"
+  name: "display_hdr_26q2"
+  state: ENABLED
+  permission: READ_ONLY
+}

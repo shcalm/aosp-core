@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.appwidget.flags"
+  name: "widget_display_changes"
+  state: ENABLED
+  permission: READ_ONLY
+}

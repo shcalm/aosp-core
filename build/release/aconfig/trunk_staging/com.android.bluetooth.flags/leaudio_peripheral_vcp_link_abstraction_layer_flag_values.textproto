@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_peripheral_vcp_link_abstraction_layer"
+  state: ENABLED
+  permission: READ_WRITE
+}

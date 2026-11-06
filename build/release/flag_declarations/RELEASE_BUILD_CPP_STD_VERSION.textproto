@@ -1,0 +1,11 @@
+name: "RELEASE_BUILD_CPP_STD_VERSION"
+namespace: "llvm_and_toolchains"
+description: "Control which C++ standard version is used to build the platform"
+value: {
+  string_value: ""
+}
+workflow: PREBUILT
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

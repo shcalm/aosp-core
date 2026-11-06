@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "cache_sdk_system_features"
+  state: ENABLED
+  permission: READ_WRITE
+}

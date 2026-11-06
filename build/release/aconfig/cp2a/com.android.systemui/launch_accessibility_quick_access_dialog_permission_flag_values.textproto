@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "launch_accessibility_quick_access_dialog_permission"
+  state: ENABLED
+  permission: READ_ONLY
+}

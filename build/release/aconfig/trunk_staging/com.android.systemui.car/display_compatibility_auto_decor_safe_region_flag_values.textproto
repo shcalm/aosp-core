@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.car"
+  name: "display_compatibility_auto_decor_safe_region"
+  state: ENABLED
+  permission: READ_WRITE
+}

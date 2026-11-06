@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.documentsui.flags"
+  name: "visual_signals_ro"
+  state: ENABLED
+  permission: READ_ONLY
+}

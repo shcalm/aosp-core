@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "verify_supervision_role_holders_before_destroying_escrow_token"
+  state: ENABLED
+  permission: READ_ONLY
+}

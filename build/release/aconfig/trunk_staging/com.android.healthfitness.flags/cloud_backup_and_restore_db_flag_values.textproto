@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "cloud_backup_and_restore_db"
+  state: ENABLED
+  permission: READ_ONLY
+}

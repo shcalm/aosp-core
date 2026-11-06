@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.printspooler.flags"
+  name: "skip_service_warning"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.contacts.flags"
+  name: "enforce_strict_sql_checks"
+  state: ENABLED
+  permission: READ_ONLY
+}

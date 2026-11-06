@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "end_outgoing_call_on_chld"
+  state: ENABLED
+  permission: READ_WRITE
+}

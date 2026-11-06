@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "enable_captions_easy_reader"
+  state: ENABLED
+  permission: READ_WRITE
+}

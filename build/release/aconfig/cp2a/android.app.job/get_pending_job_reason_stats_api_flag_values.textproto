@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.job"
+  name: "get_pending_job_reason_stats_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

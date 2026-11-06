@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.os"
+  name: "zygote_early_fifo_boost"
+  state: ENABLED
+  permission: READ_ONLY
+}

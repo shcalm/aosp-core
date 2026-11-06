@@ -1,0 +1,4 @@
+name: "RELEASE_SOONG_INCREMENTAL_ANALYSIS"
+value {
+  bool_value: true
+}

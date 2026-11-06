@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.text.flags"
+  name: "language_specific_extent"
+  state: ENABLED
+  permission: READ_ONLY
+}

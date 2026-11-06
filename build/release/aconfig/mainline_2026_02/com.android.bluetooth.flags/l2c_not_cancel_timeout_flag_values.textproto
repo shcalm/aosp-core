@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "l2c_not_cancel_timeout"
+  state: ENABLED
+  permission: READ_ONLY
+}

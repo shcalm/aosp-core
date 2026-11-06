@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "avdt_close_on_start_failure_bad_state"
+  state: ENABLED
+  permission: READ_WRITE
+}

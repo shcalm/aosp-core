@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "wb_framebuffersurface2"
+  state: ENABLED
+  permission: READ_WRITE
+}

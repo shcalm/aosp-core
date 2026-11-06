@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "heads_up_style_provider_display_aware"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.selinux.flags"
+  name: "selinux_logs_collect"
+  state: ENABLED
+  permission: READ_WRITE
+}

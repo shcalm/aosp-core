@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubbles_long_press_nav_handle"
+  state: ENABLED
+  permission: READ_ONLY
+}

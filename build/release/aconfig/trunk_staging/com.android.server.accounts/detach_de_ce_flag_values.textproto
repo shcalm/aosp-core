@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accounts"
+  name: "detach_de_ce"
+  state: ENABLED
+  permission: READ_WRITE
+}

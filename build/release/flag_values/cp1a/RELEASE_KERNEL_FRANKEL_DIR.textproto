@@ -1,0 +1,4 @@
+name: "RELEASE_KERNEL_FRANKEL_DIR"
+value: {
+  string_value: "device/google/laguna-kernels/6.6/26Q1-15037487/muzel"
+}

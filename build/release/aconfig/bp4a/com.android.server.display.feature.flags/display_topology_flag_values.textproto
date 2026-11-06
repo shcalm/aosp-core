@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "display_topology"
+  state: ENABLED
+  permission: READ_ONLY
+}

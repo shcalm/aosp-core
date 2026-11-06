@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "channel_vibration_ignore_invalid_pattern"
+  state: ENABLED
+  permission: READ_ONLY
+}

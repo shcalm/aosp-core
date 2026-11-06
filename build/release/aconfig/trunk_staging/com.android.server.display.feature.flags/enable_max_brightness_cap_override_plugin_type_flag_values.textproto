@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "enable_max_brightness_cap_override_plugin_type"
+  state: ENABLED
+  permission: READ_WRITE
+}

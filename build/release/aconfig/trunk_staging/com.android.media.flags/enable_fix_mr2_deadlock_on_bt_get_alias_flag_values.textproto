@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "enable_fix_mr2_deadlock_on_bt_get_alias"
+  state: ENABLED
+  permission: READ_WRITE
+}

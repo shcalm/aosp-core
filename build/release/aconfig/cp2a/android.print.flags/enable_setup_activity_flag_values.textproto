@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.print.flags"
+  name: "enable_setup_activity"
+  state: ENABLED
+  permission: READ_ONLY
+}

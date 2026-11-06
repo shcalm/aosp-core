@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_dismiss_flyout_persistent_taskbar"
+  state: ENABLED
+  permission: READ_ONLY
+}

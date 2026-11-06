@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_always_schedule_auto_hide"
+  state: ENABLED
+  permission: READ_WRITE
+}

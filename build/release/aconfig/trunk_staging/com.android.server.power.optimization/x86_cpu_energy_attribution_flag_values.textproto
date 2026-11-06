@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.optimization"
+  name: "x86_cpu_energy_attribution"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "reset_model_flushes_fence"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "bugreport_multi_display_screenshot_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "enable_on_mode_changed_vsync_phase_offset"
+  state: ENABLED
+  permission: READ_ONLY
+}

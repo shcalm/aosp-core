@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "fix_wallpaper_crops_on_restore"
+  state: ENABLED
+  permission: READ_ONLY
+}

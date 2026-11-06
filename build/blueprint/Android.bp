@@ -1,0 +1,89 @@
+package {
+    default_applicable_licenses: ["build_blueprint_license"],
+    default_visibility: [
+        "//build/blueprint:__subpackages__",
+        "//build/soong:__subpackages__",
+    ],
+}
+
+// Added automatically by a large-scale-change that took the approach of
+// 'apply every license found to every target'. While this makes sure we respect
+// every license restriction, it may not be entirely correct.
+//
+// e.g. GPL in an MIT project might only apply to the contrib/ directory.
+//
+// Please consider splitting the single license below into multiple licenses,
+// taking care not to lose any license_kind information, and overriding the
+// default license using the 'licenses: [...]' property on targets as needed.
+//
+// For unused files, consider creating a 'fileGroup' with "//visibility:private"
+// to attach the license to, and including a comment whether the files may be
+// used in the current project.
+// See: http://go/android-license-faq
+license {
+    name: "build_blueprint_license",
+    visibility: [":__subpackages__"],
+    license_kinds: [
+        "SPDX-license-identifier-Apache-2.0",
+        "SPDX-license-identifier-BSD",
+    ],
+    license_text: [
+        "LICENSE",
+    ],
+}
+
+bootstrap_go_package {
+    name: "blueprint",
+    deps: [
+        "blueprint-bpmodify",
+        "blueprint-dbtools",
+        "blueprint-gobtools",
+        "blueprint-metrics",
+        "blueprint-parser",
+        "blueprint-pathtools",
+        "blueprint-pool",
+        "blueprint-proptools",
+        "blueprint-syncmap",
+        "blueprint-uniquelist",
+        "pogreb",
+        "pogreb-fs",
+    ],
+    pkgPath: "github.com/google/blueprint",
+    srcs: [
+        "blueprint_enc.go",
+        "context.go",
+        "incremental.go",
+        "incremental_module.go",
+        "levenshtein.go",
+        "glob.go",
+        "live_tracker.go",
+        "mangle.go",
+        "module_ctx.go",
+        "name_interface.go",
+        "ninja_defs.go",
+        "ninja_strings.go",
+        "ninja_writer.go",
+        "package_ctx.go",
+        "provider.go",
+        "scope.go",
+        "singleton_ctx.go",
+        "transition.go",
+    ],
+    testSrcs: [
+        "context_test.go",
+        "glob_test.go",
+        "incremental_test.go",
+        "levenshtein_test.go",
+        "module_ctx_test.go",
+        "ninja_strings_test.go",
+        "ninja_writer_test.go",
+        "provider_test.go",
+        "splice_modules_test.go",
+        "transition_test.go",
+        "visit_test.go",
+    ],
+    visibility: [
+        // used by plugins
+        "//visibility:public",
+    ],
+}

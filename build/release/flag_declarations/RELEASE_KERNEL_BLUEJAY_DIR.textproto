@@ -1,0 +1,8 @@
+name: "RELEASE_KERNEL_BLUEJAY_DIR"
+namespace: "pixel_kernel"
+description: "Control which version of Kernel 6.1 is installed."
+value: {
+  string_value: ""
+}
+workflow: PREBUILT
+containers: "vendor"

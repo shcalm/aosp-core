@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "ipc_data_cache_module_adservices"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_close_appsearch_on_creation_failure"
+  state: ENABLED
+  permission: READ_WRITE
+}

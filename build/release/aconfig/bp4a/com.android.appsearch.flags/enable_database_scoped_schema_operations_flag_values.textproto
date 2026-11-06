@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_database_scoped_schema_operations"
+  state: ENABLED
+  permission: READ_ONLY
+}

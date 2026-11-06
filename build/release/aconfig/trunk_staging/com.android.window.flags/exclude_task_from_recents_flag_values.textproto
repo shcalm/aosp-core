@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "exclude_task_from_recents"
+  state: ENABLED
+  permission: READ_ONLY
+}

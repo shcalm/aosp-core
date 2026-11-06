@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "favorites_incoming_call_lights"
+  state: ENABLED
+  permission: READ_WRITE
+}

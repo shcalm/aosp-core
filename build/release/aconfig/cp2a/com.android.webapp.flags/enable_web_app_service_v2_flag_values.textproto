@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.webapp.flags"
+  name: "enable_web_app_service_v2"
+  state: ENABLED
+  permission: READ_ONLY
+}

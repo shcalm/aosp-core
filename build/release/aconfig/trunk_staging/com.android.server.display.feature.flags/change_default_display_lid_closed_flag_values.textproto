@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "change_default_display_lid_closed"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "flush_socket_accept_signal"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.notification"
+  name: "enable_brightness_clamping_for_bedtime"
+  state: ENABLED
+  permission: READ_ONLY
+}

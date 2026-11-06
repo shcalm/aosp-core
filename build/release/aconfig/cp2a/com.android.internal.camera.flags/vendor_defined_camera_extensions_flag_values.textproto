@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.camera.flags"
+  name: "vendor_defined_camera_extensions"
+  state: ENABLED
+  permission: READ_ONLY
+}

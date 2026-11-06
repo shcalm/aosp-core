@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "sample_time_ordering"
+  state: ENABLED
+  permission: READ_ONLY
+}

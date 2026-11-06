@@ -1,0 +1,10 @@
+name: "RELEASE_VABC_UBLK_ENABLE_FLAG"
+namespace: "android_kernel"
+description: "Enables UBLK based OTA on capable devices"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"
+containers: "vendor"
+containers: "product"

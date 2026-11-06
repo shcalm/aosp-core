@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "missing_attribution_tags_in_overlay"
+  state: ENABLED
+  permission: READ_WRITE
+}

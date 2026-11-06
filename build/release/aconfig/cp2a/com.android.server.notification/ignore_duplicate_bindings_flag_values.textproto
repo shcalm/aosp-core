@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "ignore_duplicate_bindings"
+  state: ENABLED
+  permission: READ_ONLY
+}

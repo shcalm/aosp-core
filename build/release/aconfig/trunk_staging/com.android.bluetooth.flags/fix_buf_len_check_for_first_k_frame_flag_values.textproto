@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "fix_buf_len_check_for_first_k_frame"
+  state: ENABLED
+  permission: READ_WRITE
+}

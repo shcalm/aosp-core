@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "sdp_reset_transport_status_if_disconnect"
+  state: ENABLED
+  permission: READ_WRITE
+}

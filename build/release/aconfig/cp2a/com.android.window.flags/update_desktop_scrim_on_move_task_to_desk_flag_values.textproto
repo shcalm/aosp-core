@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "update_desktop_scrim_on_move_task_to_desk"
+  state: ENABLED
+  permission: READ_ONLY
+}

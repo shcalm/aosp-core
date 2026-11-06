@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "sniff_offload_with_vsc_based_control"
+  state: ENABLED
+  permission: READ_WRITE
+}

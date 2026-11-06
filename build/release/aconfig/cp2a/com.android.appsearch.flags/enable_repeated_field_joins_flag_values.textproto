@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_repeated_field_joins"
+  state: ENABLED
+  permission: READ_ONLY
+}

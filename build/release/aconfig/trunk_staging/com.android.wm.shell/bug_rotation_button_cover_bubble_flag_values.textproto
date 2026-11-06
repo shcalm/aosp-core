@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "bug_rotation_button_cover_bubble"
+  state: ENABLED
+  permission: READ_WRITE
+}

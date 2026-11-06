@@ -1,0 +1,8 @@
+name: "RELEASE_ACONFIG_DEFAULT_EXPORTED_READS_TO_DISABLED"
+namespace: "core_experiments_team_internal"
+description: "When true, any exported flag reads will return false unless they are included in a list under presbuilts/sdk/<level>finalized-flags.txt."
+workflow: MANUAL_NO_INHERIT
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

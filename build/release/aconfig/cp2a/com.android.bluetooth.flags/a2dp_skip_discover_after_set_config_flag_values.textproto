@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "a2dp_skip_discover_after_set_config"
+  state: ENABLED
+  permission: READ_ONLY
+}

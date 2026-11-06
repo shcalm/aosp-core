@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "max_users_in_car_is_for_secondary"
+  state: ENABLED
+  permission: READ_ONLY
+}

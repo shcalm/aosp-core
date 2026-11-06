@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "mouse_to_touch_per_app_compat"
+  state: ENABLED
+  permission: READ_WRITE
+}

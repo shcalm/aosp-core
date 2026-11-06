@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "cleanup_unnecessary_scan_request_in_settings"
+  state: ENABLED
+  permission: READ_ONLY
+}

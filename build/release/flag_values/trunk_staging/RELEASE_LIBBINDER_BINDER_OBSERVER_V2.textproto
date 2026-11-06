@@ -1,0 +1,4 @@
+name: "RELEASE_LIBBINDER_BINDER_OBSERVER_V2"
+value {
+  bool_value: true
+}

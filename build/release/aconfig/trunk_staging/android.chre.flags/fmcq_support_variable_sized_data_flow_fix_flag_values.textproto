@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.chre.flags"
+  name: "fmcq_support_variable_sized_data_flow_fix"
+  state: ENABLED
+  permission: READ_WRITE
+}

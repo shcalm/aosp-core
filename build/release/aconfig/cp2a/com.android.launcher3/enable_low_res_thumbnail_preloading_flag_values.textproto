@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_low_res_thumbnail_preloading"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.intentresolver"
+  name: "always_show_shareousel"
+  state: ENABLED
+  permission: READ_WRITE
+}

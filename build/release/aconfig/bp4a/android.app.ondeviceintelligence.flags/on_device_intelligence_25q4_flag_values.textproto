@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.ondeviceintelligence.flags"
+  name: "on_device_intelligence_25q4"
+  state: ENABLED
+  permission: READ_ONLY
+}

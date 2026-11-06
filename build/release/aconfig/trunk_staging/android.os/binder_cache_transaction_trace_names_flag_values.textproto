@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "binder_cache_transaction_trace_names"
+  state: ENABLED
+  permission: READ_WRITE
+}

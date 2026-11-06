@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.flags"
+  name: "use_generational_cmc"
+  state: ENABLED
+  permission: READ_ONLY
+}

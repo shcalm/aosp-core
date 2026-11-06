@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "lse_quick_lock"
+  state: ENABLED
+  permission: READ_ONLY
+}

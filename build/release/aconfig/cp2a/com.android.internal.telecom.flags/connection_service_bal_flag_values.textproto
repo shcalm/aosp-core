@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telecom.flags"
+  name: "connection_service_bal"
+  state: ENABLED
+  permission: READ_ONLY
+}

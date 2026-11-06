@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.contacts.flags"
+  name: "restrict_pii_data_uri_columns"
+  state: ENABLED
+  permission: READ_WRITE
+}

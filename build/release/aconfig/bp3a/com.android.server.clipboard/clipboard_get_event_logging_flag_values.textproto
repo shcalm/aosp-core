@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.clipboard"
+  name: "clipboard_get_event_logging"
+  state: ENABLED
+  permission: READ_ONLY
+}

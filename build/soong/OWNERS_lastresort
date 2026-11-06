@@ -1,0 +1,18 @@
+# Bug component: 99142
+# This file is included by other projects to allow the team to approve build
+# system maintenance tasks, without being suggested as an owner for normal
+# reviews in the projects.
+# LINT.IfChange
+
+# AMER
+ccross@android.com #{LAST_RESORT_SUGGESTION}
+colefaust@google.com #{LAST_RESORT_SUGGESTION}
+dwillemsen@google.com #{LAST_RESORT_SUGGESTION}
+jihoonkang@google.com #{LAST_RESORT_SUGGESTION}
+lamontjones@google.com #{LAST_RESORT_SUGGESTION}
+mrziwang@google.com #{LAST_RESORT_SUGGESTION}
+spandandas@google.com #{LAST_RESORT_SUGGESTION}
+weiwli@google.com #{LAST_RESORT_SUGGESTION}
+yudiliu@google.com #{LAST_RESORT_SUGGESTION}
+
+# LINT.ThenChange(OWNERS)

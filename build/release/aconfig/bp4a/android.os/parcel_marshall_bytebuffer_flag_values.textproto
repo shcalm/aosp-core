@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "parcel_marshall_bytebuffer"
+  state: ENABLED
+  permission: READ_ONLY
+}

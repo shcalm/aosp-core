@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_compression_threshold"
+  state: ENABLED
+  permission: READ_ONLY
+}

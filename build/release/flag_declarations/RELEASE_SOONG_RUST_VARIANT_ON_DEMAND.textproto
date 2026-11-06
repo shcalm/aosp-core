@@ -1,0 +1,11 @@
+name: "RELEASE_SOONG_RUST_VARIANT_ON_DEMAND"
+namespace: "build"
+description: "Switches the non primary rust variant creation from frontloaded to on-demand."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

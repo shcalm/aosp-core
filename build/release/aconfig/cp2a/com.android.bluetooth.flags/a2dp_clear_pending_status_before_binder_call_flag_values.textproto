@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "a2dp_clear_pending_status_before_binder_call"
+  state: ENABLED
+  permission: READ_ONLY
+}

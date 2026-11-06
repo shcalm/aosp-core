@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "preferred_shortcut_filters_navigation_mode"
+  state: ENABLED
+  permission: READ_WRITE
+}

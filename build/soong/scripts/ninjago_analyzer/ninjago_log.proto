@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package ninjago_analyzer;
+
+// Represents a single Ninja target from the log and its associated hidden dependencies.
+message NinjaTarget {
+    // The target name/output path.
+    string name = 1;
+
+    // The request hash of the action.
+    string request_hash = 2;
+
+    // The response hash of the action's output.
+    string response_hash = 3;
+
+    // Hidden dependencies discovered from inspecting the response hash.
+    repeated string hidden_deps = 4;
+}
+
+// Top-level message to store a list of all processed Ninja targets.
+message NinjaLog {
+    repeated NinjaTarget targets = 1;
+}

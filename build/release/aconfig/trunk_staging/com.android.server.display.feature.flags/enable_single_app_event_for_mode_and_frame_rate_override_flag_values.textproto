@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "enable_single_app_event_for_mode_and_frame_rate_override"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "flash_notifications_torch_callback_handler"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_R8_ONLY_RUNTIME_VISIBLE_ANNOTATIONS"
+value {
+  bool_value: true
+}

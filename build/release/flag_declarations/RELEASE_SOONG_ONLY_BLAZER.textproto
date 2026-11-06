@@ -1,0 +1,11 @@
+name: "RELEASE_SOONG_ONLY_BLAZER"
+namespace: "build"
+description: "Enables building blazer with soong-only (no make) builds"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

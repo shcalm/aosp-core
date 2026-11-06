@@ -1,0 +1,13 @@
+# Copyright 2025 Google LLC
+# Flags owned by the SDK team.
+#
+per-file {flag_declarations,flag_values/*}/RELEASE_PLATFORM_PREVIEW_SDK_INT.textproto=file:platform/frameworks/base:/SDK_OWNERS
+per-file {flag_declarations,flag_values/*}/RELEASE_PLATFORM_PROSPECTIVE_SDK_VERSION_FULL.textproto=file:platform/frameworks/base:/SDK_OWNERS
+per-file {flag_declarations,flag_values/*}/RELEASE_PLATFORM_SDK_EXTENSION_VERSION.textproto=file:platform/frameworks/base:/SDK_OWNERS
+per-file {flag_declarations,flag_values/*}/RELEASE_PLATFORM_SDK_VERSION_FULL.textproto=file:platform/frameworks/base:/SDK_OWNERS
+per-file {flag_declarations,flag_values/*}/RELEASE_PLATFORM_SDK_VERSION.textproto=file:platform/frameworks/base:/SDK_OWNERS
+per-file {flag_declarations,flag_values/*}/RELEASE_PLATFORM_VERSION_ALL_CODENAMES.textproto=file:platform/frameworks/base:/SDK_OWNERS
+per-file {flag_declarations,flag_values/*}/RELEASE_PLATFORM_VERSION_ALL_PREVIEW_CODENAMES.textproto=file:platform/frameworks/base:/SDK_OWNERS
+per-file {flag_declarations,flag_values/*}/RELEASE_PLATFORM_VERSION_CODENAME.textproto=file:platform/frameworks/base:/SDK_OWNERS
+per-file {flag_declarations,flag_values/*}/RELEASE_PLATFORM_VERSION_KNOWN_CODENAMES.textproto=file:platform/frameworks/base:/SDK_OWNERS
+per-file {flag_declarations,flag_values/*}/RELEASE_PLATFORM_VERSION_LAST_STABLE.textproto=file:platform/frameworks/base:/SDK_OWNERS

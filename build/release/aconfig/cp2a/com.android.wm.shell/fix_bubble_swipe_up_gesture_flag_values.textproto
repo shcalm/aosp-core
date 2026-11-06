@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubble_swipe_up_gesture"
+  state: ENABLED
+  permission: READ_ONLY
+}

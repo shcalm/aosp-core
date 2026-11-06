@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_storage_info_cache"
+  state: ENABLED
+  permission: READ_ONLY
+}

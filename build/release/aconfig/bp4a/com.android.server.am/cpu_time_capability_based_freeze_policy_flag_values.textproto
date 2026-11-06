@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "cpu_time_capability_based_freeze_policy"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_KERNEL_MUSTANG_DIR"
+value: {
+  string_value: "device/google/laguna-kernels/6.12/trunk-15038626/muzel"
+}

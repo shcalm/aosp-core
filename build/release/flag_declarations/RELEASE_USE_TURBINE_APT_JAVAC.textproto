@@ -1,0 +1,11 @@
+name: "RELEASE_USE_TURBINE_APT_JAVAC"
+namespace: "build"
+description: "Whether to use turbine-apt in javac"
+workflow: LAUNCH
+value: {
+  bool_value: false
+}
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

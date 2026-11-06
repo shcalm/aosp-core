@@ -1,0 +1,5 @@
+name:  "RELEASE_HC_MODULE_SERVICE_OPTIMIZATION"
+namespace:  "health_fitness_aconfig"
+description:  "This flag guards turning on code optimization to the Health Connect service"
+workflow:  LAUNCH
+containers:  "system"

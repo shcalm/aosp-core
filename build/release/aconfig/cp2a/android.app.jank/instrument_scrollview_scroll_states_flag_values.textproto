@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.jank"
+  name: "instrument_scrollview_scroll_states"
+  state: ENABLED
+  permission: READ_ONLY
+}

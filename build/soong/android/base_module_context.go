@@ -1,0 +1,560 @@
+// Copyright 2015 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package android
+
+import (
+	"fmt"
+	"regexp"
+	"slices"
+	"strings"
+
+	"github.com/google/blueprint"
+	"github.com/google/blueprint/proptools"
+)
+
+// BaseModuleContext is the same as blueprint.BaseModuleContext except that Config() returns
+// a Config instead of an interface{}, and some methods have been wrapped to use an android.Module
+// instead of a blueprint.Module, plus some extra methods that return Android-specific information
+// about the current module.
+type BaseModuleContext interface {
+	ArchModuleContext
+	EarlyModuleContext
+
+	blueprintBaseModuleContext() blueprint.BaseModuleContext
+
+	// OtherModuleName returns the name of another Module.  See BaseModuleContext.ModuleName for more information.
+	// It is intended for use inside the visit functions of Visit* and WalkDeps.
+	OtherModuleName(m ModuleOrProxy) string
+
+	// OtherModuleDir returns the directory of another Module.  See BaseModuleContext.ModuleDir for more information.
+	// It is intended for use inside the visit functions of Visit* and WalkDeps.
+	OtherModuleDir(m ModuleOrProxy) string
+
+	// OtherModuleErrorf reports an error on another Module.  See BaseModuleContext.ModuleErrorf for more information.
+	// It is intended for use inside the visit functions of Visit* and WalkDeps.
+	OtherModuleErrorf(m ModuleOrProxy, fmt string, args ...interface{})
+
+	// OtherModuleDependencyTag returns the dependency tag used to depend on a module, or nil if there is no dependency
+	// on the module.  When called inside a Visit* method with current module being visited, and there are multiple
+	// dependencies on the module being visited, it returns the dependency tag used for the current dependency.
+	OtherModuleDependencyTag(m ModuleOrProxy) blueprint.DependencyTag
+
+	// OtherModuleSubDir returns the string representing the variations of a module.
+	OtherModuleSubDir(m ModuleOrProxy) string
+
+	// OtherModuleExists returns true if a module with the specified name exists, as determined by the NameInterface
+	// passed to Context.SetNameInterface, or SimpleNameInterface if it was not called.
+	OtherModuleExists(name string) bool
+
+	// OtherModuleDependencyVariantExists returns true if a module with the
+	// specified name and variant exists. The variant must match the given
+	// variations. It must also match all the non-local variations of the current
+	// module. In other words, it checks for the module that AddVariationDependencies
+	// would add a dependency on with the same arguments.
+	OtherModuleDependencyVariantExists(variations []blueprint.Variation, name string) bool
+
+	// OtherModuleFarDependencyVariantExists returns true if a module with the
+	// specified name and variant exists. The variant must match the given
+	// variations, but not the non-local variations of the current module. In
+	// other words, it checks for the module that AddFarVariationDependencies
+	// would add a dependency on with the same arguments.
+	OtherModuleFarDependencyVariantExists(variations []blueprint.Variation, name string) bool
+
+	// OtherModuleReverseDependencyVariantExists returns true if a module with the
+	// specified name exists with the same variations as the current module. In
+	// other words, it checks for the module that AddReverseDependency would add a
+	// dependency on with the same argument.
+	OtherModuleReverseDependencyVariantExists(name string) bool
+
+	// OtherModuleType returns the type of another Module.  See BaseModuleContext.ModuleType for more information.
+	// It is intended for use inside the visit functions of Visit* and WalkDeps.
+	OtherModuleType(m ModuleOrProxy) string
+
+	// otherModuleProvider returns the value for a provider for the given module.  If the value is
+	// not set it returns nil and false.  The value returned may be a deep copy of the value originally
+	// passed to SetProvider.
+	//
+	// This method shouldn't be used directly, prefer the type-safe android.OtherModuleProvider instead.
+	otherModuleProvider(m ModuleOrProxy, provider blueprint.AnyProviderKey) (any, bool)
+
+	// OtherModuleHasProvider returns true if the module has the given provider set. This
+	// can avoid copying the provider if the caller only cares about the existence of
+	// the provider.
+	OtherModuleHasProvider(m ModuleOrProxy, provider blueprint.AnyProviderKey) bool
+
+	// OtherModuleIsAutoGenerated returns true if the module is auto generated by another module
+	// instead of being defined in Android.bp file.
+	OtherModuleIsAutoGenerated(m ModuleOrProxy) bool
+
+	// Provider returns the value for a provider for the current module.  If the value is
+	// not set it returns nil and false.  It panics if called before the appropriate
+	// mutator or GenerateBuildActions pass for the provider.  The value returned may be a deep
+	// copy of the value originally passed to SetProvider.
+	//
+	// This method shouldn't be used directly, prefer the type-safe android.ModuleProvider instead.
+	provider(provider blueprint.AnyProviderKey) (any, bool)
+
+	// setProvider sets the value for a provider for the current module.  It panics if not called
+	// during the appropriate mutator or GenerateBuildActions pass for the provider, if the value
+	// is not of the appropriate type, or if the value has already been set.  The value should not
+	// be modified after being passed to SetProvider.
+	//
+	// This method shouldn't be used directly, prefer the type-safe android.SetProvider instead.
+	setProvider(provider blueprint.AnyProviderKey, value any)
+
+	GetDirectDepsProxyWithTag(tag blueprint.DependencyTag) []ModuleProxy
+
+	// GetDirectDepProxyWithTag returns the ModuleProxy for the direct dependency with the specified
+	// name, or an empty ModuleProxy if none exists.  It panics if the dependency does not have the
+	// specified tag.
+	GetDirectDepProxyWithTag(name string, tag blueprint.DependencyTag) ModuleProxy
+
+	// visitDirectDeps calls visit for each direct dependency.  If there are multiple
+	// direct dependencies on the same module visit will be called multiple times on that module
+	// and OtherModuleDependencyTag will return a different tag for each.  It raises an error if any of the
+	// dependencies are disabled.
+	//
+	// The Module passed to the visit function should not be retained outside of the visit
+	// function, it may be invalidated by future mutators.
+	visitDirectDeps(visit func(Module))
+
+	// VisitDirectDepsProxy calls visit for each direct dependency.  If there are multiple
+	// direct dependencies on the same module visit will be called multiple times on that module
+	// and OtherModuleDependencyTag will return a different tag for each. It raises an error if any of the
+	// dependencies are disabled.
+	//
+	// The ModuleProxy passed to the visit function should not be retained outside of the visit
+	// function, it may be invalidated by future mutators.
+	VisitDirectDepsProxy(visit func(proxy ModuleProxy))
+
+	// VisitDirectDepsProxyAllowDisabled calls visit for each direct dependency.  If there are
+	// multiple direct dependencies on the same module visit will be called multiple times on
+	// that module and OtherModuleDependencyTag will return a different tag for each.
+	//
+	// The ModuleProxy passed to the visit function should not be retained outside of the visit function, it may be
+	// invalidated by future mutators.
+	VisitDirectDepsProxyAllowDisabled(visit func(proxy ModuleProxy))
+
+	visitDirectDepsWithTag(tag blueprint.DependencyTag, visit func(Module))
+
+	VisitDirectDepsProxyWithTag(tag blueprint.DependencyTag, visit func(proxy ModuleProxy))
+
+	// WalkDeps calls visit for each transitive dependency, traversing the dependency tree in top down order.  visit may
+	// be called multiple times for the same (child, parent) pair if there are multiple direct dependencies between the
+	// child and parent with different tags.  OtherModuleDependencyTag will return the tag for the currently visited
+	// (child, parent) pair.  If visit returns false WalkDeps will not continue recursing down to child.  It skips
+	// any dependencies that are not an android.Module.
+	//
+	// The Modules passed to the visit function should not be retained outside of the visit function, they may be
+	// invalidated by future mutators.
+	walkDeps(visit func(child, parent Module) bool)
+
+	// WalkDepsProxy calls visit for each transitive dependency, traversing the dependency tree in top down order.  visit may
+	// be called multiple times for the same (child, parent) pair if there are multiple direct dependencies between the
+	// child and parent with different tags.  OtherModuleDependencyTag will return the tag for the currently visited
+	// (child, parent) pair.  If visit returns false WalkDepsProxy will not continue recursing down to child.
+	//
+	// The Modules passed to the visit function should not be retained outside of the visit function, they may be
+	// invalidated by future mutators.
+	WalkDepsProxy(visit func(child, parent ModuleProxy) bool)
+
+	// GetProxyWalkPath is supposed to be called in visit function passed in WalkDepsProxy()
+	// and returns a top-down dependency path from a start module to current child module.
+	GetProxyWalkPath() []ModuleProxy
+
+	// IsPrimaryModule returns if the current module is the first variant.  Variants of a module are always visited in
+	// order by mutators and GenerateBuildActions, so the data created by the current mutator can be read from the
+	// Module returned by PrimaryModule without data races.  This can be used to perform singleton actions that are
+	// only done once for all variants of a module.
+	IsPrimaryModule() bool
+
+	// IsFinalModule returns if the current module is the last variant.  Variants of a module are always visited in
+	// order by mutators and GenerateBuildActions, so the data created by the current mutator can be read from all
+	// variants using VisitAllModuleVariants if the current module is the last one. This can be used to perform
+	// singleton actions that are only done once for all variants of a module.
+	IsFinalModule() bool
+
+	// GetTagPath is supposed to be called in visit function passed in WalkDeps()
+	// and returns a top-down dependency tags path from a start module to current child module.
+	// It has one less entry than GetWalkPath() as it contains the dependency tags that
+	// exist between each adjacent pair of modules in the GetWalkPath().
+	// GetTagPath()[i] is the tag between GetWalkPath()[i] and GetWalkPath()[i+1]
+	GetTagPath() []blueprint.DependencyTag
+
+	// GetPathString is supposed to be called in visit function passed in WalkDeps()
+	// and returns a multi-line string showing the modules and dependency tags
+	// among them along the top-down dependency path from a start module to current child module.
+	// skipFirst when set to true, the output doesn't include the start module,
+	// which is already printed when this function is used along with ModuleErrorf().
+	GetPathString(skipFirst bool) string
+
+	AddMissingDependencies(missingDeps []string)
+
+	// getMissingDependencies returns the list of missing dependencies.
+	// Calling this function prevents adding new dependencies.
+	getMissingDependencies() []string
+
+	// EvaluateConfiguration makes ModuleContext a valid proptools.ConfigurableEvaluator, so this context
+	// can be used to evaluate the final value of Configurable properties.
+	EvaluateConfiguration(condition proptools.ConfigurableCondition, property string) proptools.ConfigurableValue
+}
+
+type baseModuleContext struct {
+	bp blueprint.BaseModuleContext
+	earlyModuleContext
+	archModuleContext
+
+	walkPath      []Module
+	proxyWalkPath []ModuleProxy
+	tagPath       []blueprint.DependencyTag
+
+	strictVisitDeps bool // If true, enforce that all dependencies are enabled
+
+}
+
+func EqualModules(m1, m2 ModuleOrProxy) bool {
+	return blueprint.EqualModules(m1, m2)
+}
+
+func (b *baseModuleContext) OtherModuleName(m ModuleOrProxy) string {
+	return b.bp.OtherModuleName(m)
+}
+func (b *baseModuleContext) OtherModuleDir(m ModuleOrProxy) string {
+	return b.bp.OtherModuleDir(m)
+}
+func (b *baseModuleContext) OtherModuleErrorf(m ModuleOrProxy, fmt string, args ...interface{}) {
+	b.bp.OtherModuleErrorf(m, fmt, args...)
+}
+func (b *baseModuleContext) OtherModuleDependencyTag(m ModuleOrProxy) blueprint.DependencyTag {
+	return b.bp.OtherModuleDependencyTag(m)
+}
+func (b *baseModuleContext) OtherModuleSubDir(m ModuleOrProxy) string {
+	return b.bp.OtherModuleSubDir(m)
+}
+func (b *baseModuleContext) OtherModuleExists(name string) bool { return b.bp.OtherModuleExists(name) }
+func (b *baseModuleContext) OtherModuleDependencyVariantExists(variations []blueprint.Variation, name string) bool {
+	return b.bp.OtherModuleDependencyVariantExists(variations, name)
+}
+func (b *baseModuleContext) OtherModuleFarDependencyVariantExists(variations []blueprint.Variation, name string) bool {
+	return b.bp.OtherModuleFarDependencyVariantExists(variations, name)
+}
+func (b *baseModuleContext) OtherModuleReverseDependencyVariantExists(name string) bool {
+	return b.bp.OtherModuleReverseDependencyVariantExists(name)
+}
+func (b *baseModuleContext) OtherModuleType(m ModuleOrProxy) string {
+	return b.bp.OtherModuleType(m)
+}
+
+func (b *baseModuleContext) otherModuleProvider(m ModuleOrProxy, provider blueprint.AnyProviderKey) (any, bool) {
+	return b.bp.OtherModuleProvider(m, provider)
+}
+
+func (b *baseModuleContext) OtherModuleHasProvider(m ModuleOrProxy, provider blueprint.AnyProviderKey) bool {
+	return b.bp.OtherModuleHasProvider(m, provider)
+}
+
+func (b *baseModuleContext) OtherModuleIsAutoGenerated(m ModuleOrProxy) bool {
+	return b.bp.OtherModuleIsAutoGenerated(m)
+}
+
+func (b *baseModuleContext) provider(provider blueprint.AnyProviderKey) (any, bool) {
+	return b.bp.Provider(provider)
+}
+
+func (b *baseModuleContext) setProvider(provider blueprint.AnyProviderKey, value any) {
+	b.bp.SetProvider(provider, value)
+}
+
+func (b *baseModuleContext) GetDirectDepProxyWithTag(name string, tag blueprint.DependencyTag) ModuleProxy {
+	if module := b.bp.GetDirectDepProxyWithTag(name, tag); !module.IsNil() {
+		return ModuleProxy{module}
+	}
+	return ModuleProxy{}
+}
+
+func (b *baseModuleContext) blueprintBaseModuleContext() blueprint.BaseModuleContext {
+	return b.bp
+}
+
+func (b *baseModuleContext) AddMissingDependencies(deps []string) {
+	if deps != nil {
+		missingDeps := &b.Module().base().commonProperties.MissingDeps
+		*missingDeps = append(*missingDeps, deps...)
+		*missingDeps = FirstUniqueStrings(*missingDeps)
+	}
+}
+
+func (b *baseModuleContext) checkedMissingDeps() bool {
+	return b.Module().base().commonProperties.CheckedMissingDeps
+}
+
+func (b *baseModuleContext) getMissingDependencies() []string {
+	checked := &b.Module().base().commonProperties.CheckedMissingDeps
+	*checked = true
+	var missingDeps []string
+	missingDeps = append(missingDeps, b.Module().base().commonProperties.MissingDeps...)
+	missingDeps = append(missingDeps, b.bp.EarlyGetMissingDependencies()...)
+	missingDeps = FirstUniqueStrings(missingDeps)
+	return missingDeps
+}
+
+type AllowDisabledModuleDependency interface {
+	blueprint.DependencyTag
+	AllowDisabledModuleDependency(target Module) bool
+	AllowDisabledModuleDependencyProxy(ctx OtherModuleProviderContext, target ModuleProxy) bool
+}
+
+type AlwaysAllowDisabledModuleDependencyTag struct{}
+
+func (t AlwaysAllowDisabledModuleDependencyTag) AllowDisabledModuleDependency(Module) bool {
+	return true
+}
+
+func (t AlwaysAllowDisabledModuleDependencyTag) AllowDisabledModuleDependencyProxy(OtherModuleProviderContext, ModuleProxy) bool {
+	return true
+}
+
+func (b *baseModuleContext) validateAndroidModule(module blueprint.Module, tag blueprint.DependencyTag, strict bool) Module {
+	aModule, _ := module.(Module)
+
+	if !strict {
+		return aModule
+	}
+
+	if aModule == nil {
+		panic(fmt.Errorf("module %q (%#v) not an android module", b.OtherModuleName(module), tag))
+	}
+
+	if !aModule.Enabled(b) {
+		if t, ok := tag.(AllowDisabledModuleDependency); !ok || !t.AllowDisabledModuleDependency(aModule) {
+			if b.Config().AllowMissingDependencies() {
+				b.AddMissingDependencies([]string{b.OtherModuleName(aModule)})
+			} else {
+				b.ModuleErrorf("depends on disabled module %q", b.OtherModuleName(aModule))
+			}
+		}
+		return nil
+	}
+	return aModule
+}
+
+func (b *baseModuleContext) validateAndroidModuleProxy(
+	module blueprint.ModuleProxy, tag blueprint.DependencyTag, strict bool) ModuleProxy {
+	aModule := ModuleProxy{module}
+
+	if !strict {
+		return aModule
+	}
+
+	if !OtherModulePointerProviderOrDefault(b, module, CommonModuleInfoProvider).Enabled {
+		if t, ok := tag.(AllowDisabledModuleDependency); !ok || !t.AllowDisabledModuleDependencyProxy(b, aModule) {
+			if b.Config().AllowMissingDependencies() {
+				b.AddMissingDependencies([]string{b.OtherModuleName(aModule)})
+			} else {
+				b.ModuleErrorf("depends on disabled module %q", b.OtherModuleName(aModule))
+			}
+		}
+		return ModuleProxy{}
+	}
+
+	return aModule
+}
+
+func (b *baseModuleContext) getDirectDepsProxyInternal(name string, tag blueprint.DependencyTag) []ModuleProxy {
+	var deps []ModuleProxy
+	b.VisitDirectDepsProxy(func(module ModuleProxy) {
+		if OtherModulePointerProviderOrDefault(b, module, CommonModuleInfoProvider).BaseModuleName == name {
+			returnedTag := b.OtherModuleDependencyTag(module)
+			if tag == nil || returnedTag == tag {
+				deps = append(deps, module)
+			}
+		}
+	})
+	return deps
+}
+
+func (b *baseModuleContext) GetDirectDepsProxyWithTag(tag blueprint.DependencyTag) []ModuleProxy {
+	var deps []ModuleProxy
+	b.VisitDirectDepsProxy(func(module ModuleProxy) {
+		if b.OtherModuleDependencyTag(module) == tag {
+			deps = append(deps, module)
+		}
+	})
+	return deps
+}
+
+func (b *baseModuleContext) visitDirectDeps(visit func(Module)) {
+	b.bp.VisitDirectDeps(func(module blueprint.Module) {
+		if aModule := b.validateAndroidModule(module, b.bp.OtherModuleDependencyTag(module), b.strictVisitDeps); aModule != nil {
+			visit(aModule)
+		}
+	})
+}
+
+func (b *baseModuleContext) VisitDirectDepsProxy(visit func(ModuleProxy)) {
+	b.bp.VisitDirectDepsProxy(func(module blueprint.ModuleProxy) {
+		if aModule := b.validateAndroidModuleProxy(module, b.bp.OtherModuleDependencyTag(module), b.strictVisitDeps); !aModule.IsNil() {
+			visit(aModule)
+		}
+	})
+}
+
+func (b *baseModuleContext) VisitDirectDepsProxyAllowDisabled(visit func(proxy ModuleProxy)) {
+	b.bp.VisitDirectDepsProxy(visitProxyAdaptor(visit))
+}
+
+func (b *baseModuleContext) visitDirectDepsWithTag(tag blueprint.DependencyTag, visit func(Module)) {
+	b.bp.VisitDirectDeps(func(module blueprint.Module) {
+		if b.bp.OtherModuleDependencyTag(module) == tag {
+			if aModule := b.validateAndroidModule(module, tag, b.strictVisitDeps); aModule != nil {
+				visit(aModule)
+			}
+		}
+	})
+}
+
+func (b *baseModuleContext) VisitDirectDepsProxyWithTag(tag blueprint.DependencyTag, visit func(proxy ModuleProxy)) {
+	b.bp.VisitDirectDepsProxy(func(module blueprint.ModuleProxy) {
+		if b.bp.OtherModuleDependencyTag(module) == tag {
+			if aModule := b.validateAndroidModuleProxy(module, tag, b.strictVisitDeps); !aModule.IsNil() {
+				visit(aModule)
+			}
+		}
+	})
+}
+
+func (b *baseModuleContext) walkDeps(visit func(Module, Module) bool) {
+	b.walkPath = []Module{b.Module()}
+	b.proxyWalkPath = nil
+	b.tagPath = []blueprint.DependencyTag{}
+	b.bp.WalkDeps(func(child, parent blueprint.Module) bool {
+		childAndroidModule, _ := child.(Module)
+		parentAndroidModule, _ := parent.(Module)
+		if childAndroidModule != nil && parentAndroidModule != nil {
+			// record walkPath before visit
+			for b.walkPath[len(b.walkPath)-1] != parentAndroidModule {
+				b.walkPath = b.walkPath[0 : len(b.walkPath)-1]
+				b.tagPath = b.tagPath[0 : len(b.tagPath)-1]
+			}
+			b.walkPath = append(b.walkPath, childAndroidModule)
+			b.tagPath = append(b.tagPath, b.OtherModuleDependencyTag(childAndroidModule))
+			return visit(childAndroidModule, parentAndroidModule)
+		} else {
+			return false
+		}
+	})
+	b.walkPath = nil
+}
+
+func (b *baseModuleContext) WalkDepsProxy(visit func(ModuleProxy, ModuleProxy) bool) {
+	startProxy := blueprint.CreateModuleProxy(b.Module())
+	b.proxyWalkPath = []ModuleProxy{{startProxy}}
+	b.walkPath = nil
+	b.tagPath = []blueprint.DependencyTag{}
+	b.bp.WalkDepsProxy(func(child, parent blueprint.ModuleProxy) bool {
+		childAndroidModule := ModuleProxy{child}
+		parentAndroidModule := ModuleProxy{parent}
+		// record walkPath before visit
+		for b.proxyWalkPath[len(b.proxyWalkPath)-1] != parentAndroidModule {
+			b.proxyWalkPath = b.proxyWalkPath[0 : len(b.proxyWalkPath)-1]
+			b.tagPath = b.tagPath[0 : len(b.tagPath)-1]
+		}
+		b.proxyWalkPath = append(b.proxyWalkPath, childAndroidModule)
+		b.tagPath = append(b.tagPath, b.OtherModuleDependencyTag(childAndroidModule))
+		return visit(childAndroidModule, parentAndroidModule)
+	})
+	b.proxyWalkPath = nil
+}
+
+func (b *baseModuleContext) GetProxyWalkPath() []ModuleProxy {
+	if b.proxyWalkPath == nil {
+		panic("GetProxyWalkPath called from outside WalkDeps, did you mean GetWalkPath?")
+	}
+	return slices.Clone(b.proxyWalkPath)
+}
+
+func (b *baseModuleContext) GetTagPath() []blueprint.DependencyTag {
+	return b.tagPath
+}
+
+func (b *baseModuleContext) IsPrimaryModule() bool {
+	return b.bp.IsPrimaryModule()
+}
+
+func (b *baseModuleContext) IsFinalModule() bool {
+	return b.bp.IsFinalModule()
+}
+
+// IsMetaDependencyTag returns true for cross-cutting metadata dependencies.
+func IsMetaDependencyTag(tag blueprint.DependencyTag) bool {
+	if tag == licenseKindTag {
+		return true
+	} else if tag == licensesTag {
+		return true
+	} else if tag == AcDepTag {
+		return true
+	}
+	return false
+}
+
+// A regexp for removing boilerplate from BaseDependencyTag from the string representation of
+// a dependency tag.
+var tagCleaner = regexp.MustCompile(`\QBaseDependencyTag:{}\E(, )?`)
+
+// PrettyPrintTag returns string representation of the tag, but prefers
+// custom String() method if available.
+func PrettyPrintTag(tag blueprint.DependencyTag) string {
+	// Use tag's custom String() method if available.
+	if stringer, ok := tag.(fmt.Stringer); ok {
+		return stringer.String()
+	}
+
+	// Otherwise, get a default string representation of the tag's struct.
+	tagString := fmt.Sprintf("%T: %+v", tag, tag)
+
+	// Remove the boilerplate from BaseDependencyTag as it adds no value.
+	tagString = tagCleaner.ReplaceAllString(tagString, "")
+	return tagString
+}
+
+func (b *baseModuleContext) GetPathString(skipFirst bool) string {
+	sb := strings.Builder{}
+	tagPath := b.GetTagPath()
+	var walkPath []ModuleOrProxy
+	if b.walkPath != nil {
+		for _, w := range b.walkPath {
+			walkPath = append(walkPath, w)
+		}
+	} else if b.proxyWalkPath != nil {
+		for _, w := range b.proxyWalkPath {
+			walkPath = append(walkPath, w)
+		}
+	} else {
+		panic(fmt.Errorf("GetPathString must be called inside WalkDeps or WalkDepsProxy"))
+	}
+	if !skipFirst {
+		sb.WriteString(walkPath[0].String())
+	}
+	for i, m := range walkPath[1:] {
+		sb.WriteString("\n")
+		sb.WriteString(fmt.Sprintf("           via tag %s\n", PrettyPrintTag(tagPath[i])))
+		sb.WriteString(fmt.Sprintf("    -> %s", m.String()))
+	}
+	return sb.String()
+}
+
+func (m *baseModuleContext) EvaluateConfiguration(condition proptools.ConfigurableCondition, property string) proptools.ConfigurableValue {
+	return m.Module().ConfigurableEvaluator(m).EvaluateConfiguration(condition, property)
+}

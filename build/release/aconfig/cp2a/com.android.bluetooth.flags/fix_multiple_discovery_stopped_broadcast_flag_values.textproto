@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "fix_multiple_discovery_stopped_broadcast"
+  state: ENABLED
+  permission: READ_ONLY
+}

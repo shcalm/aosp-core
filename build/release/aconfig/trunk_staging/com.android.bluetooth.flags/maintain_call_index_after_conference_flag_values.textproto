@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "maintain_call_index_after_conference"
+  state: ENABLED
+  permission: READ_WRITE
+}

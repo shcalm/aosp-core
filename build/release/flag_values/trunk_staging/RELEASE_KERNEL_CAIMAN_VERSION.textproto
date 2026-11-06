@@ -1,0 +1,4 @@
+name: "RELEASE_KERNEL_CAIMAN_VERSION"
+value: {
+  string_value: "6.12"
+}

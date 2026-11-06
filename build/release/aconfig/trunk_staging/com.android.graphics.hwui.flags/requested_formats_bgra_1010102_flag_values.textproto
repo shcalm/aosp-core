@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.hwui.flags"
+  name: "requested_formats_bgra_1010102"
+  state: ENABLED
+  permission: READ_WRITE
+}

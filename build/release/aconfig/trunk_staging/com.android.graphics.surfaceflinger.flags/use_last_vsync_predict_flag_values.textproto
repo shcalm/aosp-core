@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "use_last_vsync_predict"
+  state: ENABLED
+  permission: READ_WRITE
+}

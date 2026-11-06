@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "visibility_management_in_bubble_root"
+  state: ENABLED
+  permission: READ_ONLY
+}

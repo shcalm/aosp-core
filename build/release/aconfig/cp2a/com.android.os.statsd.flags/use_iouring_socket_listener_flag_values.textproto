@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.os.statsd.flags"
+  name: "use_iouring_socket_listener"
+  state: ENABLED
+  permission: READ_ONLY
+}

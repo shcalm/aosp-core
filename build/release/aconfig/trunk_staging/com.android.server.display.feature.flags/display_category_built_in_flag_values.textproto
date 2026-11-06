@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "display_category_built_in"
+  state: ENABLED
+  permission: READ_WRITE
+}

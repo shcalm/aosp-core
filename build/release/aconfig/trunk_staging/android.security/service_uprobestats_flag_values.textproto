@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "service_uprobestats"
+  state: ENABLED
+  permission: READ_WRITE
+}

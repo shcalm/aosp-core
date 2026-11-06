@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "no_shade_blur_on_dream_start"
+  state: ENABLED
+  permission: READ_WRITE
+}

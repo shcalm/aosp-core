@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "enable_refresh_window_info"
+  state: ENABLED
+  permission: READ_WRITE
+}

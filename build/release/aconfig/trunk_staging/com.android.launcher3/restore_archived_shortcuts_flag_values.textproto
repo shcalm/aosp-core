@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "restore_archived_shortcuts"
+  state: ENABLED
+  permission: READ_WRITE
+}

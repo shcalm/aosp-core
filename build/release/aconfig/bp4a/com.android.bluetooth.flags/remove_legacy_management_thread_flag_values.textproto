@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "remove_legacy_management_thread"
+  state: ENABLED
+  permission: READ_ONLY
+}

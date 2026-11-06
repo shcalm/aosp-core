@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "enable_on_display_added_in_observer"
+  state: ENABLED
+  permission: READ_WRITE
+}

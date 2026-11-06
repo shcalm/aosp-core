@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.codec"
+  name: "flip_support"
+  state: ENABLED
+  permission: READ_WRITE
+}

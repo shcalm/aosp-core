@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "ignore_initial_data_stall_recovered"
+  state: ENABLED
+  permission: READ_WRITE
+}

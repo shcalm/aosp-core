@@ -1,0 +1,10 @@
+name: "RELEASE_AVF_VALIDATE_CLIENT_VM_USING_DICE_INFO"
+namespace: "virtualization"
+description: "Validate client VM using DICE component name and security version"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

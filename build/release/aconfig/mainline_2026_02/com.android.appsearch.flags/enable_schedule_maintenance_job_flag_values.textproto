@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_schedule_maintenance_job"
+  state: ENABLED
+  permission: READ_ONLY
+}

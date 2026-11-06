@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "accessibility_debug_log_base_on_prop"
+  state: ENABLED
+  permission: READ_ONLY
+}

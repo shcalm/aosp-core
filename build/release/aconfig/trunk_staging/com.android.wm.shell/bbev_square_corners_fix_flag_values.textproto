@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "bbev_square_corners_fix"
+  state: ENABLED
+  permission: READ_WRITE
+}

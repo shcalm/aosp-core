@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "fix_widget_drag_radius_loss"
+  state: ENABLED
+  permission: READ_WRITE
+}

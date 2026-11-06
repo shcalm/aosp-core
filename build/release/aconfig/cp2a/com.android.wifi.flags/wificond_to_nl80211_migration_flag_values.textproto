@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "wificond_to_nl80211_migration"
+  state: ENABLED
+  permission: READ_ONLY
+}

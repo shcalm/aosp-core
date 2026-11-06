@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_broadcast_auto_switch_announcement"
+  state: ENABLED
+  permission: READ_WRITE
+}

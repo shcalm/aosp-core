@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.permission.flags"
+  name: "decluttered_permission_manager_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

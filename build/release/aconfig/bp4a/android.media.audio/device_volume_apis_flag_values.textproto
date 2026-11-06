@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "device_volume_apis"
+  state: ENABLED
+  permission: READ_ONLY
+}

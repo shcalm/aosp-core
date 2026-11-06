@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "ml_scorer_in_wifi_fw"
+  state: ENABLED
+  permission: READ_WRITE
+}

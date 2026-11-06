@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "update_mcc_mnc_configuration_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

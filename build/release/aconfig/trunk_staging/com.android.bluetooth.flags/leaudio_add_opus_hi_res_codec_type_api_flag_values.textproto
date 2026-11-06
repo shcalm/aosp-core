@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_add_opus_hi_res_codec_type_api"
+  state: ENABLED
+  permission: READ_WRITE
+}

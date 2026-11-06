@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.text.flags"
+  name: "fix_selection_via_mouse_drag_in_editor"
+  state: ENABLED
+  permission: READ_ONLY
+}

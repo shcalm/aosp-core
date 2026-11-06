@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "audio_fade_balance_getter_apis"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "offload_gpu_composition"
+  state: ENABLED
+  permission: READ_ONLY
+}

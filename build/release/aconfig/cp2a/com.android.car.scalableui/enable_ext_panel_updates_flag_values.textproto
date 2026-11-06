@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.car.scalableui"
+  name: "enable_ext_panel_updates"
+  state: ENABLED
+  permission: READ_ONLY
+}

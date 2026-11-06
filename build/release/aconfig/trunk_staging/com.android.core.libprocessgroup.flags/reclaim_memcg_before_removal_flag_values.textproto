@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.core.libprocessgroup.flags"
+  name: "reclaim_memcg_before_removal"
+  state: ENABLED
+  permission: READ_WRITE
+}

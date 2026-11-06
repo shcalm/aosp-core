@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.projection.flags"
+  name: "stop_on_display_removal"
+  state: ENABLED
+  permission: READ_WRITE
+}

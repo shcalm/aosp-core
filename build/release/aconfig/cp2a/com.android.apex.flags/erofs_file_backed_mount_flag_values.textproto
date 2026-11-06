@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.apex.flags"
+  name: "erofs_file_backed_mount"
+  state: ENABLED
+  permission: READ_ONLY
+}

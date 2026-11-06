@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.documentsui.flags"
+  name: "use_material3"
+  state: ENABLED
+  permission: READ_ONLY
+}

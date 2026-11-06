@@ -1,0 +1,4 @@
+name: "RELEASE_DEPRECATE_MAINLINE_R_SUPPORT"
+value {
+  bool_value: true
+}

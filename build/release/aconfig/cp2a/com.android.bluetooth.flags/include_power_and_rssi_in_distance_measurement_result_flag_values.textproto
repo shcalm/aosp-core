@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "include_power_and_rssi_in_distance_measurement_result"
+  state: ENABLED
+  permission: READ_ONLY
+}

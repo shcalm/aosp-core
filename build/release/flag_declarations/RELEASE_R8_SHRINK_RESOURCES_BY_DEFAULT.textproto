@@ -1,0 +1,8 @@
+name:  "RELEASE_R8_SHRINK_RESOURCES_BY_DEFAULT"
+namespace:  "system_performance"
+description:  "Enables R8 resource shrinking by default for app targets"
+workflow:  LAUNCH
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

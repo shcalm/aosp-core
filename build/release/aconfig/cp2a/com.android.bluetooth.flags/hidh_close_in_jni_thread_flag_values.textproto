@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hidh_close_in_jni_thread"
+  state: ENABLED
+  permission: READ_ONLY
+}

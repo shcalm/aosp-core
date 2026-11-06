@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.deviceidle"
+  name: "remove_notification_seen_elevation"
+  state: ENABLED
+  permission: READ_WRITE
+}

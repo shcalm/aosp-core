@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubble_bar_flick_on_pinning_animation"
+  state: ENABLED
+  permission: READ_ONLY
+}

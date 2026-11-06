@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "process_iocap_rsp_while_repairing"
+  state: ENABLED
+  permission: READ_WRITE
+}

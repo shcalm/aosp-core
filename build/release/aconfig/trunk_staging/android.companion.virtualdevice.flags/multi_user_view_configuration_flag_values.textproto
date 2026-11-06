@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "multi_user_view_configuration"
+  state: ENABLED
+  permission: READ_WRITE
+}

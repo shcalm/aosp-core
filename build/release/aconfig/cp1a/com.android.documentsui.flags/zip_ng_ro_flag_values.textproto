@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.documentsui.flags"
+  name: "zip_ng_ro"
+  state: ENABLED
+  permission: READ_ONLY
+}

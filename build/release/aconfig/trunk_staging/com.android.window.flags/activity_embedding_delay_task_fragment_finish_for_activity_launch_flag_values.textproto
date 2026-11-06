@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "activity_embedding_delay_task_fragment_finish_for_activity_launch"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "qs_sizes_in_tile_request_dialog"
+  state: ENABLED
+  permission: READ_ONLY
+}

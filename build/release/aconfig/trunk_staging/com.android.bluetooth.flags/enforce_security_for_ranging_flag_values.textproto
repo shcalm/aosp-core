@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "enforce_security_for_ranging"
+  state: ENABLED
+  permission: READ_WRITE
+}

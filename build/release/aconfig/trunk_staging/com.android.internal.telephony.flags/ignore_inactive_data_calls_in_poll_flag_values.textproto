@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "ignore_inactive_data_calls_in_poll"
+  state: ENABLED
+  permission: READ_WRITE
+}

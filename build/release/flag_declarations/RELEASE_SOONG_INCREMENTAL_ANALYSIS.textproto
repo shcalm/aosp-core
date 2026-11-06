@@ -1,0 +1,7 @@
+name: "RELEASE_SOONG_INCREMENTAL_ANALYSIS"
+namespace: "build"
+description: "Enables Soong incremental analysis"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH

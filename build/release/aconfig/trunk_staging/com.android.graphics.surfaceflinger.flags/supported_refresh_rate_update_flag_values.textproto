@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "supported_refresh_rate_update"
+  state: ENABLED
+  permission: READ_WRITE
+}

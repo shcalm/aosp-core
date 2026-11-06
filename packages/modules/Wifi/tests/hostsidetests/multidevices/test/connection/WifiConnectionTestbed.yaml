@@ -1,0 +1,8 @@
+TestBeds:
+- Name: WifiConnectionTestbed
+  Controllers:
+    AndroidDevice: '*'
+  TestParams:
+    use_programmable_ap: False
+    wifi_ssid: ""
+    wifi_password: ""

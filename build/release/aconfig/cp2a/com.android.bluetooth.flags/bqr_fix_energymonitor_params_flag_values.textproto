@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "bqr_fix_energymonitor_params"
+  state: ENABLED
+  permission: READ_ONLY
+}

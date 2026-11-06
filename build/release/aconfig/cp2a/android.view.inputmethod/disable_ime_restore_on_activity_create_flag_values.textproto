@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "disable_ime_restore_on_activity_create"
+  state: ENABLED
+  permission: READ_ONLY
+}

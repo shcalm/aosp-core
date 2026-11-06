@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubbles_cancel_animation"
+  state: ENABLED
+  permission: READ_WRITE
+}

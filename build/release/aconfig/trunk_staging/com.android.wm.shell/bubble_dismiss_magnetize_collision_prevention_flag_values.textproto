@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "bubble_dismiss_magnetize_collision_prevention"
+  state: ENABLED
+  permission: READ_WRITE
+}

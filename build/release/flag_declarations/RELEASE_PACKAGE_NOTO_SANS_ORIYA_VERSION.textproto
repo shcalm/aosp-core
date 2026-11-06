@@ -1,0 +1,9 @@
+name: "RELEASE_PACKAGE_NOTO_SANS_ORIYA_VERSION"
+namespace: "text"
+description: "Version of the Noto Sans Oriya font."
+value: {
+  string_value: "1.010"
+}
+workflow: PREBUILT
+containers: "system"
+

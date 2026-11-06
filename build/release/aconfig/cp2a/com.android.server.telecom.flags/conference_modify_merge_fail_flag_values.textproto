@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "conference_modify_merge_fail"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.feature.flags"
+  name: "enable_app_wakelock_data_source"
+  state: ENABLED
+  permission: READ_ONLY
+}

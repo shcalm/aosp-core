@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "access_local_network_permission_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

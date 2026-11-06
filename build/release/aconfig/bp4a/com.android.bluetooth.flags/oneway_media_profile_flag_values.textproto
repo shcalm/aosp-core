@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "oneway_media_profile"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_csis_handle_misconfigured_sets"
+  state: ENABLED
+  permission: READ_ONLY
+}

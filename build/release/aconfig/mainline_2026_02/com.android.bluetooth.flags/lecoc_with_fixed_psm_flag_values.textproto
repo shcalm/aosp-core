@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "lecoc_with_fixed_psm"
+  state: ENABLED
+  permission: READ_ONLY
+}

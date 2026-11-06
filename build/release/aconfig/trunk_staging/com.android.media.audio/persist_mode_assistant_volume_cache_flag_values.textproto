@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audio"
+  name: "persist_mode_assistant_volume_cache"
+  state: ENABLED
+  permission: READ_WRITE
+}

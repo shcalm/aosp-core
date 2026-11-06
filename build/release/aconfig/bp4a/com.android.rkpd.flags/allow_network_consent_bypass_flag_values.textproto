@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.rkpd.flags"
+  name: "allow_network_consent_bypass"
+  state: ENABLED
+  permission: READ_ONLY
+}

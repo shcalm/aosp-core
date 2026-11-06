@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.frameworks.sensorservice.flags"
+  name: "use_looper_for_uid_state_change"
+  state: ENABLED
+  permission: READ_ONLY
+}

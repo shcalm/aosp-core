@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "remote_sim_sub_id_set"
+  state: ENABLED
+  permission: READ_ONLY
+}

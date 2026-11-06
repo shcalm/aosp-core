@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_privileged_app_transparent_windowing_exemptions"
+  state: ENABLED
+  permission: READ_ONLY
+}

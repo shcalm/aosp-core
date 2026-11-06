@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "a11y_selection_position_app_getters_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

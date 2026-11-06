@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.flags"
+  name: "enforce_permitted_subclasses_checks"
+  state: ENABLED
+  permission: READ_ONLY
+}

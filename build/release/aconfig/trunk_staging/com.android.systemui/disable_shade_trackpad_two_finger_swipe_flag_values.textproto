@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "disable_shade_trackpad_two_finger_swipe"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "reparent_to_default_with_display_removal"
+  state: ENABLED
+  permission: READ_ONLY
+}

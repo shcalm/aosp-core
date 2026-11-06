@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.deviceidle"
+  name: "enable_non_scheduled_exit_from_idle_pending"
+  state: ENABLED
+  permission: READ_ONLY
+}

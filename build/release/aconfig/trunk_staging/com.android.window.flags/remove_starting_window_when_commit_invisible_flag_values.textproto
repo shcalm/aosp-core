@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "remove_starting_window_when_commit_invisible"
+  state: ENABLED
+  permission: READ_WRITE
+}

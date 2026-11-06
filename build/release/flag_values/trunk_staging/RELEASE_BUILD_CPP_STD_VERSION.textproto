@@ -1,0 +1,4 @@
+name: "RELEASE_BUILD_CPP_STD_VERSION"
+value {
+  string_value: "gnu++23"
+}

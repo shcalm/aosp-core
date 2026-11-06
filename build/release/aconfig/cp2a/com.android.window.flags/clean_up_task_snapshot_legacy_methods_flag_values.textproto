@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "clean_up_task_snapshot_legacy_methods"
+  state: ENABLED
+  permission: READ_ONLY
+}

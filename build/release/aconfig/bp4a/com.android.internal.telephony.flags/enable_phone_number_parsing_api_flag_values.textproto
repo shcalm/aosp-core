@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "enable_phone_number_parsing_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

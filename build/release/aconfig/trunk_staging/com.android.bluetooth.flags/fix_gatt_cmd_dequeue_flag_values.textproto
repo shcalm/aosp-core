@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "fix_gatt_cmd_dequeue"
+  state: ENABLED
+  permission: READ_WRITE
+}

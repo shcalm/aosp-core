@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "better_desk_deactivation_in_recents_transition"
+  state: ENABLED
+  permission: READ_WRITE
+}

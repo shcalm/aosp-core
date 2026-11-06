@@ -1,0 +1,8 @@
+name: "RELEASE_SYSTEMUI_BASELINE_PROFILE_ARTIFACT"
+namespace: "systemui"
+description: "b/423915874: Add build flag to specify the profile artifact to be used in a release config."
+value: {
+  string_value: "systemui_baseline_profile_trunk_staging.txt.prof"
+}
+workflow: MANUAL
+containers: "system_ext"

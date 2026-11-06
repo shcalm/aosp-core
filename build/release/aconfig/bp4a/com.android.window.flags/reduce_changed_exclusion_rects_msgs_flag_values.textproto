@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "reduce_changed_exclusion_rects_msgs"
+  state: ENABLED
+  permission: READ_ONLY
+}

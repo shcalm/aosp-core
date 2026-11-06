@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "fix_race_in_orphaned_acls"
+  state: ENABLED
+  permission: READ_ONLY
+}

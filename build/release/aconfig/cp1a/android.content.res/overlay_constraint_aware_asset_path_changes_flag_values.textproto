@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.res"
+  name: "overlay_constraint_aware_asset_path_changes"
+  state: ENABLED
+  permission: READ_ONLY
+}

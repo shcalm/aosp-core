@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_new_optimize_strategy_for_active_result_states"
+  state: ENABLED
+  permission: READ_ONLY
+}

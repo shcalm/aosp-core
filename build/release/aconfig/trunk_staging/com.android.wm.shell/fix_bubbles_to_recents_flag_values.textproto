@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubbles_to_recents"
+  state: ENABLED
+  permission: READ_WRITE
+}

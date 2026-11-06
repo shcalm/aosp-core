@@ -1,0 +1,8 @@
+name: "RELEASE_PACKAGE_NOTO_SANS_TELUGU_VERSION"
+namespace: "text"
+description: "Version of the Noto Sans Telugu font."
+value: {
+  string_value: "2.004"
+}
+workflow: PREBUILT
+containers: "system"

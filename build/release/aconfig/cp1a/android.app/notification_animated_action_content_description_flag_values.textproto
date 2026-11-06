@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "notification_animated_action_content_description"
+  state: ENABLED
+  permission: READ_ONLY
+}

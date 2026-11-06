@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "early_incoming_hid_connection"
+  state: ENABLED
+  permission: READ_WRITE
+}

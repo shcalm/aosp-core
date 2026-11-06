@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wallpaper"
+  name: "desktop_ui_flag"
+  state: ENABLED
+  permission: READ_WRITE
+}

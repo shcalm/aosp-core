@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "translate_imeswitcher_3buttons_with_bubble"
+  state: ENABLED
+  permission: READ_WRITE
+}

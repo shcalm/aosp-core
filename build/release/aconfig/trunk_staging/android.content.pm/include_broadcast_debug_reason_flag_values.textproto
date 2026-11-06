@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "include_broadcast_debug_reason"
+  state: ENABLED
+  permission: READ_WRITE
+}

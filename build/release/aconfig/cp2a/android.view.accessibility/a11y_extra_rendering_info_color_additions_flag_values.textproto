@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "a11y_extra_rendering_info_color_additions"
+  state: ENABLED
+  permission: READ_ONLY
+}

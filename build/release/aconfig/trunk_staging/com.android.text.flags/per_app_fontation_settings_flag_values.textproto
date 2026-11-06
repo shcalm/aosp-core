@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.text.flags"
+  name: "per_app_fontation_settings"
+  state: ENABLED
+  permission: READ_WRITE
+}

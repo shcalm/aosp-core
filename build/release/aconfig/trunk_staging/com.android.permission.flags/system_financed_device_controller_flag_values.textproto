@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.permission.flags"
+  name: "system_financed_device_controller"
+  state: ENABLED
+  permission: READ_ONLY
+}

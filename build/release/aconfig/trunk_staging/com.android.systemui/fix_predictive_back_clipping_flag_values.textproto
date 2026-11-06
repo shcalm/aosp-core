@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fix_predictive_back_clipping"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "touchpad_settings_design_update"
+  state: ENABLED
+  permission: READ_ONLY
+}

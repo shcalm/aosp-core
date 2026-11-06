@@ -1,0 +1,64 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+bootstrap_go_package {
+    name: "soong-filesystem",
+    pkgPath: "android/soong/filesystem",
+    deps: [
+        "blueprint",
+        "blueprint-depset",
+        "blueprint-gobtools",
+        "blueprint-proptools",
+        "soong",
+        "soong-android",
+        "soong-bpf", // for testing
+        "soong-cc-config",
+        "soong-cc", // for testing
+        "soong-etc",
+        "soong-filesystem-ramdisk_16k-common",
+        "soong-java", // for testing
+        "soong-kernel",
+        "soong-linkerconfig",
+        "soong-phony", // for testing
+    ],
+    srcs: [
+        "aconfig_files.go",
+        "android_device.go",
+        "android_device_product_out.go",
+        "avb_add_hash_footer.go",
+        "avb_gen_vbmeta_image.go",
+        "bootimg.go",
+        "bootconfig.go",
+        "bootloader.go",
+        "boot_otas_16k.go",
+        "check_partition_sizes.go",
+        "dtboimg.go",
+        "filesystem.go",
+        "filesystem_enc.go",
+        "find_shareduid_violation_check.go",
+        "fontchain_lint.go",
+        "fsverity_metadata.go",
+        "host_init_verifier_check.go",
+        "logical_partition.go",
+        "prebuilt.go",
+        "raw_binary.go",
+        "radio.go",
+        "ramdisk_16k.go",
+        "recovery_background_pictures.go",
+        "super_image.go",
+        "system_image.go",
+        "system_other.go",
+        "vbmeta.go",
+        "vendor_module_check.go",
+        "testing.go",
+        "tzsw.go",
+    ],
+    testSrcs: [
+        "filesystem_test.go",
+        "find_shareduid_violation_check_test.go",
+        "host_init_verifier_check_test.go",
+        "vendor_module_check_test.go",
+    ],
+    pluginFor: ["soong_build"],
+}

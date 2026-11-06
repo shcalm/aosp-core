@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "remove_depart_target_from_motion"
+  state: ENABLED
+  permission: READ_ONLY
+}

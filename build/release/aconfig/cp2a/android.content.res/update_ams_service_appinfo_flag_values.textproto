@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.res"
+  name: "update_ams_service_appinfo"
+  state: ENABLED
+  permission: READ_ONLY
+}

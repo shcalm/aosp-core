@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "multi_party_anchor_conf"
+  state: ENABLED
+  permission: READ_ONLY
+}

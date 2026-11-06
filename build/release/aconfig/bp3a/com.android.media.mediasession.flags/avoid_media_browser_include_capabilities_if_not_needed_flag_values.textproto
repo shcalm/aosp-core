@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mediasession.flags"
+  name: "avoid_media_browser_include_capabilities_if_not_needed"
+  state: ENABLED
+  permission: READ_ONLY
+}

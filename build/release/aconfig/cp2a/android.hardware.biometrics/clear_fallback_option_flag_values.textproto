@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.biometrics"
+  name: "clear_fallback_option"
+  state: ENABLED
+  permission: READ_ONLY
+}

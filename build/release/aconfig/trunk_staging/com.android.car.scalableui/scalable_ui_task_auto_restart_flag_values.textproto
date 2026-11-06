@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.car.scalableui"
+  name: "scalable_ui_task_auto_restart"
+  state: ENABLED
+  permission: READ_WRITE
+}

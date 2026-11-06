@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.chre.flags"
+  name: "hal_client_new_connect_in_background"
+  state: ENABLED
+  permission: READ_WRITE
+}

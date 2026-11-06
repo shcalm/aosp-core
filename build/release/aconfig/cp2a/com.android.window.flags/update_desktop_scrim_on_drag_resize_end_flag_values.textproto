@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "update_desktop_scrim_on_drag_resize_end"
+  state: ENABLED
+  permission: READ_ONLY
+}

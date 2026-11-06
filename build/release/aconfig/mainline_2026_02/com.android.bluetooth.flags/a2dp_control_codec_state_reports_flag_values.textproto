@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "a2dp_control_codec_state_reports"
+  state: ENABLED
+  permission: READ_ONLY
+}

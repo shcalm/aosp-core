@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.appwidget.flags"
+  name: "check_remote_views_uri_permission"
+  state: ENABLED
+  permission: READ_WRITE
+}

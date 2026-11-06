@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.contactspicker"
+  name: "enable_action_pick_takeover_in_droidfood"
+  state: ENABLED
+  permission: READ_WRITE
+}

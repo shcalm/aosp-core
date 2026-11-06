@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "floating_menu_update_on_feature_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,92 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.bluetooth.hfp;
+
+import android.bluetooth.BluetoothDevice;
+import android.os.Looper;
+import android.util.Log;
+
+import com.android.bluetooth.Util;
+import com.android.bluetooth.btservice.AdapterService;
+import com.android.bluetooth.storage.BluetoothStorageManager;
+
+/** Factory class for object initialization to help with unit testing */
+public class HeadsetObjectsFactory {
+    private static final String TAG = HeadsetObjectsFactory.class.getSimpleName();
+
+    private static HeadsetObjectsFactory sInstance;
+    private static final Object INSTANCE_LOCK = new Object();
+
+    private HeadsetObjectsFactory() {}
+
+    /**
+     * Get the singleton instance of object factory
+     *
+     * @return the singleton instance, guaranteed not null
+     */
+    public static HeadsetObjectsFactory getInstance() {
+        synchronized (INSTANCE_LOCK) {
+            if (sInstance == null) {
+                sInstance = new HeadsetObjectsFactory();
+            }
+        }
+        return sInstance;
+    }
+
+    /**
+     * Allow unit tests to substitute HeadsetObjectsFactory with a test instance
+     *
+     * @param objectsFactory a test instance of the HeadsetObjectsFactory
+     */
+    static void setInstanceForTesting(HeadsetObjectsFactory objectsFactory) {
+        Util.enforceInstrumentationTestMode();
+        synchronized (INSTANCE_LOCK) {
+            Log.d(TAG, "setInstanceForTesting(), set to " + objectsFactory);
+            sInstance = objectsFactory;
+        }
+    }
+
+    /**
+     * @return a {@link HeadsetStateMachine} that is initialized and started, ready to go
+     */
+    public HeadsetStateMachine makeStateMachine(
+            BluetoothDevice device,
+            Looper looper,
+            HeadsetService headsetService,
+            AdapterService adapterService,
+            BluetoothStorageManager storage,
+            HeadsetNativeInterface nativeInterface,
+            HeadsetSystemInterface systemInterface) {
+        return new HeadsetStateMachine(
+                device,
+                looper,
+                headsetService,
+                adapterService,
+                storage,
+                nativeInterface,
+                systemInterface);
+    }
+
+    /**
+     * Destroy a state machine
+     *
+     * @param stateMachine to be destroyed. Cannot be used after this call.
+     */
+    public void destroyStateMachine(HeadsetStateMachine stateMachine) {
+        HeadsetStateMachine.destroy(stateMachine);
+    }
+}

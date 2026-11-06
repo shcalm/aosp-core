@@ -1,0 +1,4 @@
+name: "RELEASE_JARJAR_FLAGS_IN_FRAMEWORK"
+value {
+  bool_value: true
+}

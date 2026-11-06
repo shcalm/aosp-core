@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.codec"
+  name: "decrypt_and_decode_in_hal"
+  state: ENABLED
+  permission: READ_ONLY
+}

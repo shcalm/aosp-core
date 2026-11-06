@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "ignore_unrelated_cancel_bond"
+  state: ENABLED
+  permission: READ_WRITE
+}

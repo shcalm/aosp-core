@@ -1,0 +1,5 @@
+name: "RELEASE_CAR_SYS_EXP_MUMD_SCALABLE_UI_DRIVER"
+namespace: "car_sys_exp"
+description: "b/439667547: This flag controls the enablement of ScalableUI for the driver in the MUMD configuration."
+workflow: LAUNCH
+containers: "system"

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "audio_stream_play_pause_by_modify_source"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "restrict_communal_shade_to_when_idle"
+  state: ENABLED
+  permission: READ_ONLY
+}

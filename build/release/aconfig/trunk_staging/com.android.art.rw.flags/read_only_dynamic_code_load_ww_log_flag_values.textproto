@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "read_only_dynamic_code_load_ww_log"
+  state: ENABLED
+  permission: READ_WRITE
+}

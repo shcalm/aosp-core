@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "reduce_workspace_blur_usage"
+  state: ENABLED
+  permission: READ_WRITE
+}

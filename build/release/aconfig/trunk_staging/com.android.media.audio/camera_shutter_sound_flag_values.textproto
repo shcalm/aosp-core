@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audio"
+  name: "camera_shutter_sound"
+  state: ENABLED
+  permission: READ_WRITE
+}

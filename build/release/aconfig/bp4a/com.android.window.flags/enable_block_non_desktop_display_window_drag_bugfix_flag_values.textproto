@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_block_non_desktop_display_window_drag_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

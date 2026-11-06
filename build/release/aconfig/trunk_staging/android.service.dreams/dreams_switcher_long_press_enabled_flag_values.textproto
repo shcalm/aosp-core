@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.dreams"
+  name: "dreams_switcher_long_press_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

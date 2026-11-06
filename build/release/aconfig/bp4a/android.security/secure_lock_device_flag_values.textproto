@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "secure_lock_device"
+  state: ENABLED
+  permission: READ_ONLY
+}

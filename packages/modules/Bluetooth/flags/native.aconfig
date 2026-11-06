@@ -1,0 +1,56 @@
+package: "com.android.bluetooth.flags"
+container: "com.android.bt"
+
+flag {
+    name: "jni_batch_memory_management"
+    namespace: "bluetooth"
+    description: "jni offer PushLocalFrame/PopLocalFrame to batch memory management"
+    bug: "491599972"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "replace_message_loop_thread_with_gd_handler"
+    namespace: "bluetooth"
+    description: "Use GD Handler and Reactor Thread instead of MessageLoopThread in legacy stack"
+    bug: "418119118"
+}
+
+flag {
+    name: "remove_handler_clear"
+    namespace: "bluetooth"
+    description: "Remove Handler::Clear(), and use the destructor instead."
+    bug: "428667010"
+}
+
+flag {
+    name: "add_watchdog_with_timeout"
+    namespace : "bluetooth"
+    description: "Implement a watchdog mechanism with a set timeout to monitor the AIDL backend callback. If the timeout is exceeded, trigger the generation of a tombstone."
+    bug: "452756731"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "resolve_collision_conn_discon"
+    namespace : "bluetooth"
+    description: "Resolve the collision between connection and disconnection on the same handle."
+    bug: "461368782"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "fix_module_shutdown_sync_with_stack"
+    namespace : "bluetooth"
+    description: "Fix the module shutdown synchronization with the stack."
+    bug: "462626831"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}

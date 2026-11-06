@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "supervision_manager_apis"
+  state: ENABLED
+  permission: READ_WRITE
+}

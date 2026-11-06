@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "device_owner_for_all"
+  state: ENABLED
+  permission: READ_WRITE
+}

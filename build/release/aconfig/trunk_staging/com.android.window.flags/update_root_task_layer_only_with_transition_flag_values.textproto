@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "update_root_task_layer_only_with_transition"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.readonly.flags"
+  name: "use_libbpf"
+  state: ENABLED
+  permission: READ_ONLY
+}

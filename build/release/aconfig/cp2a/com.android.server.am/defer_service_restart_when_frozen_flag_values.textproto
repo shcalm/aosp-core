@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "defer_service_restart_when_frozen"
+  state: ENABLED
+  permission: READ_ONLY
+}

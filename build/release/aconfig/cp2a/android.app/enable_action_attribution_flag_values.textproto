@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "enable_action_attribution"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.platform.flags"
+  name: "reenable_inner_ipv6_on_vpn"
+  state: ENABLED
+  permission: READ_WRITE
+}

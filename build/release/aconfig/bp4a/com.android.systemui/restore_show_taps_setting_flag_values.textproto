@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "restore_show_taps_setting"
+  state: ENABLED
+  permission: READ_ONLY
+}

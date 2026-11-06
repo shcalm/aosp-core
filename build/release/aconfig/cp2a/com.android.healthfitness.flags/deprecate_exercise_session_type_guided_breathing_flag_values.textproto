@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "deprecate_exercise_session_type_guided_breathing"
+  state: ENABLED
+  permission: READ_ONLY
+}

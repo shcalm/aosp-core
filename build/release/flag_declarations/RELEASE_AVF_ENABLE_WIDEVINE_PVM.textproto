@@ -1,0 +1,8 @@
+name: "RELEASE_AVF_ENABLE_WIDEVINE_PVM"
+namespace: "virtualization"
+description: "Adds supports for Widevine pVM"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

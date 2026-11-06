@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "stk_send_sms_terminal_response_on_send_success"
+  state: ENABLED
+  permission: READ_ONLY
+}

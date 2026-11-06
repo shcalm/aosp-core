@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "dialog_background_refresh"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "simulate_touch_display_from_navigation_back"
+  state: ENABLED
+  permission: READ_ONLY
+}

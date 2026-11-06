@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "always_seq_id_layout"
+  state: ENABLED
+  permission: READ_WRITE
+}

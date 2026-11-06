@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "clear_scrim_on_reset"
+  state: ENABLED
+  permission: READ_ONLY
+}

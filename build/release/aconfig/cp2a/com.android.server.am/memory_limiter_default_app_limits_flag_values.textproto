@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "memory_limiter_default_app_limits"
+  state: ENABLED
+  permission: READ_ONLY
+}

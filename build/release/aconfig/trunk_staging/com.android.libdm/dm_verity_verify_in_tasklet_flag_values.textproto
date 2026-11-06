@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.libdm"
+  name: "dm_verity_verify_in_tasklet"
+  state: ENABLED
+  permission: READ_ONLY
+}

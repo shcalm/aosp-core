@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "fix_pin_storage_deadlock"
+  state: ENABLED
+  permission: READ_WRITE
+}

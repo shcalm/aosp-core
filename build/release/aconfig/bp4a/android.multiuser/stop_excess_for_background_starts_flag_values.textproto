@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "stop_excess_for_background_starts"
+  state: ENABLED
+  permission: READ_ONLY
+}

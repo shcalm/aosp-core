@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "audio_focus_desktop"
+  state: ENABLED
+  permission: READ_WRITE
+}

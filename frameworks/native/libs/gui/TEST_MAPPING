@@ -1,0 +1,101 @@
+{
+  "desktop-presubmit": [
+    {
+      "name": "CfVkmsCursorTest"
+    }
+  ],
+  "imports": [
+    {
+      "path": "frameworks/native/libs/nativewindow"
+    },
+    {
+      "path": "frameworks/native/services/surfaceflinger"
+    },
+    {
+      "path": "frameworks/base/tests/ChoreographerTests"
+    }
+  ],
+  "wm": [
+    {
+      "name": "libgui_test",
+      "options": [
+        // TODO(b/277604286): Failing on Cuttlefish.
+        {
+          "exclude-filter": "MultiTextureConsumerTest#EGLImageTargetWorks"
+        },
+
+        // TODO(b/285011590): Failing on Cuttlefish.
+        {
+          "exclude-filter": "SurfaceTest#GetHdrSupport"
+        },
+        {
+          "exclude-filter": "SurfaceTest#GetWideColorSupport"
+        },
+
+        // TODO(b/285006554): Failing on Cuttlefish.
+        {
+          "exclude-filter": "SurfaceTextureGLTest#InvalidWidthOrHeightFails"
+        },
+
+        // TODO(b/277347351): Known test data issues, failing across devices.
+        {
+          "exclude-filter": "SurfaceTextureGLTest#TexturingFromCpuFilledYV12BufferNpot"
+        },
+        {
+          "exclude-filter": "SurfaceTextureGLTest#TexturingFromCpuFilledYV12BufferPow2"
+        },
+        {
+          "exclude-filter": "SurfaceTextureGLTest#TexturingFromCpuFilledYV12BufferWithCrop"
+        },
+        {
+          "exclude-filter": "SurfaceTextureGLTest#TexturingFromCpuFilledYV12BuffersRepeatedly"
+        },
+
+        // TODO(b/285041169): Hanging on Cuttlefish.
+        {
+          "exclude-filter": "SurfaceTextureGLThreadToGLTest#UpdateTexImageBeforeFrameFinishedCompletes"
+        },
+        {
+          "exclude-filter": "SurfaceTextureGLThreadToGLTest#RepeatedUpdateTexImageBeforeFrameFinishedCompletes"
+        },
+        {
+          "exclude-filter": "SurfaceTextureGLThreadToGLTest#RepeatedUpdateTexImageAfterFrameFinishedCompletes"
+        },
+
+        // TODO(b/285041070): Failing on Cuttlefish.
+        {
+          "exclude-filter": "SurfaceTextureGLToGLTest#EglDestroySurfaceUnrefsBuffers"
+        }
+      ]
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "libgui_test",
+      "keywords": [ "primary-device" ],
+      "options": [
+        // TODO(b/397776630): Failing on real devices.
+        {
+          "exclude-filter": "InputSurfacesTest#input_respects_scaled_touchable_region_overflow"
+        },
+	// TODO(b/233363648): Failing on real devices.
+        {
+          "exclude-filter": "SurfaceTextureGLTest#TexturingFromCpuFilledYV12BufferNpot"
+        },
+        {
+          "exclude-filter": "SurfaceTextureGLTest#TexturingFromCpuFilledYV12BufferPow2"
+        },
+        {
+          "exclude-filter": "SurfaceTextureGLTest#TexturingFromCpuFilledYV12BufferWithCrop"
+        },
+	// TODO(b/233363648): Flaky on real devices.
+        {
+          "exclude-filter": "SurfaceTextureGLToGLTest#EglMakeCurrentBeforeConsumerDeathUnrefsBuffers"
+        },
+        {
+          "exclude-filter": "SurfaceTextureGLToGLTest#EglMakeCurrentAfterConsumerDeathUnrefsBuffers"
+        }
+      ]
+    }
+  ]
+}

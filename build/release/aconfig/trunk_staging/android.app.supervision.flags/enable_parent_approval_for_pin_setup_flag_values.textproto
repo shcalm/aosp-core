@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "enable_parent_approval_for_pin_setup"
+  state: ENABLED
+  permission: READ_WRITE
+}

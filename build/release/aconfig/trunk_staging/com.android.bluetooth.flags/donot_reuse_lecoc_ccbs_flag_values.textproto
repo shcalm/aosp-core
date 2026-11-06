@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "donot_reuse_lecoc_ccbs"
+  state: ENABLED
+  permission: READ_WRITE
+}

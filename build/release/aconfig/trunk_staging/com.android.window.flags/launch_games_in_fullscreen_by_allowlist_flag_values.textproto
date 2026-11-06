@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "launch_games_in_fullscreen_by_allowlist"
+  state: ENABLED
+  permission: READ_WRITE
+}

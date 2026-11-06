@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "add_new_local_disconnect_reason"
+  state: ENABLED
+  permission: READ_ONLY
+}

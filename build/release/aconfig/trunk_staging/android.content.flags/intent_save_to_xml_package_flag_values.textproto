@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.flags"
+  name: "intent_save_to_xml_package"
+  state: ENABLED
+  permission: READ_WRITE
+}

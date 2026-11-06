@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "delay_jv_pm_idle"
+  state: ENABLED
+  permission: READ_WRITE
+}

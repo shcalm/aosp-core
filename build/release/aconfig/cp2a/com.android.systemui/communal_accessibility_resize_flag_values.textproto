@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "communal_accessibility_resize"
+  state: ENABLED
+  permission: READ_ONLY
+}

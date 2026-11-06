@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_density_reset_on_cross_displays_pip_launch"
+  state: ENABLED
+  permission: READ_WRITE
+}

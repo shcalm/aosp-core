@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "track_event_incremental_state_clear_not_destroy"
+  state: ENABLED
+  permission: READ_ONLY
+}

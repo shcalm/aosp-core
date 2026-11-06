@@ -1,0 +1,6 @@
+flag_value {
+    package: "com.android.aconfig.test.mainline_beta"
+    name: "beta_enabled_rw"
+    state: ENABLED
+    permission: READ_WRITE
+}

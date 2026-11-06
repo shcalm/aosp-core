@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "taskbar_running_tasks_in_splitscreen_select"
+  state: ENABLED
+  permission: READ_ONLY
+}

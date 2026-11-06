@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.flags"
+  name: "notify_gpu_load_up"
+  state: ENABLED
+  permission: READ_ONLY
+}

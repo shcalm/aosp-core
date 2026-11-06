@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mediasession.flags"
+  name: "override_media_session_owner"
+  state: ENABLED
+  permission: READ_ONLY
+}

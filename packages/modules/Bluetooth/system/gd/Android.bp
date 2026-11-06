@@ -1,0 +1,725 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "system_bt_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    //   SPDX-license-identifier-BSD
+    default_applicable_licenses: ["system_bt_license"],
+}
+
+cc_defaults {
+    name: "gd_defaults",
+    defaults: [
+        "bluetooth_cflags",
+        "bluetooth_tidy",
+    ],
+    target: {
+        android: {
+            test_config_template: "AndroidTestTemplate.xml",
+            shared_libs: [
+                "liblog",
+            ],
+            // sanitize: {
+            //     misc_undefined: ["bounds"],
+            // },
+        },
+        darwin: {
+            enabled: false,
+        },
+    },
+    cflags: [
+        "-DEXPORT_SYMBOL=__attribute__((visibility(\"default\")))",
+        "-DGOOGLE_PROTOBUF_NO_RTTI",
+        "-DLOG_NDEBUG=0",
+        "-fvisibility=hidden",
+    ],
+    header_libs: ["jni_headers"],
+}
+
+cc_defaults {
+    name: "libbluetooth_gd_defaults",
+    defaults: [
+        "gd_defaults",
+        "libbluetooth_gd_os_defaults",
+    ],
+    host_supported: true,
+    target: {
+        host: {
+            srcs: [
+                "hal/hci_hal_impl_host_rootcanal.cc",
+                "os/host/parameter_provider.cc",
+                "os/host/system_properties.cc",
+                "os/host/wakelock_native.cc",
+            ],
+        },
+        android: {
+            srcs: [
+                "hal/gatt_hal_impl_android.cc",
+                "hal/hci_backend_aidl.cc",
+                "hal/hci_backend_hidl.cc",
+                "hal/hci_hal_impl_android.cc",
+                "hal/ranging_hal_impl_android.cc",
+                "hal/socket_hal_impl_android.cc",
+                "os/android/parameter_provider.cc",
+                "os/android/system_properties.cc",
+                "os/android/wakelock_native.cc",
+            ],
+            shared_libs: [
+                "android.hardware.bluetooth@1.0",
+                "android.hardware.bluetooth@1.1",
+                "android.system.suspend-V1-ndk",
+                "android.system.suspend.control-V1-ndk",
+                "libbinder_ndk",
+                "libcutils",
+                "libhidlbase",
+                "libstatssocket",
+                "libutils",
+            ],
+            static_libs: [
+                "libperfetto_client_experimental",
+            ],
+            whole_static_libs: [
+                "android.hardware.bluetooth-V1-ndk",
+                "android.hardware.bluetooth.gatt-V1-ndk",
+                "android.hardware.bluetooth.ranging-V2-ndk",
+                "android.hardware.bluetooth.socket-V1-ndk",
+                "android.hardware.contexthub-V4-ndk",
+            ],
+        },
+    },
+    srcs: [
+        ":BluetoothPacketSources",
+        "common/audit_log.cc",
+        "common/stop_watch.cc",
+        "common/utils.cc",
+        "common/watchdog.cc",
+        "hal/link_clocker.cc",
+        "hal/snoop_logger.cc",
+        "hal/snoop_logger_file.cc",
+        "hal/snoop_logger_socket.cc",
+        "hal/snoop_logger_socket_thread.cc",
+        "hal/snoop_logger_tracing.cc",
+        "hal/syscall_wrapper_impl.cc",
+        "hci/acl_manager/acl_connection.cc",
+        "hci/acl_manager/acl_fragmenter.cc",
+        "hci/acl_manager/acl_manager_classic_impl.cc",
+        "hci/acl_manager/acl_manager_le_impl.cc",
+        "hci/acl_manager/acl_scheduler.cc",
+        "hci/acl_manager/classic_acl_connection.cc",
+        "hci/acl_manager/le_acl_connection.cc",
+        "hci/acl_manager/round_robin_scheduler.cc",
+        "hci/channel_sounding/cs_metrics.cc",
+        "hci/controller_impl.cc",
+        "hci/distance_measurement_manager_impl.cc",
+        "hci/hci_layer.cc",
+        "hci/hci_metrics_logging.cc",
+        "hci/le_address_manager.cc",
+        "hci/le_advertising_manager_impl.cc",
+        "hci/le_scanning_manager_impl.cc",
+        "hci/le_scanning_reassembler.cc",
+        "hci/msft.cc",
+        "hci/remote_name_request_impl.cc",
+        "lpp/lpp_offload_manager.cc",
+        "os/rand.cc",
+        "os/system_properties_common.cc",
+        "storage/config_cache.cc",
+        "storage/config_cache_helper.cc",
+        "storage/device.cc",
+        "storage/legacy_config_file.cc",
+        "storage/storage_module.cc",
+    ],
+    shared_libs: [
+        "libcrypto",
+        "libflatbuffers-cpp",
+        "liblog",
+    ],
+    export_shared_lib_headers: [
+        "libflatbuffers-cpp",
+    ],
+    whole_static_libs: [
+        "libbluetooth_hci_pdl",
+        "libbluetooth_l2cap_pdl",
+        "libbluetooth_ras_pdl",
+        "libbluetooth_smp_pdl",
+    ],
+    static_libs: [
+        "libaconfig_storage_read_api_cc",
+        "libbase",
+        "libbluetooth_crypto_toolbox",
+        "libbluetooth_log",
+        "libbluetooth_metrics",
+        "libbluetooth_types",
+        "libbt-common",
+        "libcom.android.sysprop.bluetooth.wrapped",
+        "libosi",
+        "server_configurable_flags",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system/include",
+    ],
+}
+
+cc_library_static {
+    name: "libbluetooth_gd_os",
+    defaults: [
+        "libbluetooth_gd_os_defaults",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system",
+    ],
+    apex_available: ["com.android.bt"],
+    min_sdk_version: "36",
+    static_libs: [
+        "bluetooth_flags_c_lib",
+        "libchrome",
+    ],
+}
+
+cc_library_static {
+    name: "libbluetooth_gd_os_mock",
+    defaults: ["gd_defaults"],
+    host_supported: true,
+    test_only: true,
+    srcs: [
+        "os/rand.cc",
+    ],
+    static_libs: [
+        "libbluetooth_log",
+        "libgmock",
+    ],
+    shared_libs: [
+        "libcrypto",
+    ],
+    include_dirs: ["packages/modules/Bluetooth/system/gd"],
+}
+
+cc_defaults {
+    name: "libbluetooth_gd_os_defaults",
+    host_supported: true,
+    srcs: [
+        "os/handler.cc",
+        "os/linux_generic/alarm.cc",
+        "os/linux_generic/boottime_clock.cc",
+        "os/linux_generic/files.cc",
+        "os/linux_generic/reactive_semaphore.cc",
+        "os/linux_generic/reactor.cc",
+        "os/linux_generic/repeating_alarm.cc",
+        "os/linux_generic/thread.cc",
+        "os/linux_generic/timed_mutex.cc",
+        "os/linux_generic/wakelock_manager.cc",
+    ],
+    static_libs: [
+        "bluetooth_flags_c_lib",
+        "libaconfig_storage_read_api_cc",
+        "libbase",
+        "libbluetooth_crypto_toolbox",
+        "libbluetooth_log",
+        "libbluetooth_metrics",
+        "libbluetooth_types",
+        "libcom.android.sysprop.bluetooth.wrapped",
+        "libosi",
+        "server_configurable_flags",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system/include",
+    ],
+}
+
+cc_library_static {
+    name: "libbluetooth_gd",
+    defaults: [
+        "libbluetooth_gd_defaults",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system",
+    ],
+    apex_available: ["com.android.bt"],
+    min_sdk_version: "36",
+    static_libs: [
+        "bluetooth_flags_c_lib",
+        "libchrome",
+    ],
+}
+
+cc_library_static {
+    name: "libbluetooth_gd_fuzzing",
+    defaults: [
+        "libbluetooth_gd_defaults",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system",
+    ],
+    srcs: [
+        "os/fake_timer/fake_timerfd.cc",
+    ],
+    cflags: [
+        "-DFUZZ_TARGET",
+        "-DUSE_FAKE_TIMERS",
+    ],
+    static_libs: [
+        "bluetooth_flags_c_lib_for_test",
+        "libbluetooth_types",
+        "libbt-common",
+        "libchrome",
+        "libosi",
+    ],
+}
+
+cc_library_static {
+    name: "libbluetooth_gd_unit_tests",
+    defaults: [
+        "libbluetooth_gd_defaults",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system",
+    ],
+    srcs: [
+        "os/fake_timer/fake_timerfd.cc",
+    ],
+    cflags: [
+        "-DUSE_FAKE_TIMERS",
+    ],
+    static_libs: [
+        "bluetooth_flags_c_lib_for_test",
+        "libbluetooth_types",
+        "libbt-common",
+        "libchrome",
+        "libosi",
+    ],
+}
+
+cc_test {
+    name: "bluetooth_test_with_timerfd",
+    test_suites: ["general-tests"],
+    defaults: [
+        "gd_defaults",
+        "mts_defaults",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system",
+        "packages/modules/Bluetooth/system/include",
+    ],
+    host_supported: true,
+    target: {
+        host: {
+            srcs: ["os/host/system_properties.cc"],
+            sanitize: {
+                address: true,
+            },
+        },
+        android: {
+            srcs: ["os/android/system_properties.cc"],
+            sanitize: {
+                address: false, // TODO(b/481480264) - Mts can't run with asan
+            },
+        },
+    },
+    srcs: [
+        "os/handler.cc",
+        "os/linux_generic/alarm.cc",
+        "os/linux_generic/alarm_timerfd_unittest.cc",
+        "os/linux_generic/boottime_clock.cc",
+        "os/linux_generic/files.cc",
+        "os/linux_generic/reactive_semaphore.cc",
+        "os/linux_generic/reactor.cc",
+        "os/linux_generic/repeating_alarm.cc",
+        "os/linux_generic/thread.cc",
+        "os/linux_generic/timed_mutex.cc",
+    ],
+    static_libs: [
+        "bluetooth_flags_c_lib_for_test",
+        "libaconfig_storage_read_api_cc",
+        "libbluetooth_log",
+        "libbluetooth_types",
+        "libchrome",
+        "libgmock",
+        "server_configurable_flags",
+    ],
+    shared_libs: [
+        "libbase",
+        "liblog",
+    ],
+    min_sdk_version: "36",
+}
+
+/**
+ * This tests module will test with a real timer. It is not included in the
+ * bluetooth_test_gd_unit test because it may take too long to run on
+ * Android as it uses a real timer.
+ */
+cc_test {
+    name: "bluetooth_test_gd_unit_rt",
+    test_suites: ["general-tests"],
+    defaults: [
+        "gd_defaults",
+        "mts_defaults",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system",
+        "packages/modules/Bluetooth/system/include",
+    ],
+    host_supported: true,
+    // TODO(b/231993739): Reenable isolated:true by deleting the explicit disable below
+    isolated: false,
+    srcs: [
+        "os/handler_unittest_rt.cc",
+    ],
+    static_libs: [
+        "bluetooth_flags_c_lib_for_test",
+        "libPlatformProperties",
+        "libbase",
+        "libbluetooth_crypto_toolbox",
+        "libbluetooth_gd",
+        "libbluetooth_log",
+        "libbt-common",
+        "libbtdevice",
+        "libchrome",
+        "libcom.android.sysprop.bluetooth.wrapped",
+        "libflagtest",
+        "libflatbuffers-cpp",
+        "libgmock",
+        "libosi",
+        "server_configurable_flags",
+    ],
+    shared_libs: [
+        "libaconfig_storage_read_api_cc",
+        "libcrypto",
+        "liblog",
+    ],
+    sanitize: {
+        // TODO(b/484475434): Mts fails with asan
+        address: false,
+    },
+    min_sdk_version: "36",
+}
+
+cc_test {
+    name: "bluetooth_test_gd_unit",
+    test_suites: ["general-tests"],
+    defaults: [
+        "gd_defaults",
+        "mts_defaults",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system",
+        "packages/modules/Bluetooth/system/include",
+    ],
+    host_supported: true,
+    // TODO(b/231993739): Reenable isolated:true by deleting the explicit disable below
+    isolated: false,
+    target: {
+        linux: {
+            sanitize: {
+                address: true,
+            },
+            srcs: [
+                "os/linux_generic/alarm_unittest.cc",
+                "os/linux_generic/files_test.cc",
+                "os/linux_generic/queue_unittest.cc",
+                "os/linux_generic/reactor_unittest.cc",
+                "os/linux_generic/repeating_alarm_unittest.cc",
+                "os/linux_generic/thread_unittest.cc",
+                "os/linux_generic/timed_mutex_unittest.cc",
+                "os/linux_generic/wakelock_manager_unittest.cc",
+            ],
+        },
+        host: {
+            sanitize: {
+                address: true,
+
+            },
+            srcs: [
+                "hal/hci_hal_impl_host_rootcanal_test.cc",
+            ],
+        },
+        android: {
+            sanitize: {
+                // TODO(b/484475434): Mts fails with asan
+                address: false,
+                cfi: false,
+            },
+            srcs: [
+                "hal/hci_hal_impl_android_test.cc",
+                "os/android/wakelock_native_test.cc",
+            ],
+            static_libs: [
+                "android.hardware.bluetooth@1.0",
+                "android.hardware.bluetooth@1.1",
+                "android.system.suspend-V1-ndk",
+                "android.system.suspend.control-V1-ndk",
+                "libperfetto_client_experimental",
+            ],
+            shared_libs: [
+                "libbinder_ndk",
+                "libcutils",
+                "libhidlbase",
+                "libstatssocket",
+                "libutils",
+            ],
+        },
+    },
+    srcs: [
+        ":BluetoothPacketTestSources",
+        ":TestCommonMockFunctions",
+        ":TestMockMainShim",
+        ":TestMockMainShimEntry",
+        "common/bidi_queue_unittest.cc",
+        "common/blocking_queue_unittest.cc",
+        "common/byte_array_test.cc",
+        "common/circular_buffer_test.cc",
+        "common/list_map_test.cc",
+        "common/lru_cache_test.cc",
+        "common/multi_priority_queue_test.cc",
+        "common/numbers_test.cc",
+        "common/sync_map_count_test.cc",
+        "common/watchdog_test.cc",
+        "crypto_toolbox/crypto_toolbox_test.cc",
+        "hal/hci_hal_fake.cc",
+        "hal/snoop_logger_socket_test.cc",
+        "hal/snoop_logger_socket_thread_test.cc",
+        "hal/snoop_logger_test.cc",
+        "hci/acl_builder_test.cc",
+        "hci/acl_manager/acl_manager_classic_impl_test.cc",
+        "hci/acl_manager/acl_manager_classic_impl_unittest.cc",
+        "hci/acl_manager/acl_manager_le_impl_test.cc",
+        "hci/acl_manager/acl_scheduler_test.cc",
+        "hci/acl_manager/classic_acl_connection_test.cc",
+        "hci/acl_manager/classic_impl_test.cc",
+        "hci/acl_manager/le_acl_connection_test.cc",
+        "hci/acl_manager/le_impl_test.cc",
+        "hci/acl_manager/round_robin_scheduler_test.cc",
+        "hci/address_unittest.cc",
+        "hci/address_with_type_test.cc",
+        "hci/class_of_device_unittest.cc",
+        "hci/controller_impl_test.cc",
+        "hci/distance_measurement_manager_impl_test.cc",
+        "hci/hci_layer_fake.cc",
+        "hci/hci_layer_test.cc",
+        "hci/hci_layer_unittest.cc",
+        "hci/hci_packets_test.cc",
+        "hci/le_address_manager_test.cc",
+        "hci/le_advertising_manager_impl_test.cc",
+        "hci/le_periodic_sync_manager_test.cc",
+        "hci/le_scanning_manager_impl_test.cc",
+        "hci/le_scanning_reassembler_test.cc",
+        "hci/msft_unittest.cc",
+        "hci/remote_name_request_impl_test.cc",
+        "os/handler_unittest.cc",
+        "os/parameter_provider_test.cc",
+        "os/system_properties_common_test.cc",
+        "storage/config_cache_helper_test.cc",
+        "storage/config_cache_test.cc",
+        "storage/device_test.cc",
+        "storage/le_device_test.cc",
+        "storage/legacy_config_file_test.cc",
+        "storage/storage_module_test.cc",
+    ],
+    cflags: [
+        "-DUSE_FAKE_TIMERS",
+    ],
+    static_libs: [
+        "bluetooth_flags_c_lib_for_test",
+        "libPlatformProperties",
+        "libbase",
+        "libbluetooth_crypto_toolbox",
+        "libbluetooth_gd_os_mock",
+        "libbluetooth_gd_unit_tests",
+        "libbluetooth_hci_pdl",
+        "libbluetooth_l2cap_pdl",
+        "libbluetooth_log",
+        "libbluetooth_metrics_mock",
+        "libbluetooth_ras_pdl",
+        "libbluetooth_smp_pdl",
+        "libbluetooth_types",
+        "libbt-common",
+        "libbt-stack-mock",
+        "libbtdevice",
+        "libchrome",
+        "libcom.android.sysprop.bluetooth.wrapped",
+        "libflagtest",
+        "libflatbuffers-cpp",
+        "libgmock",
+        "libosi",
+        "libutils",
+        "server_configurable_flags",
+    ],
+    shared_libs: [
+        "libaconfig_storage_read_api_cc",
+        "libcrypto",
+        "liblog",
+    ],
+    min_sdk_version: "36",
+}
+
+cc_test {
+    name: "bluetooth_packet_parser_test",
+    test_suites: ["general-tests"],
+    defaults: [
+        "gd_defaults",
+        "mts_defaults",
+    ],
+    include_dirs: ["packages/modules/Bluetooth/system/gd"],
+    host_supported: true,
+    test_options: {
+        unit_test: true,
+    },
+    srcs: [
+        ":BluetoothPacketParserTestPacketTestSources",
+        ":BluetoothPacketSources",
+    ],
+    generated_headers: [
+        "BluetoothPacketParserTestPacketPdlGen_h",
+    ],
+    sanitize: {
+        address: true,
+        cfi: true,
+    },
+    static_libs: [
+        "libbase",
+        "libbluetooth_log",
+        "liblog",
+    ],
+    target: {
+        android: {
+            shared_libs: [
+                "libcutils",
+                "libhidlbase",
+                "libutils",
+            ],
+        },
+        host_linux: {
+            shared_libs: [
+                "libcutils",
+                "libhidlbase",
+                "libutils",
+            ],
+        },
+    },
+    min_sdk_version: "36",
+}
+
+cc_defaults {
+    name: "gd_fuzz_defaults",
+    defaults: [
+        "bluetooth_fuzz_config",
+        "gd_defaults",
+    ],
+    srcs: [
+        ":TestMockMainShimEntry",
+        "fuzz/helpers.cc",
+        "hci/fuzz/fuzz_hci_layer.cc",
+        "hci/fuzz/hci_layer_fuzz_client.cc",
+        "hci/fuzz/status_vs_complete_commands.cc",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system",
+    ],
+    static_libs: [
+        "bluetooth_flags_c_lib_for_test",
+        "libPlatformProperties",
+        "libbluetooth_crypto_toolbox",
+        "libbluetooth_gd_fuzzing",
+        "libbluetooth_log",
+        "libbluetooth_metrics_mock",
+        "libbluetooth_types",
+        "libbt-common",
+        "libchrome",
+        "libcom.android.sysprop.bluetooth.wrapped",
+        "libgmock",
+        "libgtest",
+        "libosi",
+    ],
+    host_supported: true,
+    shared_libs: [
+        "libaconfig_storage_read_api_cc",
+        "libbase",
+        "libcrypto",
+        "libgrpc++",
+        "libgrpc_wrap",
+        "liblog",
+        "server_configurable_flags",
+    ],
+    cflags: [
+        "-DFUZZ_TARGET",
+        "-DUSE_FAKE_TIMERS",
+        "-Wno-missing-prototypes",
+    ],
+    target: {
+        android: {
+            shared_libs: [
+                "android.hardware.bluetooth@1.0",
+                "android.hardware.bluetooth@1.1",
+                "android.system.suspend.control-V1-ndk",
+                "libbinder_ndk",
+                "libcutils",
+                "libhidlbase",
+                "libutils",
+            ],
+            static_libs: [
+                "libperfetto_client_experimental",
+            ],
+        },
+    },
+}
+
+cc_fuzz {
+    name: "bluetooth_gd_fuzz_test",
+    defaults: ["gd_fuzz_defaults"],
+    srcs: [
+        "fuzz_test.cc",
+        "hci/hci_packets_fuzz_test.cc",
+    ],
+}
+
+cc_fuzz {
+    name: "bluetooth_gd_hci_layer_fuzz_test",
+    defaults: ["gd_fuzz_defaults"],
+    srcs: [
+        "hal/fuzz/fuzz_hci_hal.cc",
+        "hci/fuzz/hci_layer_fuzz_test.cc",
+    ],
+}
+
+cc_fuzz {
+    name: "bluetooth_gd_acl_manager_fuzz_test",
+    defaults: ["gd_fuzz_defaults"],
+    srcs: [
+        ":TestCommonMockFunctions",
+        ":TestMockMainShim",
+        "hci/fuzz/acl_manager_fuzz_test.cc",
+    ],
+    static_libs: [
+        "libbt-stack-mock",
+        "libbtdevice",
+    ],
+    include_dirs: [
+        "packages/modules/Bluetooth/system",
+        "packages/modules/Bluetooth/system/include",
+    ],
+}
+
+cc_benchmark {
+    name: "bluetooth_benchmark_gd",
+    defaults: [
+        "aconfig_lib_cc_shared_link.defaults",
+        "gd_defaults",
+    ],
+    host_supported: true,
+    srcs: [
+        "benchmark.cc",
+        "os/alarm_benchmark.cc",
+        "os/handler_benchmark.cc",
+        "os/queue_benchmark.cc",
+        "os/thread_benchmark.cc",
+    ],
+    static_libs: [
+        "bluetooth_flags_c_lib_for_test",
+        "libbase",
+        "libbluetooth_gd",
+        "libbluetooth_log",
+        "libchrome",
+        "liblog",
+        "server_configurable_flags",
+    ],
+}

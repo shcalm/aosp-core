@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "display_aware_shade_controller_impl"
+  state: ENABLED
+  permission: READ_ONLY
+}

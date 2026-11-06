@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "enforcing_admin_get_component_name_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

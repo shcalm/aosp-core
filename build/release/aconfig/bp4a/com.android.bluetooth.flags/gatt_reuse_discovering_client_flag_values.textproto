@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "gatt_reuse_discovering_client"
+  state: ENABLED
+  permission: READ_ONLY
+}

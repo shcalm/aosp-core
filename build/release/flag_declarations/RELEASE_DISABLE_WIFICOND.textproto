@@ -1,0 +1,5 @@
+name: "RELEASE_DISABLE_WIFICOND"
+namespace: "wifi"
+description: "Disable wificond from running"
+workflow: LAUNCH
+containers: "system"

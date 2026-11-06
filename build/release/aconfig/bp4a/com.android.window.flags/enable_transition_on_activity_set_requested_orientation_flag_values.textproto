@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_transition_on_activity_set_requested_orientation"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "predictive_back_quick_double_back_swipes"
+  state: ENABLED
+  permission: READ_WRITE
+}

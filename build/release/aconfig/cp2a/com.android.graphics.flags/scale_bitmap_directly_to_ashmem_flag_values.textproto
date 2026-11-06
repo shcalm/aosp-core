@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.flags"
+  name: "scale_bitmap_directly_to_ashmem"
+  state: ENABLED
+  permission: READ_ONLY
+}

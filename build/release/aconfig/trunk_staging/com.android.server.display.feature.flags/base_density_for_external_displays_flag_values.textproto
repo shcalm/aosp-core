@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "base_density_for_external_displays"
+  state: ENABLED
+  permission: READ_ONLY
+}

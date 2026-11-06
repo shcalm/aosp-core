@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.car"
+  name: "scalable_ui_no_suw_home"
+  state: ENABLED
+  permission: READ_ONLY
+}

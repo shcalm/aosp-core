@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "show_create_widget_btn_in_picker"
+  state: ENABLED
+  permission: READ_ONLY
+}

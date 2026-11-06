@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_broadcast_always_clear_notified_flags"
+  state: ENABLED
+  permission: READ_ONLY
+}

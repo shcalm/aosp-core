@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_mirror_display_no_activity"
+  state: ENABLED
+  permission: READ_WRITE
+}

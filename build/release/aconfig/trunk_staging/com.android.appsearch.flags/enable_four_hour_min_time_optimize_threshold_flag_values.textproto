@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_four_hour_min_time_optimize_threshold"
+  state: ENABLED
+  permission: READ_WRITE
+}

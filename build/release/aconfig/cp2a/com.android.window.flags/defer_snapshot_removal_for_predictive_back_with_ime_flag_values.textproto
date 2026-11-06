@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "defer_snapshot_removal_for_predictive_back_with_ime"
+  state: ENABLED
+  permission: READ_ONLY
+}

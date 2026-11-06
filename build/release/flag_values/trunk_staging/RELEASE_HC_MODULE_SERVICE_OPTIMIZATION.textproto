@@ -1,0 +1,4 @@
+name: "RELEASE_HC_MODULE_SERVICE_OPTIMIZATION"
+value {
+  bool_value: true
+}

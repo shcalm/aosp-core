@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "core_settings_multi_user"
+  state: ENABLED
+  permission: READ_WRITE
+}

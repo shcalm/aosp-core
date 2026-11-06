@@ -1,0 +1,1860 @@
+/*	$NetBSD: getaddrinfo.c,v 1.82 2006/03/25 12:09:40 rpaulo Exp $	*/
+/*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
+
+/*
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the project nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE PROJECT OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#define LOG_TAG "resolv"
+
+#include "getaddrinfo.h"
+
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <assert.h>
+#include <ctype.h>
+#include <fcntl.h>
+#include <net/if.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/un.h>
+#include <unistd.h>
+#include <chrono>
+#include <future>
+
+#include <android-base/logging.h>
+#include <android-base/parseint.h>
+#include <android-base/unique_fd.h>
+
+#include "Experiments.h"
+#include "addrlabel.h"
+#include "netd_resolv/resolv.h"
+#include "res_comp.h"
+#include "res_debug.h"
+#include "resolv_cache.h"
+#include "resolv_private.h"
+
+#define ANY 0
+
+using android::net::Experiments;
+using android::net::NetworkDnsEventReported;
+
+const char in_addrany[] = {0, 0, 0, 0};
+const char in_loopback[] = {127, 0, 0, 1};
+const char in6_addrany[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+const char in6_loopback[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
+
+const struct afd {
+    int a_af;
+    int a_addrlen;
+    int a_socklen;
+    int a_off;
+    const char* a_addrany;
+    const char* a_loopback;
+    int a_scoped;
+} afdl[] = {
+        {PF_INET6, sizeof(struct in6_addr), sizeof(struct sockaddr_in6),
+         offsetof(struct sockaddr_in6, sin6_addr), in6_addrany, in6_loopback, 1},
+        {PF_INET, sizeof(struct in_addr), sizeof(struct sockaddr_in),
+         offsetof(struct sockaddr_in, sin_addr), in_addrany, in_loopback, 0},
+        {0, 0, 0, 0, NULL, NULL, 0},
+};
+
+struct Explore {
+    int e_af;
+    int e_socktype;
+    int e_protocol;
+    int e_wild;
+#define WILD_AF(ex) ((ex).e_wild & 0x01)
+#define WILD_SOCKTYPE(ex) ((ex).e_wild & 0x02)
+#define WILD_PROTOCOL(ex) ((ex).e_wild & 0x04)
+};
+
+const Explore explore_options[] = {
+        {PF_INET6, SOCK_DGRAM, IPPROTO_UDP, 0x07},
+        {PF_INET6, SOCK_STREAM, IPPROTO_TCP, 0x07},
+        {PF_INET6, SOCK_RAW, ANY, 0x05},
+        {PF_INET, SOCK_DGRAM, IPPROTO_UDP, 0x07},
+        {PF_INET, SOCK_STREAM, IPPROTO_TCP, 0x07},
+        {PF_INET, SOCK_RAW, ANY, 0x05},
+        {PF_UNSPEC, SOCK_DGRAM, IPPROTO_UDP, 0x07},
+        {PF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0x07},
+        {PF_UNSPEC, SOCK_RAW, ANY, 0x05},
+};
+
+#define PTON_MAX 16
+
+struct res_target {
+    const char* name;                                                  // domain name
+    int qclass, qtype;                                                 // class and type of query
+    std::vector<uint8_t> answer = std::vector<uint8_t>(MAXPACKET, 0);  // buffer to put answer
+    int n = 0;                                                         // result length
+    // ResState this query should be run within
+    ResState* res_state;
+};
+
+static int explore_fqdn(const struct addrinfo*, const char*, const char*, struct addrinfo**,
+                        const struct android_net_context*, std::optional<int> app_socket,
+                        NetworkDnsEventReported* event);
+static int explore_null(const struct addrinfo*, const char*, struct addrinfo**);
+static int explore_numeric(const struct addrinfo*, const char*, const char*, struct addrinfo**,
+                           const char*);
+static int explore_numeric_scope(const struct addrinfo*, const char*, const char*,
+                                 struct addrinfo**);
+static int get_canonname(const struct addrinfo*, struct addrinfo*, const char*);
+static struct addrinfo* get_ai(const struct addrinfo*, const struct afd*, const char*);
+static int get_portmatch(const struct addrinfo*, const char*);
+static int get_port(const struct addrinfo*, const char*, int);
+static const struct afd* find_afd(int);
+static int ip6_str2scopeid(const char*, struct sockaddr_in6*, uint32_t*);
+
+static struct addrinfo* getanswer(const std::vector<uint8_t>&, int, const char*, int,
+                                  const struct addrinfo*, int* herrno);
+static int dns_getaddrinfo(const char* name, const addrinfo* pai,
+                           const android_net_context* netcontext, std::optional<int> app_socket,
+                           addrinfo** rv, NetworkDnsEventReported* event);
+static void _sethtent(FILE**);
+static void _endhtent(FILE**);
+static struct addrinfo* _gethtent(FILE**, const char*, const struct addrinfo*);
+static struct addrinfo* getCustomHosts(const size_t netid, const char*, const struct addrinfo*);
+static bool files_getaddrinfo(const size_t netid, const char* name, const addrinfo* pai,
+                              addrinfo** res);
+static int _find_src_addr(const struct sockaddr*, struct sockaddr*, unsigned, uid_t,
+                          bool allow_v6_linklocal);
+
+static int res_searchN(const char* name, std::span<res_target> queries,
+                       std::span<std::string> search_domains, bool is_mdns,
+                       android::net::NetworkDnsEventReported* event, int* herrno);
+static int res_querydomainN(const char* name, const char* domain, std::span<res_target> queries,
+                            android::net::NetworkDnsEventReported* event, int* herrno);
+
+const char* const ai_errlist[] = {
+        "Success",
+        "Address family for hostname not supported",    /* EAI_ADDRFAMILY */
+        "Temporary failure in name resolution",         /* EAI_AGAIN      */
+        "Invalid value for ai_flags",                   /* EAI_BADFLAGS   */
+        "Non-recoverable failure in name resolution",   /* EAI_FAIL       */
+        "ai_family not supported",                      /* EAI_FAMILY     */
+        "Memory allocation failure",                    /* EAI_MEMORY     */
+        "No address associated with hostname",          /* EAI_NODATA     */
+        "hostname nor servname provided, or not known", /* EAI_NONAME     */
+        "servname not supported for ai_socktype",       /* EAI_SERVICE    */
+        "ai_socktype not supported",                    /* EAI_SOCKTYPE   */
+        "System error returned in errno",               /* EAI_SYSTEM     */
+        "Invalid value for hints",                      /* EAI_BADHINTS	  */
+        "Resolved protocol is unknown",                 /* EAI_PROTOCOL   */
+        "Argument buffer overflow",                     /* EAI_OVERFLOW   */
+        "Unknown error",                                /* EAI_MAX        */
+};
+
+/* XXX macros that make external reference is BAD. */
+
+#define GET_AI(ai, afd, addr)                                \
+    do {                                                     \
+        /* external reference: pai, error, and label free */ \
+        (ai) = get_ai(pai, (afd), (addr));                   \
+        if ((ai) == NULL) {                                  \
+            error = EAI_MEMORY;                              \
+            goto free;                                       \
+        }                                                    \
+    } while (0)
+
+#define GET_PORT(ai, serv)                             \
+    do {                                               \
+        /* external reference: error and label free */ \
+        error = get_port((ai), (serv), 0);             \
+        if (error != 0) goto free;                     \
+    } while (0)
+
+#define MATCH_FAMILY(x, y, w) \
+    ((x) == (y) || ((w) && ((x) == PF_UNSPEC || (y) == PF_UNSPEC)))
+#define MATCH(x, y, w) ((x) == (y) || ((w) && ((x) == ANY || (y) == ANY)))
+
+const char* gai_strerror(int ecode) {
+    if (ecode < 0 || ecode > EAI_MAX) ecode = EAI_MAX;
+    return ai_errlist[ecode];
+}
+
+void freeaddrinfo(struct addrinfo* ai) {
+    while (ai) {
+        struct addrinfo* next = ai->ai_next;
+        if (ai->ai_canonname) free(ai->ai_canonname);
+        // Also frees ai->ai_addr which points to extra space beyond addrinfo
+        free(ai);
+        ai = next;
+    }
+}
+
+static bool have_global_ipv6_connectivity(unsigned mark, uid_t uid) {
+    static const struct sockaddr_in6 sin6_test = {
+            .sin6_family = AF_INET6,
+            .sin6_addr.s6_addr = {// 2000::
+                                  0x20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+    sockaddr_union addr = {.sin6 = sin6_test};
+    sockaddr_storage sa;
+    return _find_src_addr(&addr.sa, (struct sockaddr*)&sa, mark, uid,
+                          /*allow_v6_linklocal=*/false) == 1;
+}
+
+static bool have_local_ipv6_connectivity(unsigned mark, uid_t uid, int netid) {
+    // IPv6 link-local addresses require a scope identifier to be correctly defined. This forces us
+    // to loop through all interfaces included within |netid|.
+    std::vector<std::string> interface_names = resolv_get_interface_names(netid);
+    for (const auto& interface_name : interface_names) {
+        const struct sockaddr_in6 sin6_test = {
+                .sin6_family = AF_INET6,
+                .sin6_addr.s6_addr =
+                        {// fe80::
+                         0xfe, 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+                .sin6_scope_id = if_nametoindex(interface_name.c_str())};
+        sockaddr_union addr = {.sin6 = sin6_test};
+        sockaddr_storage sa;
+        if (_find_src_addr(&addr.sa, (struct sockaddr*)&sa, mark, uid,
+                           /*allow_v6_linklocal=*/true) == 1) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool have_ipv4_connectivity(unsigned mark, uid_t uid) {
+    static const struct sockaddr_in sin_test = {
+            .sin_family = AF_INET,
+            .sin_addr.s_addr = __constant_htonl(0x08080808L)  // 8.8.8.8
+    };
+    sockaddr_union addr = {.sin = sin_test};
+    sockaddr_storage sa;
+    return _find_src_addr(&addr.sa, (struct sockaddr*)&sa, mark, uid,
+                          /*(don't care) allow_v6_linklocal=*/false) == 1;
+}
+
+// Internal version of getaddrinfo(), but limited to AI_NUMERICHOST.
+// NOTE: also called by resolv_set_nameservers().
+int getaddrinfo_numeric(const char* hostname, const char* servname, addrinfo hints,
+                        addrinfo** result) {
+    hints.ai_flags = AI_NUMERICHOST;
+    const android_net_context netcontext = {
+            .app_netid = NETID_UNSET,
+            .app_mark = MARK_UNSET,
+            .dns_netid = NETID_UNSET,
+            .dns_mark = MARK_UNSET,
+            .uid = NET_CONTEXT_INVALID_UID,
+            .pid = NET_CONTEXT_INVALID_PID,
+    };
+    NetworkDnsEventReported event;
+    return android_getaddrinfofornetcontext(hostname, servname, &hints, &netcontext, result,
+                                            &event);
+}
+
+namespace {
+
+int validateHints(const addrinfo* _Nonnull hints) {
+    if (!hints) return EAI_BADHINTS;
+
+    // error check for hints
+    if (hints->ai_addrlen || hints->ai_canonname || hints->ai_addr || hints->ai_next) {
+        return EAI_BADHINTS;
+    }
+    if (hints->ai_flags & ~AI_MASK) {
+        return EAI_BADFLAGS;
+    }
+    if (!(hints->ai_family == PF_UNSPEC || hints->ai_family == PF_INET ||
+          hints->ai_family == PF_INET6)) {
+        return EAI_FAMILY;
+    }
+
+    // Socket types which are not in explore_options.
+    switch (hints->ai_socktype) {
+        case SOCK_RAW:
+        case SOCK_DGRAM:
+        case SOCK_STREAM:
+        case ANY:
+            break;
+        default:
+            return EAI_SOCKTYPE;
+    }
+
+    if (hints->ai_socktype == ANY || hints->ai_protocol == ANY) return 0;
+
+    // if both socktype/protocol are specified, check if they are meaningful combination.
+    for (const Explore& ex : explore_options) {
+        if (hints->ai_family != ex.e_af) continue;
+        if (ex.e_socktype == ANY) continue;
+        if (ex.e_protocol == ANY) continue;
+        if (hints->ai_socktype == ex.e_socktype && hints->ai_protocol != ex.e_protocol) {
+            return EAI_BADHINTS;
+        }
+    }
+
+    return 0;
+}
+
+void fill_sin6_scope_id_if_needed(const res_target& query, addrinfo* addr_info) {
+    if (addr_info->ai_family != AF_INET6) {
+        return;
+    }
+
+    sockaddr_in6* sin6 = reinterpret_cast<sockaddr_in6*>(addr_info->ai_addr);
+    if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+        sin6->sin6_scope_id = query.res_state->target_interface_index_for_mdns;
+    }
+}
+
+}  // namespace
+
+int android_getaddrinfofornetcontext(const char* hostname, const char* servname,
+                                     const addrinfo* hints, const android_net_context* netcontext,
+                                     addrinfo** res, NetworkDnsEventReported* event) {
+    // hostname is allowed to be nullptr
+    // servname is allowed to be nullptr
+    // hints is allowed to be nullptr
+    assert(res != nullptr);
+    assert(netcontext != nullptr);
+    assert(event != nullptr);
+
+    addrinfo sentinel = {};
+    addrinfo* cur = &sentinel;
+    int error = 0;
+
+    do {
+        if (hostname == nullptr && servname == nullptr) {
+            error = EAI_NONAME;
+            break;
+        }
+
+        if (hints && (error = validateHints(hints))) break;
+        addrinfo ai = hints ? *hints : addrinfo{};
+
+        // Check for special cases:
+        // (1) numeric servname is disallowed if socktype/protocol are left unspecified.
+        // (2) servname is disallowed for raw and other inet{,6} sockets.
+        if (MATCH_FAMILY(ai.ai_family, PF_INET, 1) || MATCH_FAMILY(ai.ai_family, PF_INET6, 1)) {
+            addrinfo tmp = ai;
+            if (tmp.ai_family == PF_UNSPEC) {
+                tmp.ai_family = PF_INET6;
+            }
+            error = get_portmatch(&tmp, servname);
+            if (error) break;
+        }
+
+        // NULL hostname, or numeric hostname
+        for (const Explore& ex : explore_options) {
+            /* PF_UNSPEC entries are prepared for DNS queries only */
+            if (ex.e_af == PF_UNSPEC) continue;
+
+            if (!MATCH_FAMILY(ai.ai_family, ex.e_af, WILD_AF(ex))) continue;
+            if (!MATCH(ai.ai_socktype, ex.e_socktype, WILD_SOCKTYPE(ex))) continue;
+            if (!MATCH(ai.ai_protocol, ex.e_protocol, WILD_PROTOCOL(ex))) continue;
+
+            addrinfo tmp = ai;
+            if (tmp.ai_family == PF_UNSPEC) tmp.ai_family = ex.e_af;
+            if (tmp.ai_socktype == ANY && ex.e_socktype != ANY) tmp.ai_socktype = ex.e_socktype;
+            if (tmp.ai_protocol == ANY && ex.e_protocol != ANY) tmp.ai_protocol = ex.e_protocol;
+
+            LOG(DEBUG) << __func__ << ": explore_numeric: ai_family=" << tmp.ai_family
+                       << " ai_socktype=" << tmp.ai_socktype << " ai_protocol=" << tmp.ai_protocol;
+            if (hostname == nullptr)
+                error = explore_null(&tmp, servname, &cur->ai_next);
+            else
+                error = explore_numeric_scope(&tmp, hostname, servname, &cur->ai_next);
+
+            if (error) break;
+
+            while (cur->ai_next) cur = cur->ai_next;
+        }
+        if (error) break;
+
+        // If numeric representation of AF1 can be interpreted as FQDN
+        // representation of AF2, we need to think again about the code below.
+        if (sentinel.ai_next) break;
+
+        if (hostname == nullptr) {
+            error = EAI_NODATA;
+            break;
+        }
+        if (ai.ai_flags & AI_NUMERICHOST) {
+            error = EAI_NONAME;
+            break;
+        }
+
+        return resolv_getaddrinfo(hostname, servname, hints, netcontext, APP_SOCKET_NONE, res,
+                                  event);
+    } while (0);
+
+    if (error) {
+        freeaddrinfo(sentinel.ai_next);
+        *res = nullptr;
+    } else {
+        *res = sentinel.ai_next;
+    }
+    return error;
+}
+
+int resolv_getaddrinfo(const char* _Nonnull hostname, const char* servname, const addrinfo* hints,
+                       const android_net_context* _Nonnull netcontext,
+                       std::optional<int> app_socket, addrinfo** _Nonnull res,
+                       NetworkDnsEventReported* _Nonnull event) {
+    if (hostname == nullptr && servname == nullptr) return EAI_NONAME;
+    if (hostname == nullptr) return EAI_NODATA;
+
+    // servname is allowed to be nullptr
+    // hints is allowed to be nullptr
+    assert(res != nullptr);
+    assert(netcontext != nullptr);
+    assert(event != nullptr);
+
+    int error = EAI_FAIL;
+    if (hints && (error = validateHints(hints))) {
+        *res = nullptr;
+        return error;
+    }
+
+    addrinfo ai = hints ? *hints : addrinfo{};
+    addrinfo sentinel = {};
+    addrinfo* cur = &sentinel;
+    // hostname as alphanumeric name.
+    // We would like to prefer AF_INET6 over AF_INET, so we'll make a outer loop by AFs.
+    for (const Explore& ex : explore_options) {
+        // Require exact match for family field
+        if (ai.ai_family != ex.e_af) continue;
+
+        if (!MATCH(ai.ai_socktype, ex.e_socktype, WILD_SOCKTYPE(ex))) continue;
+
+        if (!MATCH(ai.ai_protocol, ex.e_protocol, WILD_PROTOCOL(ex))) continue;
+
+        addrinfo tmp = ai;
+        if (tmp.ai_socktype == ANY && ex.e_socktype != ANY) tmp.ai_socktype = ex.e_socktype;
+        if (tmp.ai_protocol == ANY && ex.e_protocol != ANY) tmp.ai_protocol = ex.e_protocol;
+
+        LOG(DEBUG) << __func__ << ": explore_fqdn(): ai_family=" << tmp.ai_family
+                   << " ai_socktype=" << tmp.ai_socktype << " ai_protocol=" << tmp.ai_protocol;
+        error = explore_fqdn(&tmp, hostname, servname, &cur->ai_next, netcontext, app_socket,
+                             event);
+
+        while (cur->ai_next) cur = cur->ai_next;
+    }
+
+    // Propagate the last error from explore_fqdn(), but only when *all* attempts failed.
+    if ((*res = sentinel.ai_next)) return 0;
+
+    // TODO: consider removing freeaddrinfo.
+    freeaddrinfo(sentinel.ai_next);
+    *res = nullptr;
+    return (error == 0) ? EAI_FAIL : error;
+}
+
+// FQDN hostname, DNS lookup
+static int explore_fqdn(const addrinfo* pai, const char* hostname, const char* servname,
+                        addrinfo** res, const android_net_context* netcontext,
+                        std::optional<int> app_socket, NetworkDnsEventReported* event) {
+    assert(pai != nullptr);
+    // hostname may be nullptr
+    // servname may be nullptr
+    assert(res != nullptr);
+
+    addrinfo* result = nullptr;
+    int error = 0;
+
+    // If the servname does not match socktype/protocol, return error code.
+    if ((error = get_portmatch(pai, servname))) return error;
+
+    if (!files_getaddrinfo(netcontext->dns_netid, hostname, pai, &result)) {
+        error = dns_getaddrinfo(hostname, pai, netcontext, app_socket, &result, event);
+    }
+    if (error) {
+        freeaddrinfo(result);
+        return error;
+    }
+
+    for (addrinfo* cur = result; cur; cur = cur->ai_next) {
+        // canonname should be filled already
+        if ((error = get_port(cur, servname, 0))) {
+            freeaddrinfo(result);
+            return error;
+        }
+    }
+    *res = result;
+    return 0;
+}
+
+/*
+ * hostname == NULL.
+ * passive socket -> anyaddr (0.0.0.0 or ::)
+ * non-passive socket -> localhost (127.0.0.1 or ::1)
+ */
+static int explore_null(const struct addrinfo* pai, const char* servname, struct addrinfo** res) {
+    int s;
+    const struct afd* afd;
+    struct addrinfo* cur;
+    struct addrinfo sentinel;
+    int error;
+
+    LOG(DEBUG) << __func__;
+
+    assert(pai != NULL);
+    /* servname may be NULL */
+    assert(res != NULL);
+
+    *res = NULL;
+    sentinel.ai_next = NULL;
+    cur = &sentinel;
+
+    /*
+     * filter out AFs that are not supported by the kernel
+     * XXX errno?
+     */
+    s = socket(pai->ai_family, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+    if (s < 0) {
+        if (errno != EMFILE) return 0;
+    } else
+        close(s);
+
+    /*
+     * if the servname does not match socktype/protocol, ignore it.
+     */
+    if (get_portmatch(pai, servname) != 0) return 0;
+
+    afd = find_afd(pai->ai_family);
+    if (afd == NULL) return 0;
+
+    if (pai->ai_flags & AI_PASSIVE) {
+        GET_AI(cur->ai_next, afd, afd->a_addrany);
+        GET_PORT(cur->ai_next, servname);
+    } else {
+        GET_AI(cur->ai_next, afd, afd->a_loopback);
+        GET_PORT(cur->ai_next, servname);
+    }
+    cur = cur->ai_next;
+
+    *res = sentinel.ai_next;
+    return 0;
+
+free:
+    freeaddrinfo(sentinel.ai_next);
+    return error;
+}
+
+/*
+ * numeric hostname
+ */
+static int explore_numeric(const struct addrinfo* pai, const char* hostname, const char* servname,
+                           struct addrinfo** res, const char* canonname) {
+    const struct afd* afd;
+    struct addrinfo* cur;
+    struct addrinfo sentinel;
+    int error;
+    char pton[PTON_MAX];
+
+    assert(pai != NULL);
+    /* hostname may be NULL */
+    /* servname may be NULL */
+    assert(res != NULL);
+
+    *res = NULL;
+    sentinel.ai_next = NULL;
+    cur = &sentinel;
+
+    /*
+     * if the servname does not match socktype/protocol, ignore it.
+     */
+    if (get_portmatch(pai, servname) != 0) return 0;
+
+    afd = find_afd(pai->ai_family);
+    if (afd == NULL) return 0;
+
+    if (inet_pton(afd->a_af, hostname, pton) == 1) {
+        if (pai->ai_family == afd->a_af || pai->ai_family == PF_UNSPEC /*?*/) {
+            GET_AI(cur->ai_next, afd, pton);
+            GET_PORT(cur->ai_next, servname);
+            if ((pai->ai_flags & AI_CANONNAME)) {
+                /*
+                 * Set the numeric address itself as
+                 * the canonical name, based on a
+                 * clarification in rfc2553bis-03.
+                 */
+                error = get_canonname(pai, cur->ai_next, canonname);
+                if (error != 0) {
+                    freeaddrinfo(sentinel.ai_next);
+                    return error;
+                }
+            }
+            while (cur->ai_next) cur = cur->ai_next;
+        } else
+            return EAI_FAMILY;
+    }
+
+    *res = sentinel.ai_next;
+    return 0;
+
+free:
+    freeaddrinfo(sentinel.ai_next);
+    return error;
+}
+
+/*
+ * numeric hostname with scope
+ */
+static int explore_numeric_scope(const struct addrinfo* pai, const char* hostname,
+                                 const char* servname, struct addrinfo** res) {
+    const struct afd* afd;
+    struct addrinfo* cur;
+    int error;
+    const char *cp, *scope, *addr;
+    struct sockaddr_in6* sin6;
+
+    LOG(DEBUG) << __func__;
+
+    assert(pai != NULL);
+    /* hostname may be NULL */
+    /* servname may be NULL */
+    assert(res != NULL);
+
+    /*
+     * if the servname does not match socktype/protocol, ignore it.
+     */
+    if (get_portmatch(pai, servname) != 0) return 0;
+
+    afd = find_afd(pai->ai_family);
+    if (afd == NULL) return 0;
+
+    if (!afd->a_scoped) return explore_numeric(pai, hostname, servname, res, hostname);
+
+    cp = strchr(hostname, SCOPE_DELIMITER);
+    if (cp == NULL) return explore_numeric(pai, hostname, servname, res, hostname);
+
+    /*
+     * Handle special case of <scoped_address><delimiter><scope id>
+     */
+    char* hostname2 = strdup(hostname);
+    if (hostname2 == NULL) return EAI_MEMORY;
+    /* terminate at the delimiter */
+    hostname2[cp - hostname] = '\0';
+    addr = hostname2;
+    scope = cp + 1;
+
+    error = explore_numeric(pai, addr, servname, res, hostname);
+    if (error == 0) {
+        uint32_t scopeid;
+
+        for (cur = *res; cur; cur = cur->ai_next) {
+            if (cur->ai_family != AF_INET6) continue;
+            sin6 = (struct sockaddr_in6*) (void*) cur->ai_addr;
+            if (ip6_str2scopeid(scope, sin6, &scopeid) == -1) {
+                free(hostname2);
+                return (EAI_NODATA); /* XXX: is return OK? */
+            }
+            sin6->sin6_scope_id = scopeid;
+        }
+    }
+
+    free(hostname2);
+
+    return error;
+}
+
+static int get_canonname(const struct addrinfo* pai, struct addrinfo* ai, const char* str) {
+    assert(pai != NULL);
+    assert(ai != NULL);
+    assert(str != NULL);
+
+    if ((pai->ai_flags & AI_CANONNAME) != 0) {
+        ai->ai_canonname = strdup(str);
+        if (ai->ai_canonname == NULL) return EAI_MEMORY;
+    }
+    return 0;
+}
+
+static struct addrinfo* get_ai(const struct addrinfo* pai, const struct afd* afd,
+                               const char* addr) {
+    char* p;
+    struct addrinfo* ai;
+
+    assert(pai != NULL);
+    assert(afd != NULL);
+    assert(addr != NULL);
+
+    ai = (struct addrinfo*) calloc(1, sizeof(struct addrinfo) + sizeof(sockaddr_union));
+    if (ai == NULL) return NULL;
+
+    memcpy(ai, pai, sizeof(struct addrinfo));
+    ai->ai_addr = (struct sockaddr*) (void*) (ai + 1);
+    ai->ai_addrlen = afd->a_socklen;
+    ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
+    p = (char*) (void*) (ai->ai_addr);
+    memcpy(p + afd->a_off, addr, (size_t) afd->a_addrlen);
+    return ai;
+}
+
+static int get_portmatch(const struct addrinfo* ai, const char* servname) {
+    assert(ai != NULL);
+    /* servname may be NULL */
+
+    return get_port(ai, servname, 1);
+}
+
+static int get_port(const struct addrinfo* ai, const char* servname, int matchonly) {
+    const char* proto;
+    struct servent* sp;
+    uint port;
+    int allownumeric;
+
+    assert(ai != NULL);
+    /* servname may be NULL */
+
+    if (servname == NULL) return 0;
+    switch (ai->ai_family) {
+        case AF_INET:
+        case AF_INET6:
+            break;
+        default:
+            return 0;
+    }
+
+    switch (ai->ai_socktype) {
+        case SOCK_RAW:
+            return EAI_SERVICE;
+        case SOCK_DGRAM:
+        case SOCK_STREAM:
+        case ANY:
+            allownumeric = 1;
+            break;
+        default:
+            return EAI_SOCKTYPE;
+    }
+
+    if (android::base::ParseUint(servname, &port)) {
+        if (!allownumeric) return EAI_SERVICE;
+        if (port > 65535) return EAI_SERVICE;
+        port = htons(port);
+    } else {
+        if (ai->ai_flags & AI_NUMERICSERV) return EAI_NONAME;
+
+        switch (ai->ai_socktype) {
+            case SOCK_DGRAM:
+                proto = "udp";
+                break;
+            case SOCK_STREAM:
+                proto = "tcp";
+                break;
+            default:
+                proto = NULL;
+                break;
+        }
+
+        if ((sp = getservbyname(servname, proto)) == NULL) return EAI_SERVICE;
+        port = sp->s_port;
+    }
+
+    if (!matchonly) {
+        switch (ai->ai_family) {
+            case AF_INET:
+                ((struct sockaddr_in*) (void*) ai->ai_addr)->sin_port = port;
+                break;
+            case AF_INET6:
+                ((struct sockaddr_in6*) (void*) ai->ai_addr)->sin6_port = port;
+                break;
+        }
+    }
+
+    return 0;
+}
+
+static const struct afd* find_afd(int af) {
+    const struct afd* afd;
+
+    if (af == PF_UNSPEC) return NULL;
+    for (afd = afdl; afd->a_af; afd++) {
+        if (afd->a_af == af) return afd;
+    }
+    return NULL;
+}
+
+// Convert a string to a scope identifier.
+static int ip6_str2scopeid(const char* scope, struct sockaddr_in6* sin6, uint32_t* scopeid) {
+    struct in6_addr* a6;
+
+    assert(scope != NULL);
+    assert(sin6 != NULL);
+    assert(scopeid != NULL);
+
+    a6 = &sin6->sin6_addr;
+
+    /* empty scopeid portion is invalid */
+    if (*scope == '\0') return -1;
+
+    if (IN6_IS_ADDR_LINKLOCAL(a6) || IN6_IS_ADDR_MC_LINKLOCAL(a6)) {
+        /*
+         * We currently assume a one-to-one mapping between links
+         * and interfaces, so we simply use interface indices for
+         * like-local scopes.
+         */
+        *scopeid = if_nametoindex(scope);
+        if (*scopeid != 0) return 0;
+    }
+
+    /* try to convert to a numeric id as a last resort*/
+    if (!android::base::ParseUint(scope, scopeid)) return -1;
+
+    return 0;
+}
+
+/* code duplicate with gethnamaddr.c */
+
+#define BOUNDED_INCR(x)      \
+    do {                     \
+        BOUNDS_CHECK(cp, x); \
+        cp += (x);           \
+    } while (0)
+
+#define BOUNDS_CHECK(ptr, count)     \
+    do {                             \
+        if (eom - (ptr) < (count)) { \
+            *herrno = NO_RECOVERY;   \
+            return NULL;             \
+        }                            \
+    } while (0)
+
+static struct addrinfo* getanswer(const std::vector<uint8_t>& answer, int anslen, const char* qname,
+                                  int qtype, const struct addrinfo* pai, int* herrno) {
+    struct addrinfo sentinel = {};
+    struct addrinfo *cur;
+    struct addrinfo ai;
+    const struct afd* afd;
+    char* canonname;
+    const HEADER* hp;
+    const uint8_t* cp;
+    int n;
+    const uint8_t* eom;
+    char *bp, *ep;
+    int type, ancount, qdcount;
+    int haveanswer, had_error;
+    char tbuf[MAXDNAME];
+    char hostbuf[8 * 1024];
+
+    assert(qname != NULL);
+    assert(pai != NULL);
+
+    cur = &sentinel;
+
+    canonname = NULL;
+    eom = answer.data() + anslen;
+
+    bool (*name_ok)(const char* dn);
+    switch (qtype) {
+        case T_A:
+        case T_AAAA:
+        case T_ANY: /*use T_ANY only for T_A/T_AAAA lookup*/
+            name_ok = res_hnok;
+            break;
+        default:
+            return NULL; /* XXX should be abort(); */
+    }
+    /*
+     * find first satisfactory answer
+     */
+    hp = reinterpret_cast<const HEADER*>(answer.data());
+    ancount = ntohs(hp->ancount);
+    qdcount = ntohs(hp->qdcount);
+    bp = hostbuf;
+    ep = hostbuf + sizeof hostbuf;
+    cp = answer.data();
+    BOUNDED_INCR(HFIXEDSZ);
+    if (qdcount != 1) {
+        *herrno = NO_RECOVERY;
+        return (NULL);
+    }
+    n = dn_expand(answer.data(), eom, cp, bp, ep - bp);
+    if ((n < 0) || !(*name_ok)(bp)) {
+        *herrno = NO_RECOVERY;
+        return (NULL);
+    }
+    BOUNDED_INCR(n + QFIXEDSZ);
+    if (qtype == T_A || qtype == T_AAAA || qtype == T_ANY) {
+        /* res_send() has already verified that the query name is the
+         * same as the one we sent; this just gets the expanded name
+         * (i.e., with the succeeding search-domain tacked on).
+         */
+        n = strlen(bp) + 1; /* for the \0 */
+        if (n >= MAXHOSTNAMELEN) {
+            *herrno = NO_RECOVERY;
+            return (NULL);
+        }
+        canonname = bp;
+        bp += n;
+        /* The qname can be abbreviated, but h_name is now absolute. */
+        qname = canonname;
+    }
+    haveanswer = 0;
+    had_error = 0;
+    while (ancount-- > 0 && cp < eom && !had_error) {
+        n = dn_expand(answer.data(), eom, cp, bp, ep - bp);
+        if ((n < 0) || !(*name_ok)(bp)) {
+            had_error++;
+            continue;
+        }
+        cp += n; /* name */
+        BOUNDS_CHECK(cp, 3 * INT16SZ + INT32SZ);
+        type = ntohs(*reinterpret_cast<const uint16_t*>(cp));
+        cp += INT16SZ; /* type */
+        int cl = ntohs(*reinterpret_cast<const uint16_t*>(cp));
+        cp += INT16SZ + INT32SZ; /* class, TTL */
+        n = ntohs(*reinterpret_cast<const uint16_t*>(cp));
+        cp += INT16SZ; /* len */
+        BOUNDS_CHECK(cp, n);
+        if (cl != C_IN) {
+            /* XXX - debug? syslog? */
+            cp += n;
+            continue; /* XXX - had_error++ ? */
+        }
+        if ((qtype == T_A || qtype == T_AAAA || qtype == T_ANY) && type == T_CNAME) {
+            n = dn_expand(answer.data(), eom, cp, tbuf, sizeof tbuf);
+            if ((n < 0) || !(*name_ok)(tbuf)) {
+                had_error++;
+                continue;
+            }
+            cp += n;
+            /* Get canonical name. */
+            n = strlen(tbuf) + 1; /* for the \0 */
+            if (n > ep - bp || n >= MAXHOSTNAMELEN) {
+                had_error++;
+                continue;
+            }
+            strlcpy(bp, tbuf, (size_t)(ep - bp));
+            canonname = bp;
+            bp += n;
+            continue;
+        }
+        if (qtype == T_ANY) {
+            if (!(type == T_A || type == T_AAAA)) {
+                cp += n;
+                continue;
+            }
+        } else if (type != qtype) {
+            if (type != T_KEY && type != T_SIG)
+                LOG(DEBUG) << __func__ << ": asked for \"" << qname << " " << p_class(C_IN) << " "
+                           << p_type(qtype) << "\", got type \"" << p_type(type) << "\"";
+            cp += n;
+            continue; /* XXX - had_error++ ? */
+        }
+        switch (type) {
+            case T_A:
+            case T_AAAA:
+                if (strcasecmp(canonname, bp) != 0) {
+                    LOG(DEBUG) << __func__ << ": asked for \"" << canonname << "\", got \"" << bp
+                               << "\"";
+                    cp += n;
+                    continue; /* XXX - had_error++ ? */
+                }
+                if (type == T_A && n != INADDRSZ) {
+                    cp += n;
+                    continue;
+                }
+                if (type == T_AAAA && n != IN6ADDRSZ) {
+                    cp += n;
+                    continue;
+                }
+                if (type == T_AAAA) {
+                    struct in6_addr in6;
+                    memcpy(&in6, cp, IN6ADDRSZ);
+                    if (IN6_IS_ADDR_V4MAPPED(&in6)) {
+                        cp += n;
+                        continue;
+                    }
+                }
+                if (!haveanswer) {
+                    int nn;
+
+                    canonname = bp;
+                    nn = strlen(bp) + 1; /* for the \0 */
+                    bp += nn;
+                }
+
+                /* don't overwrite pai */
+                ai = *pai;
+                ai.ai_family = (type == T_A) ? AF_INET : AF_INET6;
+                afd = find_afd(ai.ai_family);
+                if (afd == NULL) {
+                    cp += n;
+                    continue;
+                }
+                cur->ai_next = get_ai(&ai, afd, (const char*) cp);
+                if (cur->ai_next == NULL) had_error++;
+                while (cur && cur->ai_next) cur = cur->ai_next;
+                cp += n;
+                break;
+            default:
+                abort();
+        }
+        if (!had_error) haveanswer++;
+    }
+    if (haveanswer) {
+        if (!canonname)
+            (void) get_canonname(pai, sentinel.ai_next, qname);
+        else
+            (void) get_canonname(pai, sentinel.ai_next, canonname);
+        *herrno = NETDB_SUCCESS;
+        return sentinel.ai_next;
+    }
+
+    *herrno = NO_RECOVERY;
+    return NULL;
+}
+
+static int _get_scope(const struct sockaddr* addr) {
+    if (addr->sa_family == AF_INET6) {
+        const struct sockaddr_in6* addr6 = (const struct sockaddr_in6*) addr;
+        if (IN6_IS_ADDR_MULTICAST(&addr6->sin6_addr)) {
+            return IPV6_ADDR_MC_SCOPE(&addr6->sin6_addr);
+        } else if (IN6_IS_ADDR_LOOPBACK(&addr6->sin6_addr) ||
+                   IN6_IS_ADDR_LINKLOCAL(&addr6->sin6_addr)) {
+            /*
+             * RFC 4291 section 2.5.3 says loopback is to be treated as having
+             * link-local scope.
+             */
+            return IPV6_ADDR_SCOPE_LINKLOCAL;
+        } else if (IN6_IS_ADDR_SITELOCAL(&addr6->sin6_addr)) {
+            return IPV6_ADDR_SCOPE_SITELOCAL;
+        } else {
+            return IPV6_ADDR_SCOPE_GLOBAL;
+        }
+    } else if (addr->sa_family == AF_INET) {
+        const struct sockaddr_in* addr4 = (const struct sockaddr_in*) addr;
+        unsigned long int na = ntohl(addr4->sin_addr.s_addr);
+
+        if (IN_LOOPBACK(na) ||                 /* 127.0.0.0/8 */
+            (na & 0xffff0000) == 0xa9fe0000) { /* 169.254.0.0/16 */
+            return IPV6_ADDR_SCOPE_LINKLOCAL;
+        } else {
+            /*
+             * RFC 6724 section 3.2. Other IPv4 addresses, including private addresses
+             * and shared addresses (100.64.0.0/10), are assigned global scope.
+             */
+            return IPV6_ADDR_SCOPE_GLOBAL;
+        }
+    } else {
+        /*
+         * This should never happen.
+         * Return a scope with low priority as a last resort.
+         */
+        return IPV6_ADDR_SCOPE_NODELOCAL;
+    }
+}
+
+/*
+ * Get the precedence for a given IPv4/IPv6 address.
+ * RFC 6724, section 2.1.
+ */
+
+static int _get_precedence(const struct sockaddr* addr) {
+    if (addr->sa_family == AF_INET) {
+        return 35;
+    } else if (addr->sa_family == AF_INET6) {
+        const struct sockaddr_in6* addr6 = (const struct sockaddr_in6*) addr;
+        if (IN6_IS_ADDR_LOOPBACK(&addr6->sin6_addr)) {
+            return 50;
+        } else if (IN6_IS_ADDR_V4MAPPED(&addr6->sin6_addr)) {
+            return 35;
+        } else if (IN6_IS_ADDR_6TO4(&addr6->sin6_addr)) {
+            return 30;
+        } else if (IN6_IS_ADDR_TEREDO(&addr6->sin6_addr)) {
+            return 5;
+        } else if (IN6_IS_ADDR_ULA(&addr6->sin6_addr)) {
+            return 3;
+        } else if (IN6_IS_ADDR_V4COMPAT(&addr6->sin6_addr) ||
+                   IN6_IS_ADDR_SITELOCAL(&addr6->sin6_addr) ||
+                   IN6_IS_ADDR_6BONE(&addr6->sin6_addr)) {
+            return 1;
+        } else {
+            /* All other IPv6 addresses, including global unicast addresses. */
+            return 40;
+        }
+    } else {
+        return 1;
+    }
+}
+
+/*
+ * Find number of matching initial bits between the two addresses a1 and a2.
+ */
+
+static int _common_prefix_len(const struct in6_addr* a1, const struct in6_addr* a2) {
+    const char* p1 = (const char*) a1;
+    const char* p2 = (const char*) a2;
+    unsigned i;
+
+    for (i = 0; i < sizeof(*a1); ++i) {
+        int x, j;
+
+        if (p1[i] == p2[i]) {
+            continue;
+        }
+        x = p1[i] ^ p2[i];
+        for (j = 0; j < CHAR_BIT; ++j) {
+            if (x & (1 << (CHAR_BIT - 1))) {
+                return i * CHAR_BIT + j;
+            }
+            x <<= 1;
+        }
+    }
+    return sizeof(*a1) * CHAR_BIT;
+}
+
+/*
+ * Compare two source/destination address pairs.
+ * RFC 6724, section 6.
+ */
+
+static int _rfc6724_compare(const void* ptr1, const void* ptr2) {
+    const struct addrinfo_sort_elem* a1 = (const struct addrinfo_sort_elem*) ptr1;
+    const struct addrinfo_sort_elem* a2 = (const struct addrinfo_sort_elem*) ptr2;
+    int scope_match1, scope_match2;
+    int label_match1, label_match2;
+    int prefixlen1, prefixlen2;
+
+    /* Rule 1: Avoid unusable destinations. */
+    if (a1->has_src_addr != a2->has_src_addr) {
+        return a2->has_src_addr - a1->has_src_addr;
+    }
+
+    /* Rule 2: Prefer matching scope. */
+    scope_match1 = (a1->scope_src == a1->scope_dst);
+    scope_match2 = (a2->scope_src == a2->scope_dst);
+    if (scope_match1 != scope_match2) {
+        return scope_match2 - scope_match1;
+    }
+
+    /*
+     * Rule 3: Avoid deprecated addresses.
+     * TODO(sesse): We don't currently have a good way of finding this.
+     */
+
+    /*
+     * Rule 4: Prefer home addresses.
+     * TODO(sesse): We don't currently have a good way of finding this.
+     */
+
+    /* Rule 5: Prefer matching label. */
+    label_match1 = (a1->label_src == a1->label_dst);
+    label_match2 = (a2->label_src == a2->label_dst);
+    if (label_match1 != label_match2) {
+        return label_match2 - label_match1;
+    }
+
+    /* Rule 6: Prefer higher precedence. */
+    if (a1->precedence != a2->precedence) {
+        return a2->precedence - a1->precedence;
+    }
+
+    /*
+     * Rule 7: Prefer native transport.
+     * TODO(sesse): We don't currently have a good way of finding this.
+     */
+
+    /* Rule 8: Prefer smaller scope. */
+    if (a1->scope_dst != a2->scope_dst) {
+        return a1->scope_dst - a2->scope_dst;
+    }
+
+    /*
+     * Rule 9: Use longest matching prefix.
+     * We implement this for IPv6 only, as the rules in RFC 6724 don't seem
+     * to work very well directly applied to IPv4. (glibc uses information from
+     * the routing table for a custom IPv4 implementation here.)
+     */
+    if (a1->has_src_addr && a1->ai->ai_addr->sa_family == AF_INET6 && a2->has_src_addr &&
+        a2->ai->ai_addr->sa_family == AF_INET6) {
+        const struct sockaddr_in6* a1_src = &a1->src_addr.sin6;
+        const struct sockaddr_in6* a1_dst = (const struct sockaddr_in6*) a1->ai->ai_addr;
+        const struct sockaddr_in6* a2_src = &a2->src_addr.sin6;
+        const struct sockaddr_in6* a2_dst = (const struct sockaddr_in6*) a2->ai->ai_addr;
+        prefixlen1 = _common_prefix_len(&a1_src->sin6_addr, &a1_dst->sin6_addr);
+        prefixlen2 = _common_prefix_len(&a2_src->sin6_addr, &a2_dst->sin6_addr);
+        if (prefixlen1 != prefixlen2) {
+            return prefixlen2 - prefixlen1;
+        }
+    }
+
+    /*
+     * Rule 10: Leave the order unchanged.
+     * We need this since qsort() is not necessarily stable.
+     */
+    return a1->original_order - a2->original_order;
+}
+
+/*
+ * Find the source address that will be used if trying to connect to the given
+ * address. src_addr must be assigned and large enough to hold a struct sockaddr_in6.
+ * allow_v6_linklocal controls whether to accept link-local source addresses.
+ *
+ * Returns 1 if a source address was found, 0 if the address is unreachable,
+ * and -1 if a fatal error occurred. If 0 or -1, the contents of src_addr are
+ * undefined.
+ */
+
+static int _find_src_addr(const struct sockaddr* addr, struct sockaddr* src_addr, unsigned mark,
+                          uid_t uid, bool allow_v6_linklocal) {
+    if (src_addr == nullptr) return -1;
+
+    int ret;
+    socklen_t len;
+
+    switch (addr->sa_family) {
+        case AF_INET:
+            len = sizeof(struct sockaddr_in);
+            break;
+        case AF_INET6:
+            len = sizeof(struct sockaddr_in6);
+            break;
+        default:
+            /* No known usable source address for non-INET families. */
+            return 0;
+    }
+
+    android::base::unique_fd sock(socket(addr->sa_family, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP));
+    if (sock.get() == -1) {
+        if (errno == EAFNOSUPPORT) {
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+    if (mark != MARK_UNSET && setsockopt(sock, SOL_SOCKET, SO_MARK, &mark, sizeof(mark)) < 0) {
+        return 0;
+    }
+    if (uid > 0 && uid != NET_CONTEXT_INVALID_UID && fchown(sock, uid, (gid_t) -1) < 0) {
+        return 0;
+    }
+    do {
+        ret = connect(sock, addr, len);
+    } while (ret == -1 && errno == EINTR);
+
+    if (ret == -1) {
+        return 0;
+    }
+
+    if (getsockname(sock, src_addr, &len) == -1) {
+        return -1;
+    }
+
+    if (src_addr->sa_family == AF_INET6) {
+        sockaddr_in6* sin6 = reinterpret_cast<sockaddr_in6*>(src_addr);
+        if (!allow_v6_linklocal && IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+            // There is no point in sending an AAAA query because the device does not have a global
+            // IP address. The only thing that can be affected is the hostname "localhost". Devices
+            // with this setting will not be able to get the localhost v6 IP address ::1 via DNS
+            // lookups, which is accessible by host local. But it is expected that a DNS server that
+            // replies to "localhost" in AAAA should also reply in A. So it shouldn't cause issues.
+            // Also, the current behavior will not be changed because hostname “localhost” only gets
+            // 127.0.0.1 per etc/hosts configs.
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+void rfc6724_sort_array(addrinfo_sort_elem* elems, int nelem) {
+    qsort((void*)elems, nelem, sizeof(struct addrinfo_sort_elem), _rfc6724_compare);
+}
+
+/*
+ * Sort the linked list starting at sentinel->ai_next in RFC6724 order.
+ * Will leave the list unchanged if an error occurs.
+ */
+
+void resolv_rfc6724_sort(struct addrinfo* list_sentinel, unsigned mark, uid_t uid) {
+    if (list_sentinel == nullptr) return;
+
+    struct addrinfo* cur;
+    int nelem = 0, i;
+    struct addrinfo_sort_elem* elems;
+
+    cur = list_sentinel->ai_next;
+    while (cur) {
+        ++nelem;
+        cur = cur->ai_next;
+    }
+
+    elems = (struct addrinfo_sort_elem*) calloc(nelem, sizeof(struct addrinfo_sort_elem));
+    if (elems == NULL) {
+        goto error;
+    }
+
+    /*
+     * Convert the linked list to an array that also contains the candidate
+     * source address for each destination address.
+     */
+    for (i = 0, cur = list_sentinel->ai_next; i < nelem; ++i, cur = cur->ai_next) {
+        int has_src_addr;
+        assert(cur != NULL);
+        elems[i].ai = cur;
+        elems[i].original_order = i;
+
+        has_src_addr = _find_src_addr(cur->ai_addr, &elems[i].src_addr.sa, mark, uid,
+                                      /*allow_v6_linklocal=*/true);
+        if (has_src_addr == -1) {
+            goto error;
+        }
+        elems[i].has_src_addr = has_src_addr;
+
+        // NOTE: data is pre-populated in all cases, even if it isn't universally necessary.
+        const sockaddr* src = &elems[i].src_addr.sa;
+        const sockaddr* dst = elems[i].ai->ai_addr;
+        elems[i].scope_src = _get_scope(src);
+        elems[i].scope_dst = _get_scope(dst);
+        elems[i].label_src = resolv_getaddrlabel(src);
+        elems[i].label_dst = resolv_getaddrlabel(dst);
+        elems[i].precedence = _get_precedence(dst);
+    }
+
+    /* Sort the addresses, and rearrange the linked list so it matches the sorted order. */
+    rfc6724_sort_array(elems, nelem);
+
+    list_sentinel->ai_next = elems[0].ai;
+    for (i = 0; i < nelem - 1; ++i) {
+        elems[i].ai->ai_next = elems[i + 1].ai;
+    }
+    elems[nelem - 1].ai->ai_next = NULL;
+
+error:
+    free(elems);
+}
+
+static int dns_getaddrinfo(const char* name, const addrinfo* pai,
+                           const android_net_context* netcontext, std::optional<int> app_socket,
+                           addrinfo** rv, NetworkDnsEventReported* event) {
+    std::vector<res_target> queries;
+    ResState res(netcontext, app_socket, event);
+
+    setMdnsFlag(name, res.netid, &(res.flags));
+    bool is_mdns = isMdnsResolution(res.flags);
+
+    bool query_ipv6 = false;
+    bool query_ipv4 = false;
+
+    if (pai->ai_family == AF_UNSPEC) {
+        query_ipv6 = true;
+        query_ipv4 = true;
+        if (pai->ai_flags & AI_ADDRCONFIG) {
+            // Strictly speaking, AI_ADDRCONFIG should not look at whether connectivity is
+            // available, but whether addresses of the specified family are "configured on the local
+            // system". However, bionic doesn't currently support getifaddrs, so checking for
+            // connectivity is the next best thing.
+            query_ipv6 = have_global_ipv6_connectivity(netcontext->app_mark, netcontext->uid) ||
+                         (is_mdns && have_local_ipv6_connectivity(netcontext->app_mark,
+                                                                  netcontext->uid, res.netid));
+            query_ipv4 = have_ipv4_connectivity(netcontext->app_mark, netcontext->uid);
+        }
+    } else if (pai->ai_family == AF_INET) {
+        query_ipv4 = true;
+    } else if (pai->ai_family == AF_INET6) {
+        query_ipv6 = true;
+    } else {
+        return EAI_FAMILY;
+    }
+
+    resolv_populate_res_for_net(&res);
+
+    std::vector<ResState> res_states;
+    if (is_mdns) {
+        // resolv_get_interface_names is also called within have_local_ipv6_connectivity. This is
+        // racy and the two could return different values. Having said that, the race condition is
+        // benign for the following reasons:
+        // 1. The first call is to figure out whether to send out an AAAA query.
+        // 2. The second call is to figure out which interfaces to the queries to.
+        // With the above in mind, if these value don't match only the following can happen:
+        // 1. The second call returns interfaces that didn't exist before. In this scenario, we will
+        //    send the query onto this additional interface. This is a good thing.
+        // 2. The second call returns an interface that didn't exist before. In this scenario, we
+        //    will not send the query onto this interface anymore. This is a good thing.
+        // One could argue that whether we're sending out an AAAA query or not is also affected by
+        // these network topology changes. But that is a race condition that cannot be avoided, as
+        // it could also happen while this code is returning results to the caller.
+        std::vector<std::string> interface_names = resolv_get_interface_names(res.netid);
+        for (const auto& interface_name : interface_names) {
+            res_states.emplace_back(res.clone(event)).target_interface_index_for_mdns =
+                    if_nametoindex(interface_name.c_str());
+        }
+    } else {
+        res_states.emplace_back(res.clone(event));
+    }
+
+    for (auto& res_state : res_states) {
+        if (query_ipv6) {
+            res_target ipv6_query;
+            ipv6_query.name = name;
+            ipv6_query.qclass = C_IN;
+            ipv6_query.qtype = T_AAAA;
+            ipv6_query.res_state = &res_state;
+            queries.push_back(ipv6_query);
+        }
+        if (query_ipv4) {
+            res_target ipv4_query;
+            ipv4_query.name = name;
+            ipv4_query.qclass = C_IN;
+            ipv4_query.qtype = T_A;
+            ipv4_query.res_state = &res_state;
+            queries.push_back(ipv4_query);
+        }
+    }
+    if (queries.empty()) {
+        return EAI_NODATA;
+    }
+
+    int he;
+    // TODO: Refactor search_domains and event out of ResState (they really should not be there).
+    if (res_searchN(name, queries, res.search_domains, is_mdns, res.event, &he) < 0) {
+        // Return h_errno (he) to catch more detailed errors rather than EAI_NODATA.
+        // Note that res_searchN() doesn't set the pair NETDB_INTERNAL and errno.
+        // See also herrnoToAiErrno().
+        return herrnoToAiErrno(he);
+    }
+
+    addrinfo sentinel = {};
+    addrinfo* cur = &sentinel;
+    for (const auto& query : queries) {
+        addrinfo* ai = getanswer(query.answer, query.n, query.name, query.qtype, pai, &he);
+        if (ai) {
+            cur->ai_next = ai;
+            while (cur && cur->ai_next) {
+                cur = cur->ai_next;
+                fill_sin6_scope_id_if_needed(query, cur);
+            }
+        }
+    }
+
+    if (sentinel.ai_next == NULL) {
+        // Note that getanswer() doesn't set the pair NETDB_INTERNAL and errno.
+        // See also herrnoToAiErrno().
+        return herrnoToAiErrno(he);
+    }
+
+    resolv_rfc6724_sort(&sentinel, netcontext->app_mark, netcontext->uid);
+
+    *rv = sentinel.ai_next;
+    return 0;
+}
+
+static void _sethtent(FILE** hostf) {
+    if (!*hostf)
+        *hostf = fopen(_PATH_HOSTS, "re");
+    else
+        rewind(*hostf);
+}
+
+static void _endhtent(FILE** hostf) {
+    if (*hostf) {
+        (void) fclose(*hostf);
+        *hostf = NULL;
+    }
+}
+
+static struct addrinfo* _gethtent(FILE** hostf, const char* name, const struct addrinfo* pai) {
+    char* p;
+    char *cp, *tname, *cname;
+    struct addrinfo *res0, *res;
+    int error;
+    const char* addr;
+    char hostbuf[8 * 1024];
+
+    assert(name != NULL);
+    assert(pai != NULL);
+
+    if (!*hostf && !(*hostf = fopen(_PATH_HOSTS, "re"))) return (NULL);
+again:
+    if (!(p = fgets(hostbuf, sizeof hostbuf, *hostf))) return (NULL);
+    if (*p == '#') goto again;
+    if (!(cp = strpbrk(p, "#\n"))) goto again;
+    *cp = '\0';
+    if (!(cp = strpbrk(p, " \t"))) goto again;
+    *cp++ = '\0';
+    addr = p;
+    /* if this is not something we're looking for, skip it. */
+    cname = NULL;
+    while (cp && *cp) {
+        if (*cp == ' ' || *cp == '\t') {
+            cp++;
+            continue;
+        }
+        if (!cname) cname = cp;
+        tname = cp;
+        if ((cp = strpbrk(cp, " \t")) != NULL) *cp++ = '\0';
+        if (strcasecmp(name, tname) == 0) goto found;
+    }
+    goto again;
+
+found:
+    error = getaddrinfo_numeric(addr, nullptr, *pai, &res0);
+    if (error) goto again;
+    for (res = res0; res; res = res->ai_next) {
+        /* cover it up */
+        res->ai_flags = pai->ai_flags;
+
+        if (pai->ai_flags & AI_CANONNAME) {
+            if (get_canonname(pai, res, cname) != 0) {
+                freeaddrinfo(res0);
+                goto again;
+            }
+        }
+    }
+    return res0;
+}
+
+static struct addrinfo* getCustomHosts(const size_t netid, const char* _Nonnull name,
+                                       const struct addrinfo* _Nonnull pai) {
+    struct addrinfo sentinel = {};
+    struct addrinfo *res0, *res;
+    res = &sentinel;
+    std::vector<std::string> hosts = getCustomizedTableByName(netid, name);
+    for (const std::string& host : hosts) {
+        int error = getaddrinfo_numeric(host.c_str(), nullptr, *pai, &res0);
+        if (!error && res0 != nullptr) {
+            res->ai_next = res0;
+            res = res0;
+            res0 = nullptr;
+        }
+    }
+    return sentinel.ai_next;
+}
+
+static bool files_getaddrinfo(const size_t netid, const char* name, const addrinfo* pai,
+                              addrinfo** res) {
+    struct addrinfo sentinel = {};
+    struct addrinfo *p, *cur;
+    FILE* hostf = nullptr;
+
+    cur = &sentinel;
+    _sethtent(&hostf);
+    while ((p = _gethtent(&hostf, name, pai)) != nullptr) {
+        cur->ai_next = p;
+        while (cur && cur->ai_next) cur = cur->ai_next;
+    }
+    _endhtent(&hostf);
+
+    if ((p = getCustomHosts(netid, name, pai)) != nullptr) {
+        cur->ai_next = p;
+    }
+
+    *res = sentinel.ai_next;
+    return sentinel.ai_next != nullptr;
+}
+
+/* resolver logic */
+
+namespace {
+
+constexpr int SLEEP_TIME_MS = 2;
+
+int getHerrnoFromRcode(int rcode) {
+    switch (rcode) {
+        // Not defined in RFC.
+        case RCODE_TIMEOUT:
+            // DNS metrics monitors DNS query timeout.
+            return NETD_RESOLV_H_ERRNO_EXT_TIMEOUT;  // extended h_errno.
+        // Defined in RFC 1035 section 4.1.1.
+        case NXDOMAIN:
+            return HOST_NOT_FOUND;
+        case SERVFAIL:
+            return TRY_AGAIN;
+        case NOERROR:
+            return NO_DATA;
+        case FORMERR:
+        case NOTIMP:
+        case REFUSED:
+        default:
+            return NO_RECOVERY;
+    }
+}
+
+struct QueryResult {
+    int ancount;
+    int rcode;
+    int herrno;
+    int qerrno;
+    NetworkDnsEventReported event;
+};
+
+// Formulate a normal query, send, and await answer.
+// Caller must parse answer and determine whether it answers the question.
+QueryResult doQuery(const char* name, res_target* t, ResState* res,
+                    std::chrono::milliseconds sleepTimeMs) {
+    HEADER* hp = (HEADER*)(void*)t->answer.data();
+
+    hp->rcode = NOERROR;  // default
+
+    const int cl = t->qclass;
+    const int type = t->qtype;
+    const int anslen = t->answer.size();
+
+    LOG(DEBUG) << __func__ << ": (" << cl << ", " << type << ")";
+
+    uint8_t buf[MAXPACKET];
+    int n = res_nmkquery(QUERY, name, cl, type, {}, buf, res->netcontext_flags);
+
+    if (n > 0 &&
+        (res->netcontext_flags & (NET_CONTEXT_FLAG_USE_DNS_OVER_TLS | NET_CONTEXT_FLAG_USE_EDNS))) {
+        n = res_nopt(res, n, buf, anslen);
+    }
+
+    NetworkDnsEventReported event;
+    if (n <= 0) {
+        LOG(ERROR) << __func__ << ": res_nmkquery failed";
+        return {
+                .ancount = 0,
+                .rcode = -1,
+                .herrno = NO_RECOVERY,
+                .qerrno = errno,
+                .event = event,
+        };
+    }
+
+    ResState res_temp = res->clone(&event);
+
+    int rcode = NOERROR;
+    n = res_nsend(&res_temp, std::span(buf, n), std::span(t->answer.data(), anslen), &rcode, 0,
+                  sleepTimeMs);
+    if (n < 0 || hp->rcode != NOERROR || ntohs(hp->ancount) == 0) {
+        if (rcode != RCODE_TIMEOUT) rcode = hp->rcode;
+        // if the query choked with EDNS0, retry without EDNS0
+        if ((res_temp.netcontext_flags &
+             (NET_CONTEXT_FLAG_USE_DNS_OVER_TLS | NET_CONTEXT_FLAG_USE_EDNS)) &&
+            (res_temp.flags & RES_F_EDNS0ERR)) {
+            LOG(INFO) << __func__ << ": retry without EDNS0";
+            n = res_nmkquery(QUERY, name, cl, type, {}, buf, res_temp.netcontext_flags);
+            n = res_nsend(&res_temp, std::span(buf, n), std::span(t->answer.data(), anslen), &rcode,
+                          0);
+        }
+    }
+
+    LOG(INFO) << __func__ << ": rcode=" << rcode << ", ancount=" << ntohs(hp->ancount)
+              << ", return value=" << n;
+
+    t->n = n;
+    return {
+            .ancount = ntohs(hp->ancount),
+            .rcode = rcode,
+            .qerrno = errno,
+            .event = event,
+    };
+}
+
+}  // namespace
+
+// This function runs doQuery() for each res_target in parallel.
+static int res_queryN_parallel(const char* name, std::span<res_target> queries,
+                               android::net::NetworkDnsEventReported* event, int* herrno) {
+    std::vector<std::future<QueryResult>> results;
+    std::chrono::milliseconds sleepTimeMs{};
+    bool is_first_iteration = true;
+    for (auto& query : queries) {
+        results.emplace_back(std::async(std::launch::async, doQuery, name, &query, query.res_state,
+                                        sleepTimeMs));
+        if (is_first_iteration) {
+            // Avoiding gateways drop packets if queries are sent too close together
+            // Only needed if we have multiple queries in a row.
+            is_first_iteration = false;
+            int sleepFlag = Experiments::getInstance()->getFlag("parallel_lookup_sleep_time",
+                                                                SLEEP_TIME_MS);
+            if (sleepFlag > 1000) {
+                sleepFlag = 1000;
+            }
+            sleepTimeMs = std::chrono::milliseconds(sleepFlag);
+        }
+    }
+
+    int ancount = 0;
+    int rcode = 0;
+
+    for (auto& f : results) {
+        const QueryResult& r = f.get();
+        if (r.herrno == NO_RECOVERY) {
+            *herrno = r.herrno;
+            return -1;
+        }
+        event->MergeFrom(r.event);
+        ancount += r.ancount;
+        rcode = r.rcode;
+        errno = r.qerrno;
+    }
+
+    if (ancount == 0) {
+        *herrno = getHerrnoFromRcode(rcode);
+        return -1;
+    }
+
+    return ancount;
+}
+
+/*
+ * Formulate a normal query, send, and retrieve answer in supplied buffer.
+ * Return the size of the response on success, -1 on error.
+ * If enabled, implement search rules until answer or unrecoverable failure
+ * is detected.  Error code, if any, is left in *herrno.
+ */
+static int res_searchN(const char* name, std::span<res_target> queries,
+                       std::span<std::string> search_domains, bool is_mdns,
+                       android::net::NetworkDnsEventReported* event, int* herrno) {
+    const char* cp;
+    HEADER* hp;
+    uint32_t dots;
+    int ret, saved_herrno;
+    int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
+
+    assert(name != NULL);
+    assert(!queries.empty());
+
+    hp = (HEADER*)(void*)queries.front().answer.data();
+
+    errno = 0;
+    *herrno = HOST_NOT_FOUND; /* default, if we never query */
+    dots = 0;
+    for (cp = name; *cp; cp++) dots += (*cp == '.');
+    const bool trailing_dot = (cp > name && *--cp == '.') ? true : false;
+
+    // If there are dots in the name already, let's just give it a try 'as is'.
+    saved_herrno = -1;
+    if (dots >= NDOTS) {
+        ret = res_querydomainN(name, NULL, queries, event, herrno);
+        if (ret > 0) return (ret);
+        saved_herrno = *herrno;
+        tried_as_is++;
+    }
+
+    /*
+     * We do at least one level of search if
+     * - there is no dot, or
+     * - there is at least one dot and there is no trailing dot.
+     * - this is not a .local mDNS lookup.
+     */
+    if ((!dots || (dots && !trailing_dot)) && !is_mdns) {
+        for (const auto& domain : search_domains) {
+            ret = res_querydomainN(name, domain.c_str(), queries, event, herrno);
+            if (ret > 0) return ret;
+
+            /*
+             * If no server present, give up.
+             * If name isn't found in this domain,
+             * keep trying higher domains in the search list
+             * (if that's enabled).
+             * On a NO_DATA error, keep trying, otherwise
+             * a wildcard entry of another type could keep us
+             * from finding this entry higher in the domain.
+             * If we get some other error (negative answer or
+             * server failure), then stop searching up,
+             * but try the input name below in case it's
+             * fully-qualified.
+             */
+            if (errno == ECONNREFUSED) {
+                *herrno = TRY_AGAIN;
+                return -1;
+            }
+
+            switch (*herrno) {
+                case NO_DATA:
+                    got_nodata++;
+                    [[fallthrough]];
+                case HOST_NOT_FOUND:
+                    /* keep trying */
+                    break;
+                case TRY_AGAIN:
+                    if (hp->rcode == SERVFAIL) {
+                        /* try next search element, if any */
+                        got_servfail++;
+                    }
+                    break;
+            }
+        }
+    }
+
+    /*
+     * if we have not already tried the name "as is", do that now.
+     * note that we do this regardless of how many dots were in the
+     * name or whether it ends with a dot.
+     */
+    if (!tried_as_is) {
+        ret = res_querydomainN(name, NULL, queries, event, herrno);
+        if (ret > 0) return ret;
+    }
+
+    /*
+     * if we got here, we didn't satisfy the search.
+     * if we did an initial full query, return that query's h_errno
+     * (note that we wouldn't be here if that query had succeeded).
+     * else if we ever got a nodata, send that back as the reason.
+     * else send back meaningless h_errno, that being the one from
+     * the last DNSRCH we did.
+     */
+    if (saved_herrno != -1)
+        *herrno = saved_herrno;
+    else if (got_nodata)
+        *herrno = NO_DATA;
+    else if (got_servfail)
+        *herrno = TRY_AGAIN;
+    return -1;
+}
+
+// Perform a call on res_query on the concatenation of name and domain,
+// removing a trailing dot from name if domain is NULL.
+static int res_querydomainN(const char* name, const char* domain, std::span<res_target> queries,
+                            android::net::NetworkDnsEventReported* event, int* herrno) {
+    char nbuf[MAXDNAME];
+    const char* longname = nbuf;
+    size_t n, d;
+
+    assert(name != NULL);
+
+    if (domain == NULL) {
+        // Check for trailing '.'; copy without '.' if present.
+        n = strlen(name);
+        if (n + 1 > sizeof(nbuf)) {
+            *herrno = NO_RECOVERY;
+            return -1;
+        }
+        if (n > 0 && name[--n] == '.') {
+            strncpy(nbuf, name, n);
+            nbuf[n] = '\0';
+        } else
+            longname = name;
+    } else {
+        n = strlen(name);
+        d = strlen(domain);
+        if (n + 1 + d + 1 > sizeof(nbuf)) {
+            *herrno = NO_RECOVERY;
+            return -1;
+        }
+        snprintf(nbuf, sizeof(nbuf), "%s.%s", name, domain);
+    }
+    return res_queryN_parallel(longname, queries, event, herrno);
+}

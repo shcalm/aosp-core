@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wallpaper"
+  name: "enable_pack_theme_entry"
+  state: ENABLED
+  permission: READ_WRITE
+}

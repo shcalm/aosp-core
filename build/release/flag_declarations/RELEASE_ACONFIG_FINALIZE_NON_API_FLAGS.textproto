@@ -1,0 +1,11 @@
+name: "RELEASE_ACONFIG_FINALIZE_NON_API_FLAGS"
+namespace: "core_experiments_team_internal"
+description: "When true, non-API exported flags will be provided to record-finalized-flags."
+workflow: LAUNCH
+value: {
+  bool_value: true
+}
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

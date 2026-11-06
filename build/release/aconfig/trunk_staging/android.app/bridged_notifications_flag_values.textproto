@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "bridged_notifications"
+  state: ENABLED
+  permission: READ_WRITE
+}

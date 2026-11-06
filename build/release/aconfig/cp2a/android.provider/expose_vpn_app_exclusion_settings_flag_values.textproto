@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.provider"
+  name: "expose_vpn_app_exclusion_settings"
+  state: ENABLED
+  permission: READ_ONLY
+}

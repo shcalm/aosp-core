@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "dream_preview_tap_dismiss"
+  state: ENABLED
+  permission: READ_ONLY
+}

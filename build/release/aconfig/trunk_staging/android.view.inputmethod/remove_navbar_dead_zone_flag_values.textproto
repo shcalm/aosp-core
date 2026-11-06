@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "remove_navbar_dead_zone"
+  state: ENABLED
+  permission: READ_WRITE
+}

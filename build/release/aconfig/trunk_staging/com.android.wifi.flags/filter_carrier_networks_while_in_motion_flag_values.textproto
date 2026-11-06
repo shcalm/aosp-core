@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "filter_carrier_networks_while_in_motion"
+  state: ENABLED
+  permission: READ_WRITE
+}

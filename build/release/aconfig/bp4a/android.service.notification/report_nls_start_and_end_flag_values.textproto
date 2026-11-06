@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.notification"
+  name: "report_nls_start_and_end"
+  state: ENABLED
+  permission: READ_ONLY
+}

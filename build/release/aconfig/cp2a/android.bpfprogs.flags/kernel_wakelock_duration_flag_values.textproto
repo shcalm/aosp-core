@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.bpfprogs.flags"
+  name: "kernel_wakelock_duration"
+  state: ENABLED
+  permission: READ_ONLY
+}

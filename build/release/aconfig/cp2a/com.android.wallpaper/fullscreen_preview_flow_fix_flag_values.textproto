@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wallpaper"
+  name: "fullscreen_preview_flow_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

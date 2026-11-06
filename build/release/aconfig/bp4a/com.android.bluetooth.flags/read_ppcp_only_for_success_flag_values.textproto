@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "read_ppcp_only_for_success"
+  state: ENABLED
+  permission: READ_ONLY
+}

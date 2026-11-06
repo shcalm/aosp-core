@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "fix_fullscreen_in_multi_window"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "current_user_access_unassigned_displays"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "vcp_skip_redundant_operation_writes"
+  state: ENABLED
+  permission: READ_ONLY
+}

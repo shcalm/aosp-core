@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "enable_web_content_filters_screen_search_redirection"
+  state: ENABLED
+  permission: READ_ONLY
+}

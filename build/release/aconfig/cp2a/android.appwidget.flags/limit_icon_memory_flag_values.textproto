@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.appwidget.flags"
+  name: "limit_icon_memory"
+  state: ENABLED
+  permission: READ_ONLY
+}

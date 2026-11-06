@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "allow_output_switcher_list_rearrangement_within_timeout"
+  state: ENABLED
+  permission: READ_WRITE
+}

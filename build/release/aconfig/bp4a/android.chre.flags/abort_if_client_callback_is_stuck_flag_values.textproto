@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.chre.flags"
+  name: "abort_if_client_callback_is_stuck"
+  state: ENABLED
+  permission: READ_ONLY
+}

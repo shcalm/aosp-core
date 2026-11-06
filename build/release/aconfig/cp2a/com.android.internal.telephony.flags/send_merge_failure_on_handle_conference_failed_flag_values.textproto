@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "send_merge_failure_on_handle_conference_failed"
+  state: ENABLED
+  permission: READ_ONLY
+}

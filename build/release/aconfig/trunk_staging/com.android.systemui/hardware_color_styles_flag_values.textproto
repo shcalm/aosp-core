@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "hardware_color_styles"
+  state: ENABLED
+  permission: READ_WRITE
+}

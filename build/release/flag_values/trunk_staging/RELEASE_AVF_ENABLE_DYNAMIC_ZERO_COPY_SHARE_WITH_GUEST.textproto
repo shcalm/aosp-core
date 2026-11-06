@@ -1,0 +1,4 @@
+name: "RELEASE_AVF_ENABLE_DYNAMIC_ZERO_COPY_SHARE_WITH_GUEST"
+value {
+  bool_value: true
+}

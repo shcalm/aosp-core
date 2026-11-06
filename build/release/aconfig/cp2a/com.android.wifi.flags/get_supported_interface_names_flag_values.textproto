@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "get_supported_interface_names"
+  state: ENABLED
+  permission: READ_ONLY
+}

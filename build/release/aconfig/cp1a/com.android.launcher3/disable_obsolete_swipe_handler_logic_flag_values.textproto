@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "disable_obsolete_swipe_handler_logic"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_ACONFIG_GENERATE_CHECKS_SDK_ANNOTATION"
+value {
+  bool_value: true
+}

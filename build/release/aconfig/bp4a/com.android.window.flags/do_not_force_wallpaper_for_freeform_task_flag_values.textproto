@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "do_not_force_wallpaper_for_freeform_task"
+  state: ENABLED
+  permission: READ_ONLY
+}

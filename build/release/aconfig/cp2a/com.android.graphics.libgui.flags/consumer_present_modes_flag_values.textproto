@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libgui.flags"
+  name: "consumer_present_modes"
+  state: ENABLED
+  permission: READ_ONLY
+}

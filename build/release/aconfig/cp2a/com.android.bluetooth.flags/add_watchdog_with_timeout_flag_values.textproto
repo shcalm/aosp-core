@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "add_watchdog_with_timeout"
+  state: ENABLED
+  permission: READ_ONLY
+}

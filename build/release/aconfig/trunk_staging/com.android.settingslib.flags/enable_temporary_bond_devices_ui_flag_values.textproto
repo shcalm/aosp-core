@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "enable_temporary_bond_devices_ui"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "notify_qs_tile_changed_after_user_initialization"
+  state: ENABLED
+  permission: READ_ONLY
+}

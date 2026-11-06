@@ -1,0 +1,8 @@
+name: "RELEASE_WIFI_MAINLINE_SUPPLICANT_VERSION"
+namespace: "wifi"
+description: "Control which version of Mainline Supplicant is included in the Wifi mainline Apex"
+value: {
+  string_value: ""
+}
+workflow: PREBUILT
+containers: "com.android.wifi"

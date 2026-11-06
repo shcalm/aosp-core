@@ -1,0 +1,8 @@
+name: "RELEASE_AVF_SOONG_GENERATED_CIDATA"
+namespace: "virtualization"
+description: "Use soong generated cidata.iso, instead of building it with kokoro"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

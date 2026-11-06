@@ -1,0 +1,8 @@
+name: "RELEASE_ENABLE_ON_DEVICE_ABUSE_DETECTION"
+namespace: "machine_learning"
+description: "This flag enables ODAD (On-Device Abuse Detection)."
+value: {
+  bool_value: true
+}
+workflow: LAUNCH
+containers: "system"

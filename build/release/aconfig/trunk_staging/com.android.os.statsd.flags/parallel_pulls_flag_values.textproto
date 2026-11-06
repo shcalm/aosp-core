@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.os.statsd.flags"
+  name: "parallel_pulls"
+  state: ENABLED
+  permission: READ_WRITE
+}

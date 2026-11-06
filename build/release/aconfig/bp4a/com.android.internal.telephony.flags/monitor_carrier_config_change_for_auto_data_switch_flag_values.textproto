@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "monitor_carrier_config_change_for_auto_data_switch"
+  state: ENABLED
+  permission: READ_ONLY
+}

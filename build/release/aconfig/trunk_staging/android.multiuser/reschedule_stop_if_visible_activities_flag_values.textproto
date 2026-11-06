@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "reschedule_stop_if_visible_activities"
+  state: ENABLED
+  permission: READ_WRITE
+}

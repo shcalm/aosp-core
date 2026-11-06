@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "phr_allow_nulls_in_primitive_value_arrays"
+  state: ENABLED
+  permission: READ_ONLY
+}

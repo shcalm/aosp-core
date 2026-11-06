@@ -1,0 +1,4 @@
+name:  "RELEASE_AVF_ENABLE_VM_TO_HOST_SERVICES"
+value:  {
+  bool_value:  true
+}

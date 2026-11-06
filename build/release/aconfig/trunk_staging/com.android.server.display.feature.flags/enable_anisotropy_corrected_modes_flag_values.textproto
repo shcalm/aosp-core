@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "enable_anisotropy_corrected_modes"
+  state: ENABLED
+  permission: READ_WRITE
+}

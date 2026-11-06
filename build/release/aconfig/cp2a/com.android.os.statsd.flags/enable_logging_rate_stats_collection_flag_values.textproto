@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.os.statsd.flags"
+  name: "enable_logging_rate_stats_collection"
+  state: ENABLED
+  permission: READ_ONLY
+}

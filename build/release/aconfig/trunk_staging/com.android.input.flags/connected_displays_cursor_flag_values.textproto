@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "connected_displays_cursor"
+  state: ENABLED
+  permission: READ_WRITE
+}

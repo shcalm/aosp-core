@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "thread_safe_key_generation"
+  state: ENABLED
+  permission: READ_ONLY
+}

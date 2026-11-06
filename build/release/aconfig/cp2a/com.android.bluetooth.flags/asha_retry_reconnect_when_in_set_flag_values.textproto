@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "asha_retry_reconnect_when_in_set"
+  state: ENABLED
+  permission: READ_ONLY
+}

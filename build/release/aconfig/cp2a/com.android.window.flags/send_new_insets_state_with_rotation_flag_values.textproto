@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "send_new_insets_state_with_rotation"
+  state: ENABLED
+  permission: READ_ONLY
+}

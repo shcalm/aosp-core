@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "show_audio_sharing_slider_in_volume_panel"
+  state: ENABLED
+  permission: READ_WRITE
+}

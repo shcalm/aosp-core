@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.apex.flags"
+  name: "microdroid_no_loop_device"
+  state: ENABLED
+  permission: READ_ONLY
+}

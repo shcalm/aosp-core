@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "fix_disabled_by_admin_short_message_not_shown"
+  state: ENABLED
+  permission: READ_ONLY
+}

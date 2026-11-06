@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.flags"
+  name: "called_from_wrong_thread_listener_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

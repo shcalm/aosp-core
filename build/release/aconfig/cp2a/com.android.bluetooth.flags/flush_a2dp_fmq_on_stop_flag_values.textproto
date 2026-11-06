@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "flush_a2dp_fmq_on_stop"
+  state: ENABLED
+  permission: READ_ONLY
+}

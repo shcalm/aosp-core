@@ -1,0 +1,11 @@
+name: "RELEASE_ENABLE_PIXEL_MTE"
+namespace: "pixel_gsc"
+description: "Include MTE build configuration"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

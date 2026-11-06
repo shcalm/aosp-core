@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "failed_auth_lock_toggle"
+  state: ENABLED
+  permission: READ_ONLY
+}

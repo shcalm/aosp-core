@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.biometrics"
+  name: "internal_cleanup_for_all_profiles"
+  state: ENABLED
+  permission: READ_WRITE
+}

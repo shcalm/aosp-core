@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "utils_return_user_handle_for_current_user_id"
+  state: ENABLED
+  permission: READ_WRITE
+}

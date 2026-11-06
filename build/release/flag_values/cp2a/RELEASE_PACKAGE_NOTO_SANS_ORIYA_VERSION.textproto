@@ -1,0 +1,4 @@
+name: "RELEASE_PACKAGE_NOTO_SANS_ORIYA_VERSION"
+value {
+  string_value: "1.010"
+}

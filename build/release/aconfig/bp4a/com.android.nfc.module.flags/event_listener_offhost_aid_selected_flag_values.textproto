@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.module.flags"
+  name: "event_listener_offhost_aid_selected"
+  state: ENABLED
+  permission: READ_ONLY
+}

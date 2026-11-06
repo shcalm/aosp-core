@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "phone_account_changed"
+  state: ENABLED
+  permission: READ_WRITE
+}

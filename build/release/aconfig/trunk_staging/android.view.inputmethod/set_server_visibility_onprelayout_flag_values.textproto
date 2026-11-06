@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "set_server_visibility_onprelayout"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_pip_ui_state_change_callback_for_connected_displays"
+  state: ENABLED
+  permission: READ_WRITE
+}

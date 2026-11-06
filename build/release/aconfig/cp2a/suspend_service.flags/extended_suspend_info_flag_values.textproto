@@ -1,0 +1,6 @@
+flag_value {
+  package: "suspend_service.flags"
+  name: "extended_suspend_info"
+  state: ENABLED
+  permission: READ_ONLY
+}

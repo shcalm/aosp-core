@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "color_transform_translation"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.contentcapture.flags"
+  name: "content_interaction_api_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

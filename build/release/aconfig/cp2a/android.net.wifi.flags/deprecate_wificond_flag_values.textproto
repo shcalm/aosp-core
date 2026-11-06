@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.wifi.flags"
+  name: "deprecate_wificond"
+  state: ENABLED
+  permission: READ_ONLY
+}

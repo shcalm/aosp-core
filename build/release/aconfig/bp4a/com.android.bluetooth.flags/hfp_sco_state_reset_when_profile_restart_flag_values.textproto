@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hfp_sco_state_reset_when_profile_restart"
+  state: ENABLED
+  permission: READ_ONLY
+}

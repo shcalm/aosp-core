@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "enable_android_auto_check_by_ui_mode_manager"
+  state: ENABLED
+  permission: READ_ONLY
+}

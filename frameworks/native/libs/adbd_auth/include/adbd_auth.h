@@ -1,0 +1,254 @@
+#pragma once
+
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <stdbool.h>
+#include <stdint.h>
+#include <sys/cdefs.h>
+#include <sys/types.h>
+
+#if !defined(__INTRODUCED_IN)
+#define __INTRODUCED_IN(__api_level) /* nothing */
+#endif
+
+__BEGIN_DECLS
+
+// The transport type of the device connection.
+// must be in sync with frameworks/base/core/java/android/debug/AdbTransportType.aidl
+enum AdbTransportType : int32_t {
+    kAdbTransportTypeUsb = 0,
+    kAdbTransportTypeWifi,
+    kAdbTransportTypeVsock,
+};
+static_assert(sizeof(AdbTransportType) == sizeof(int32_t), "Unexpected AdbTransportType size");
+
+struct AdbdAuthCallbacks {
+    uint32_t version;
+};
+
+struct AdbdAuthCallbacksV1 : AdbdAuthCallbacks {
+    // Callback for a successful user authorization.
+    void (*key_authorized)(void* opaque, uint64_t id);
+    // The framework removed the key from the keystore. This callback notifies
+    // adbd so it can take the appropriate actions (e.g. disconnect all devices
+    // using that key).
+    void (*key_removed)(const char* public_key, size_t length);
+};
+
+struct AdbdAuthCallbacksV2 : AdbdAuthCallbacksV1 {
+    // The framework wants adbd to start adb wifi (TCP / TLS)
+    void (*start_adbd_wifi)();
+
+    // The framework wants adbd to stop adb wifi (TCP / TLS)
+    void (*stop_adbd_wifi)();
+};
+
+struct AdbdAuthCallbacksV3: AdbdAuthCallbacksV2 {
+    // The framework has connected to adbd_auth socket
+    void (*on_framework_connected)();
+};
+
+struct AdbdAuthContext;
+typedef struct AdbdAuthContext AdbdAuthContext;
+
+/**
+ * Creates a new AdbdAuthContext.
+ *
+ * @param callbacks a set of user-provided callbacks used internally (see
+ * #AdbdAuthCallbacksV1
+ * @return a new AdbdAuthContext instance. Caller is responsible for destroying
+ * the context with #adbd_auth_delete.
+ */
+AdbdAuthContext* adbd_auth_new(AdbdAuthCallbacks* callbacks) __INTRODUCED_IN(30);
+
+/**
+ * Destroys the AdbdAuthContext.
+ *
+ * @param ctx the AdbdAuthContext to destroy.
+ */
+void adbd_auth_delete(AdbdAuthContext* ctx) __INTRODUCED_IN(30);
+
+/**
+ * Starts the AdbdAuthContext.
+ *
+ * The caller may want to run this on a different thread, as this
+ * runs indefinitely.
+ *
+ * @param ctx the AdbdAuthContext
+ */
+void adbd_auth_run(AdbdAuthContext* ctx) __INTRODUCED_IN(30);
+
+/**
+ * Iterate through the list of authorized public keys.
+ *
+ * @param ctx the AdbdAuthContext
+ * @param callback a callback which will get called for every known adb public
+ * key in its keystore. To stop iteration of the keys, return false in the
+ * callback. Otherwise, return true to continue the iteration.
+ * @param opaque an opaque userdata argument
+ */
+void adbd_auth_get_public_keys(AdbdAuthContext* ctx,
+                               bool (*callback)(void* opaque, const char* public_key, size_t len),
+                               void* opaque) __INTRODUCED_IN(30);
+
+/**
+ * Let system_server know that a key has been successfully used for authentication.
+ *
+ * @param ctx the AdbdAuthContext
+ * @param public_key the RSA key that was authorized using the AUTH protocol
+ * @param len the length of the public_key argument
+ * @return an id corresponding to the new connection
+ */
+uint64_t adbd_auth_notify_auth(AdbdAuthContext* ctx,
+                               const char* public_key,
+                               size_t len) __INTRODUCED_IN(30);
+
+/**
+ * Let system_server know that an AUTH connection has been closed.
+ *
+ * @param ctx the AdbdAuthContext
+ * @param id the id of the disconnected device
+ */
+void adbd_auth_notify_disconnect(AdbdAuthContext* ctx,
+                                 uint64_t id) __INTRODUCED_IN(30);
+
+/**
+ * Prompt the user to authorize a public key.
+ *
+ * When this happens, a callback will be run on the auth thread with the result.
+ *
+ * @param ctx the AdbdAuthContext
+ * @param public_key the RSA public key to prompt user with
+ * @param len the length of the public_key argument
+ * @param arg an opaque userdata argument
+ */
+void adbd_auth_prompt_user(AdbdAuthContext* ctx, const char* public_key, size_t len, void* opaque)
+        __INTRODUCED_IN(30);
+
+/**
+ * Prompt the user to authorize a public key.
+ *
+ * When this happens, a callback will be run on the auth thread with the result.
+ *
+ * @param ctx the AdbdAuthContext
+ * @param public_key the RSA public key to prompt user with
+ * @param len the length of the public_key argument
+ * @param arg an opaque userdata argument
+ * @return a unique id which will be returned via callback
+ */
+__attribute__((weak)) uint64_t adbd_auth_prompt_user_with_id(AdbdAuthContext* ctx,
+                                                             const char* public_key, size_t len,
+                                                             void* opaque) __INTRODUCED_IN(30);
+
+/**
+ * Let system_server know that a TLS device has connected.
+ *
+ * @param ctx the AdbdAuthContext
+ * @param type the transport type of the connection (see #AdbTransportType)
+ * @param public_key the RSA public key used to establish the connection
+ * @param len the length of the public_key argument
+ * @return an id corresponding to the new connection
+ */
+uint64_t adbd_auth_tls_device_connected(AdbdAuthContext* ctx,
+                                        AdbTransportType type,
+                                        const char* public_key,
+                                        size_t len) __INTRODUCED_IN(30);
+
+/**
+ * Let system_server know that a TLS device has disconnected.
+ *
+ * @param ctx the AdbdAuthContext
+ * @param type the transport type of the connection (see #AdbTransportType)
+ * @param the id of the disconnected device (see #adbd_tls_device_connected)
+ */
+void adbd_auth_tls_device_disconnected(AdbdAuthContext* ctx,
+                                       AdbTransportType type,
+                                       uint64_t id) __INTRODUCED_IN(30);
+
+/**
+ * Returns the max #AdbdAuthCallbacks version.
+ *
+ * The version starts at 1, with version 1 corresponding to the
+ * #AdbdAuthCallbacksV1 struct.
+ *
+ * @return the max #AdbdAuthCallbacks version.
+ */
+uint32_t adbd_auth_get_max_version(void) __INTRODUCED_IN(30);
+
+enum AdbdAuthFeature : int32_t {
+  WifiLifeCycle, // Framework can request ADB Wifi TLS server to start/stop.
+};
+
+/**
+ * Checks if a feature is supported by the framework. See #AdbdAuthFeature.
+ *
+ * @param feature the feature to check for support
+ * @return true if the feature is supported
+ */
+bool adbd_auth_supports_feature(AdbdAuthFeature feature);
+
+/**
+ * Advertise the port number the TLS server is running on. 0 = not running.
+ *
+ * @param ctx the AdbdAuthContext
+ * @param port the port number the TLS server is running on.
+ */
+void adbd_auth_send_tls_server_port(AdbdAuthContext* ctx, uint16_t port) __INTRODUCED_IN(37);
+
+enum AdbdauthRegisterResult : uint32_t {
+    ADBD_AUTH_REGISTER_OK,
+    ADBD_AUTH_REGISTER_BAD_NAME, // Either instance name or service type was too long (>255)
+};
+/**
+ * Register mDNS Service
+ *
+ * @param ctx the AdbdAuthContext
+ * @param instance_name the mDNS service instance name (a-z), (A-Z), (0-9), (_), and (-)
+ *        and (UTF-8, max 256 bytes including a required NUL byte)
+ * @param service_type the mDNS service name (a-z), (A-Z), (0-9), (_), and (-)
+ *        and (UTF-8, max 256 bytes including a required NUL byte)
+ * @param port the port number of the service
+ * @return RegisterResult
+ */
+AdbdauthRegisterResult adbd_auth_register_service(AdbdAuthContext* ctx,
+                                                  const char* instance_name,
+                                                  const char* service_type,
+                                                  uint16_t port) __INTRODUCED_IN(37);
+
+enum AdbdauthUnregisterResult : uint32_t {
+    ADBD_AUTH_UNREGISTER_OK,
+    ADBD_AUTH_UNREGISTER_BAD_NAME, // Either instance name or service type was too long (>255)
+};
+/**
+ * Unregister mDNS Service
+ *
+ * @param ctx the AdbdAuthContext
+ * @param instance_name the mDNS service instance name (a-z), (A-Z), (0-9), (_), and (-)
+ *        and (UTF-8, max 256 bytes including a required NUL byte)
+ * @param service_type the mDNS service name (a-z), (A-Z), (0-9), (_), and (-)
+ *        and (UTF-8, max 256 bytes including a required NUL byte)
+ * @return UnregisterResult
+ *
+ * It is ok to call unregister on an service unknown to framework. Services are tracked there
+ * and results in a no-op.
+ *
+ */
+AdbdauthUnregisterResult adbd_auth_unregister_service(AdbdAuthContext* ctx,
+                                                      const char* instance_name,
+                                                      const char* service_type) __INTRODUCED_IN(37);
+
+__END_DECLS

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "display_info_copy_on_write_cache_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

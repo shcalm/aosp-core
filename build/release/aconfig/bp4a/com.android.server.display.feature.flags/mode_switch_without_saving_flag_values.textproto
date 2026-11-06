@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "mode_switch_without_saving"
+  state: ENABLED
+  permission: READ_ONLY
+}

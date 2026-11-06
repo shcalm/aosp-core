@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.feature.flags"
+  name: "enable_inset_focus_rings_in_suw"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.4.0-alpha08" type="baseline" client="" dependencies="true" name="" variant="all" version="8.4.0-alpha08">
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36 (current min is 33): `android.os.Handler#removeEqualMessages`"
+        errorLine1="            handler.removeEqualMessages(what, object);"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Connectivity/service-t/src/com/android/server/connectivity/mdns/MdnsReplySender.java"
+            line="106"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `BpfNetMaps`"
+        errorLine1="            return new BpfNetMaps(ctx, new InterfaceTracker(ctx));"
+        errorLine2="                   ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Connectivity/service-t/src/com/android/server/net/NetworkStatsFactory.java"
+            line="135"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `swapActiveStatsMap`"
+        errorLine1="            mBpfNetMaps.swapActiveStatsMap();"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Connectivity/service-t/src/com/android/server/net/NetworkStatsFactory.java"
+            line="233"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Field requires API level 37 (current min is 35): `REGISTER_NSD_OFFLOAD_ENGINE`"
+        errorLine1="                permissionsList.add(REGISTER_NSD_OFFLOAD_ENGINE);"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Connectivity/service-t/src/com/android/server/NsdService.java"
+            line="2613"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `addOrUpdateInterfaceAddress`"
+        errorLine1="                    mCb.addOrUpdateInterfaceAddress(ifaddrMsg.index, la);"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Connectivity/service-t/src/com/android/server/connectivity/mdns/internal/SocketNetlinkMonitor.java"
+            line="69"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `deleteInterfaceAddress`"
+        errorLine1="                mCb.deleteInterfaceAddress(ifaddrMsg.index, la);"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Connectivity/service-t/src/com/android/server/connectivity/mdns/internal/SocketNetlinkMonitor.java"
+            line="73"
+            column="21"/>
+    </issue>
+
+</issues>

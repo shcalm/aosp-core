@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "call_sdp_free_in_main_thread"
+  state: ENABLED
+  permission: READ_ONLY
+}

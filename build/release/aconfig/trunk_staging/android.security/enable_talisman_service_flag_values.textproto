@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "enable_talisman_service"
+  state: ENABLED
+  permission: READ_WRITE
+}

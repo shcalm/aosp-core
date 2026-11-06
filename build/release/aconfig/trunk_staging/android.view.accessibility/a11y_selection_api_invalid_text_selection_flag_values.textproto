@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "a11y_selection_api_invalid_text_selection"
+  state: ENABLED
+  permission: READ_WRITE
+}

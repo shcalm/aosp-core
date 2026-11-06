@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.voiceinteraction.flags"
+  name: "enable_restrict_vis_self_trigger"
+  state: ENABLED
+  permission: READ_ONLY
+}

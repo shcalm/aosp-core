@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "remove_hop_from_le_adv_set_term"
+  state: ENABLED
+  permission: READ_ONLY
+}

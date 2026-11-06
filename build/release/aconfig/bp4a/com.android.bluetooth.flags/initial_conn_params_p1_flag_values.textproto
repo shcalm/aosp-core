@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "initial_conn_params_p1"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "widget_scaling_bugfix"
+  state: ENABLED
+  permission: READ_WRITE
+}

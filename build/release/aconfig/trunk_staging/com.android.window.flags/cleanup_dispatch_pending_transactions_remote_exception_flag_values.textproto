@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "cleanup_dispatch_pending_transactions_remote_exception"
+  state: ENABLED
+  permission: READ_ONLY
+}

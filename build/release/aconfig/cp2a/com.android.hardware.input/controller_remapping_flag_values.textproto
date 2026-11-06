@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "controller_remapping"
+  state: ENABLED
+  permission: READ_ONLY
+}

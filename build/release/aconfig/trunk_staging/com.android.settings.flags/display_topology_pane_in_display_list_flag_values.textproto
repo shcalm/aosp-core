@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "display_topology_pane_in_display_list"
+  state: ENABLED
+  permission: READ_WRITE
+}

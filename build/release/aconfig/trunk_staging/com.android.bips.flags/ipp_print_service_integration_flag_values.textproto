@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bips.flags"
+  name: "ipp_print_service_integration"
+  state: ENABLED
+  permission: READ_WRITE
+}

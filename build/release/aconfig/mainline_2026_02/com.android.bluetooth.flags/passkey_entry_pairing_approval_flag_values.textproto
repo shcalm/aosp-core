@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "passkey_entry_pairing_approval"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,11 @@
+name: "RELEASE_PLATFORM_PREVIEW_SDK_INT"
+namespace: "android_sdk"
+description: "The value of Build.VERSION.PREVIEW_SDK_INT. Must be 0 on if the SDK is finalized, should be non-zero otherwise."
+value: {
+  string_value: "1"
+}
+workflow: MANUAL
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

@@ -1,0 +1,8 @@
+name:  "RELEASE_R8_FRAMEWORK_BASIC"
+namespace:  "system_performance"
+description:  "Enables the most basic and conservative R8 usage on framework lib(s)"
+workflow:  LAUNCH
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

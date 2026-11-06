@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.crashrecovery.flags"
+  name: "flag_reset_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

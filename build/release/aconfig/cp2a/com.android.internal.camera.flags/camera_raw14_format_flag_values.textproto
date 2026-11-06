@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.camera.flags"
+  name: "camera_raw14_format"
+  state: ENABLED
+  permission: READ_ONLY
+}

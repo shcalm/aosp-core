@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_broadcast_sw_config_quality_logic"
+  state: ENABLED
+  permission: READ_ONLY
+}

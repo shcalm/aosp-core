@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "aapm_feature_usb_data_protection_delay_disable_auto_only"
+  state: ENABLED
+  permission: READ_WRITE
+}

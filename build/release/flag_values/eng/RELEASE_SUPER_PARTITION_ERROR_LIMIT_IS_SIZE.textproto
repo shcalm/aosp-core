@@ -1,0 +1,5 @@
+name: "RELEASE_SUPER_PARTITION_ERROR_LIMIT_IS_SIZE"
+value: {
+  bool_value: true
+}
+

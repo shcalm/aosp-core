@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.dreams"
+  name: "allow_dream_with_charge_limit"
+  state: DISABLED
+  permission: READ_ONLY
+}

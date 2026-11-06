@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "skip_add_recents_to_sync_set"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_CAR_SYS_EXP_TOS_RESTRICTIONS"
+value: {
+  bool_value: true
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "catalyst_extra_dim"
+  state: ENABLED
+  permission: READ_ONLY
+}

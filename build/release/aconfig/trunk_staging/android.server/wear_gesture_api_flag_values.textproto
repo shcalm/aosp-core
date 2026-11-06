@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.server"
+  name: "wear_gesture_api"
+  state: ENABLED
+  permission: READ_WRITE
+}

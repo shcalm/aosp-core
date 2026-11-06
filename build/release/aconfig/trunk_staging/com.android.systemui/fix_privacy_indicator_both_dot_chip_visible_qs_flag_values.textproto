@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fix_privacy_indicator_both_dot_chip_visible_qs"
+  state: ENABLED
+  permission: READ_WRITE
+}

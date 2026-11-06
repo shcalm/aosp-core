@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "device_aware_settings_override"
+  state: ENABLED
+  permission: READ_WRITE
+}

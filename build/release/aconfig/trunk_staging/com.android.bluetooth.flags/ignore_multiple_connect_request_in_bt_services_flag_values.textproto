@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "ignore_multiple_connect_request_in_bt_services"
+  state: ENABLED
+  permission: READ_WRITE
+}

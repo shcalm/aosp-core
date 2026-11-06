@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.feature.flags"
+  name: "lock_on_power_group_disconnect"
+  state: ENABLED
+  permission: READ_WRITE
+}

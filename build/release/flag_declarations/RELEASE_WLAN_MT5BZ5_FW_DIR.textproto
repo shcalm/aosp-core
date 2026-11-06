@@ -1,0 +1,8 @@
+name: "RELEASE_WLAN_MT5BZ5_FW_DIR"
+namespace: "pixel_wifi"
+description: "Directory for the release WLAN firmware for MT5BZ5."
+value: {
+  string_value: "."
+}
+workflow: PREBUILT
+containers: "vendor"

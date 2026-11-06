@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "dynamic_instrumentation_method_entry_hook"
+  state: ENABLED
+  permission: READ_ONLY
+}

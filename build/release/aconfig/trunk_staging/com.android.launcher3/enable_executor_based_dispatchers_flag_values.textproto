@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_executor_based_dispatchers"
+  state: ENABLED
+  permission: READ_WRITE
+}

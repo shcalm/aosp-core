@@ -1,0 +1,12 @@
+name: "RELEASE_APEX_CODECS"
+namespace: "codec_fwk"
+description: "If true, then the ApexCodecs is enabled"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"
+containers: "com.android.media.swcodec"

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "ignore_current_params_in_desktop_launch_params"
+  state: ENABLED
+  permission: READ_ONLY
+}

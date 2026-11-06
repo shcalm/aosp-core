@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "enable_remove_policies_on_supervision_disable"
+  state: ENABLED
+  permission: READ_ONLY
+}

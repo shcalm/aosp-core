@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "reuse_original_conn_remote_conf_behavior"
+  state: ENABLED
+  permission: READ_ONLY
+}

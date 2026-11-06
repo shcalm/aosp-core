@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "asha_omit_gatt_after_svc_changed"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "system_status_animation_per_display"
+  state: ENABLED
+  permission: READ_ONLY
+}

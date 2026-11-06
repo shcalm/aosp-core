@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "no_transfer_first_window_drawn"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,5 @@
+name: "RELEASE_KERNEL_FRANKEL_DIR"
+namespace: "pixel_kernel"
+description: "Controls which kernel prebuilt is installed."
+workflow: PREBUILT
+containers: "vendor"

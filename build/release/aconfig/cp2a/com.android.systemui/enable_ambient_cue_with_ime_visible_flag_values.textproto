@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "enable_ambient_cue_with_ime_visible"
+  state: ENABLED
+  permission: READ_ONLY
+}

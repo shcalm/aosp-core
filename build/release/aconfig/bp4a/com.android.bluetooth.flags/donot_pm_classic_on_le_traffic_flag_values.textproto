@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "donot_pm_classic_on_le_traffic"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "log_augmented_service_uid"
+  state: ENABLED
+  permission: READ_ONLY
+}

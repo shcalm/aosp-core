@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.platform.flags"
+  name: "vpn_type_oem_service_and_legacy"
+  state: ENABLED
+  permission: READ_WRITE
+}

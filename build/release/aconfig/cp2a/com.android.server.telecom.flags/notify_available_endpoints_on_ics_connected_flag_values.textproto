@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "notify_available_endpoints_on_ics_connected"
+  state: ENABLED
+  permission: READ_ONLY
+}

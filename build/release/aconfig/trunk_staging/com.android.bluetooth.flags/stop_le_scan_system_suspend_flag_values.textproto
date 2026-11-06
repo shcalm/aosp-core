@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "stop_le_scan_system_suspend"
+  state: ENABLED
+  permission: READ_WRITE
+}

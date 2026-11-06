@@ -1,0 +1,14 @@
+lorenzo@google.com
+larsberg@google.com #{LAST_RESORT_SUGGESTION}
+
+# The following are for:
+# - cherry-picks of CLs that are already merged in goog/main,
+# - flaky test fixes
+# - no-op refactors
+# Additionally:
+#   MaZe & Yuyang for APF firmware tests (to verify correct behaviour)
+#   Remi for NsdManager tests
+jchalard@google.com #{LAST_RESORT_SUGGESTION}
+maze@google.com #{LAST_RESORT_SUGGESTION}
+reminv@google.com #{LAST_RESORT_SUGGESTION}
+yuyanghuang@google.com #{LAST_RESORT_SUGGESTION}

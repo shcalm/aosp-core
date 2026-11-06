@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "managed_services_concurrent_multiuser"
+  state: ENABLED
+  permission: READ_ONLY
+}

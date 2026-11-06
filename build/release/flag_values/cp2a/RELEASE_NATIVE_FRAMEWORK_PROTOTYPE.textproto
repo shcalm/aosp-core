@@ -1,0 +1,4 @@
+name: "RELEASE_NATIVE_FRAMEWORK_PROTOTYPE"
+value {
+  bool_value: true
+}

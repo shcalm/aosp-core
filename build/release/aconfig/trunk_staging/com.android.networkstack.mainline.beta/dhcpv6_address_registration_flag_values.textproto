@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.networkstack.mainline.beta"
+  name: "dhcpv6_address_registration"
+  state: ENABLED
+  permission: READ_WRITE
+}

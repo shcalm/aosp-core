@@ -1,0 +1,6 @@
+flag_value {
+  package: "vendor.google.desktop.serviceability.flags"
+  name: "enable_serviceability_api_25q4"
+  state: ENABLED
+  permission: READ_WRITE
+}

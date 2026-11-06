@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "l4s_developer_option"
+  state: ENABLED
+  permission: READ_ONLY
+}

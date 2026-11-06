@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "allow_multiple_adjacent_task_fragments"
+  state: ENABLED
+  permission: READ_ONLY
+}

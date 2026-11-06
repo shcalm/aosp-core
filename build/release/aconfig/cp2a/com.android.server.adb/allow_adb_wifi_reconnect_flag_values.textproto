@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.adb"
+  name: "allow_adb_wifi_reconnect"
+  state: ENABLED
+  permission: READ_ONLY
+}

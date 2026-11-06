@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.swcodec.flags"
+  name: "apexcodecs_base"
+  state: ENABLED
+  permission: READ_ONLY
+}

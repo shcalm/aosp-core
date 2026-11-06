@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "paginated_qs_pager_dots_arrows"
+  state: ENABLED
+  permission: READ_ONLY
+}

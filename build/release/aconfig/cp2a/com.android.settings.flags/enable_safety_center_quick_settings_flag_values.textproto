@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "enable_safety_center_quick_settings"
+  state: ENABLED
+  permission: READ_ONLY
+}

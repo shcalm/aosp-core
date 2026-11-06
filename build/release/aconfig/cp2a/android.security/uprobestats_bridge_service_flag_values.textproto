@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "uprobestats_bridge_service"
+  state: ENABLED
+  permission: READ_ONLY
+}

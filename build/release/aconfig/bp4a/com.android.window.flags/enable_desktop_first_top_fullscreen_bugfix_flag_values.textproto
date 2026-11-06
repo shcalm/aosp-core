@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_desktop_first_top_fullscreen_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "role_switch_after_encryption"
+  state: ENABLED
+  permission: READ_WRITE
+}

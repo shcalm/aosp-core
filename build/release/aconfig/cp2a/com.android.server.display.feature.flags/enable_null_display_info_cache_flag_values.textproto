@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "enable_null_display_info_cache"
+  state: ENABLED
+  permission: READ_ONLY
+}

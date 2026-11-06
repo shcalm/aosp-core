@@ -1,0 +1,11 @@
+name: "RELEASE_ANOMALY_DETECTOR"
+namespace: "backstage_power"
+description: "Flag will control the release of the anomaly detector inside the Profiling module apex."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "limit_raw_table_visibility"
+  state: ENABLED
+  permission: READ_WRITE
+}

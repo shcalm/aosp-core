@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "virtual_camera_on_open"
+  state: ENABLED
+  permission: READ_ONLY
+}

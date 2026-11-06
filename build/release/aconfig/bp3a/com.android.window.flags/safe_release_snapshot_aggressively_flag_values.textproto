@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "safe_release_snapshot_aggressively"
+  state: ENABLED
+  permission: READ_ONLY
+}

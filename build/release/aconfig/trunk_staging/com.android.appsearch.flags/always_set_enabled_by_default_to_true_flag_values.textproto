@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "always_set_enabled_by_default_to_true"
+  state: ENABLED
+  permission: READ_WRITE
+}

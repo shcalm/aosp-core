@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "vvm_async_sim_state_handling"
+  state: ENABLED
+  permission: READ_WRITE
+}

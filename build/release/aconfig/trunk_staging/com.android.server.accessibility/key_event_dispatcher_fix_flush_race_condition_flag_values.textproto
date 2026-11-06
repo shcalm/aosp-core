@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "key_event_dispatcher_fix_flush_race_condition"
+  state: ENABLED
+  permission: READ_WRITE
+}

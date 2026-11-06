@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "disable_display_force_freeform_on_pc"
+  state: ENABLED
+  permission: READ_ONLY
+}

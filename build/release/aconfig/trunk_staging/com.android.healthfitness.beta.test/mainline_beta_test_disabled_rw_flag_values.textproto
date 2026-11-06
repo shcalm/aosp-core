@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.beta.test"
+  name: "mainline_beta_test_disabled_rw"
+  state: ENABLED
+  permission: READ_WRITE
+}

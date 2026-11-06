@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "enable_app_store_filters_screen"
+  state: ENABLED
+  permission: READ_ONLY
+}

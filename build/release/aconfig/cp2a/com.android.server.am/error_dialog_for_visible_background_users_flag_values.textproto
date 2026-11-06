@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "error_dialog_for_visible_background_users"
+  state: ENABLED
+  permission: READ_ONLY
+}

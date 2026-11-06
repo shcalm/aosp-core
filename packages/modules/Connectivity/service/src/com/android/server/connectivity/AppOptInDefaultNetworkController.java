@@ -1,0 +1,605 @@
+/*
+ * Copyright (C) 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.server.connectivity;
+
+import static android.os.Process.INVALID_UID;
+
+import static com.android.server.connectivity.AppOptInDefaultNetworkPolicy.POLICY_NONE;
+import static com.android.server.connectivity.AppOptInDefaultNetworkPolicy.POLICY_OTT;
+import static com.android.server.connectivity.AppOptInDefaultNetworkPolicy.POLICY_SATELLITE_OPT_IN;
+import static com.android.server.connectivity.AppOptInDefaultNetworkPolicy.POLICY_SATELLITE_ROLE_SMS;
+
+import android.Manifest;
+import android.annotation.NonNull;
+import android.app.role.OnRoleHoldersChangedListener;
+import android.app.role.RoleManager;
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ServiceInfo;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
+import android.os.UserHandle;
+import android.os.UserManager;
+import android.text.TextUtils;
+import android.util.ArraySet;
+import android.util.SparseArray;
+import android.util.SparseLongArray;
+
+import com.android.internal.annotations.VisibleForTesting;
+import com.android.internal.util.IndentingPrintWriter;
+import com.android.net.module.util.CollectionUtils;
+import com.android.net.module.util.HandlerUtils;
+import com.android.net.module.util.SharedLog;
+import com.android.server.ConnectivityStatsLog;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
+
+import javax.annotation.CheckReturnValue;
+
+
+/**
+ * Tracks the uid of all the default messaging application which are role_sms role and
+ * satellite_communication permission complaint and requests ConnectivityService to create multi
+ * layer request with satellite internet access support for the default message application.
+ *
+ * Note that this class is not thread safe and should only be accessed on the handler
+ * thread, except {@link #start()}.
+ */
+public class AppOptInDefaultNetworkController {
+    private static final String TAG = AppOptInDefaultNetworkController.class.getSimpleName();
+    // Shamelessly copied from telephony/satellite/SatelliteManager.java.
+    // TODO: Import from SatelliteManager when it is available.
+    @VisibleForTesting
+    public static final String PROPERTY_SATELLITE_DATA_OPTIMIZED =
+            "android.telephony.PROPERTY_SATELLITE_DATA_OPTIMIZED";
+    // This value is taken from android.os.UserHandle#PER_USER_RANGE.
+    @VisibleForTesting
+    public static final int PER_USER_RANGE = 100000;
+    private static final int MAX_LOG_ENTRIES = 50;
+    private final Context mContext;
+    private final Dependencies mDeps;
+    private final DefaultMessageRoleListener mDefaultMessageRoleListener;
+    // The callback is a Consumer that accepts a List of AppOptInDefaultNetworkPolicy objects.
+    private final Consumer<List<AppOptInDefaultNetworkPolicy>> mCallback;
+    private final Handler mConnectivityServiceHandler;
+    private final SharedLog mLog = new SharedLog(MAX_LOG_ENTRIES, TAG);
+
+    // At this sparseArray, Key is userId and values are uids of SMS apps that are allowed
+    // to use satellite network as fallback.
+    private final SparseArray<Set<Integer>> mSatelliteRoleSmsUids = new SparseArray<>();
+
+    // Set of UIDs that have declared the
+    // {@code android.telephony.PROPERTY_SATELLITE_DATA_OPTIMIZED} meta-data
+    // with a value of package name in their manifest file. This variable will only be
+    // accessed on the handler thread.
+    // See {@link SatelliteManager#PROPERTY_SATELLITE_DATA_OPTIMIZED}.
+    private final Set<Integer> mSatelliteDataOptInUids = new ArraySet<>();
+
+    /**
+     * A cache of UIDs for applications that are currently in an active Over-the-Top (OTT) call
+     * and require a high-priority network slice.
+     *
+     * <p>This map is dynamically populated by the {@code onOttCallStateChanged} method, which
+     * receives events when a call starts or ends. It serves as a primary input into the
+     * arbitration logic within this controller to determine which UIDs should receive a
+     * network request with a premium slicing preference.
+     *
+     * <ul>
+     *   <li>Key: Integer representing the UID of the application.</li>
+     *   <li>Value: Long representing the value of {@link android.os.SystemClock#elapsedRealtime()}
+     *       when the OTT call started.</li>
+     * </ul>
+     */
+    private final SparseLongArray mOttUidToStartTime = new SparseLongArray();
+    private static final long INVALID_START_TIME = -1L;
+
+    /**
+     *  Monitor {@link android.app.role.OnRoleHoldersChangedListener#onRoleHoldersChanged(String,
+     *  UserHandle)},
+     *
+     */
+    private final class DefaultMessageRoleListener
+            implements OnRoleHoldersChangedListener {
+        @Override
+        public void onRoleHoldersChanged(String role, UserHandle userHandle) {
+            HandlerUtils.ensureRunningOnHandlerThread(mConnectivityServiceHandler);
+            if (RoleManager.ROLE_SMS.equals(role) && updateSatelliteRoleSmsUids(userHandle)) {
+                mLog.i("ROLE_SMS Change detected ");
+                reportAppOptInDefaultNetworkPolicies();
+            }
+        }
+
+        public void register() {
+            try {
+                mDeps.addOnRoleHoldersChangedListenerAsUser(
+                        mConnectivityServiceHandler::post, this, UserHandle.ALL);
+            } catch (RuntimeException e) {
+                mLog.wtf("Could not register satellite controller listener due to " + e);
+            }
+        }
+    }
+
+    public AppOptInDefaultNetworkController(@NonNull final Context c,
+            Consumer<List<AppOptInDefaultNetworkPolicy>> callback,
+            @NonNull final Handler connectivityServiceInternalHandler) {
+        this(c, new Dependencies(c), callback, connectivityServiceInternalHandler);
+    }
+
+    public static class Dependencies {
+        private final RoleManager mRoleManager;
+
+        private Dependencies(Context context) {
+            mRoleManager = context.getSystemService(RoleManager.class);
+        }
+
+        /** See {@link RoleManager#getRoleHoldersAsUser(String, UserHandle)} */
+        public List<String> getRoleHoldersAsUser(String roleName, UserHandle userHandle) {
+            return mRoleManager.getRoleHoldersAsUser(roleName, userHandle);
+        }
+
+        /** See {@link RoleManager#addOnRoleHoldersChangedListenerAsUser} */
+        public void addOnRoleHoldersChangedListenerAsUser(@NonNull Executor executor,
+                @NonNull OnRoleHoldersChangedListener listener, UserHandle user) {
+            mRoleManager.addOnRoleHoldersChangedListenerAsUser(executor, listener, user);
+        }
+
+        /**
+         * Returns the current elapsed real time in milliseconds.
+         */
+        public long elapsedRealtime() {
+            return SystemClock.elapsedRealtime();
+        }
+
+        /** Logs the duration of an OTT session. */
+        public void logOttSessionDuration(int uid, long duration) {
+            ConnectivityStatsLog.write_non_chained(
+                    ConnectivityStatsLog.CORE_NETWORKING_CRITICAL_DURATION_EVENT_OCCURRED,
+                    uid,
+                    null,
+                    ConnectivityStatsLog
+                            .CORE_NETWORKING_CRITICAL_DURATION_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_DURATION_EVENT_TYPE_OTT_SESSION_DURATION_MS,
+                    duration);
+        }
+    }
+
+    @VisibleForTesting
+    AppOptInDefaultNetworkController(@NonNull final Context c, @NonNull final Dependencies deps,
+            Consumer<List<AppOptInDefaultNetworkPolicy>> callback,
+            @NonNull final Handler connectivityServiceInternalHandler) {
+        mContext = c;
+        mDeps = deps;
+        mDefaultMessageRoleListener = new DefaultMessageRoleListener();
+        mCallback = callback;
+        mConnectivityServiceHandler = connectivityServiceInternalHandler;
+    }
+
+    @NonNull
+    private Set<Integer> getRoleSmsUidsWithSatellitePermission(List<String> packageNames,
+            @NonNull UserHandle userHandle) {
+        final Set<Integer> roleSmsUids = new ArraySet<>();
+        final PackageManager pm = getPackageManagerForUser(userHandle);
+        if (pm != null) {
+            for (String packageName : packageNames) {
+                // Check if SATELLITE_COMMUNICATION permission is enabled for default sms
+                // application package before adding it part of satellite network role-sms uid
+                // cache list.
+                if (isSatellitePermissionEnabled(pm, packageName)) {
+                    int uid = getUidForPackage(pm, packageName);
+                    if (uid != INVALID_UID) {
+                        roleSmsUids.add(uid);
+                    }
+                }
+            }
+        } else {
+            mLog.wtf("package manager found null for user " + userHandle);
+        }
+        return roleSmsUids;
+    }
+
+    // Check if satellite communication is enabled for the package
+    private boolean isSatellitePermissionEnabled(PackageManager packageManager,
+            String packageName) {
+        return packageManager.checkPermission(
+                Manifest.permission.SATELLITE_COMMUNICATION, packageName)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private int getUidForPackage(PackageManager packageManager, String pkgName) {
+        if (pkgName == null) {
+            return INVALID_UID;
+        }
+        try {
+            ApplicationInfo applicationInfo = packageManager.getApplicationInfo(pkgName, 0);
+            return applicationInfo.uid;
+        } catch (PackageManager.NameNotFoundException exception) {
+            mLog.e("Unable to find uid for package: " + pkgName);
+        }
+        return INVALID_UID;
+    }
+
+    @CheckReturnValue
+    private boolean updateSatelliteRoleSmsUids(@NonNull UserHandle userHandle) {
+        int userId = userHandle.getIdentifier();
+        if (userId == INVALID_UID) {
+            mLog.wtf("Invalid User Id for userHandle:" + userHandle);
+            return false;
+        }
+
+        //Returns empty list if no package exists
+        final List<String> packageNames =
+                mDeps.getRoleHoldersAsUser(RoleManager.ROLE_SMS, userHandle);
+
+        // Store previous satellite role sms uid available
+        final Set<Integer> prevUidsForUser = mSatelliteRoleSmsUids.get(userId, new ArraySet<>());
+        final Set<Integer> newUidsForUser =
+                getRoleSmsUidsWithSatellitePermission(packageNames, userHandle);
+
+        // on Role change, update the multilayer request at ConnectivityService with updated
+        // satellite network role-sms uid cache list of multiple users as applicable
+        if (newUidsForUser.equals(prevUidsForUser)) {
+            return false;
+        }
+
+        mSatelliteRoleSmsUids.put(userId, newUidsForUser);
+        return true;
+    }
+
+    private void reportAppOptInDefaultNetworkPolicies() {
+        mCallback.accept(buildAppOptInDefaultNetworkPolicies());
+    }
+
+    /**
+     * Performs the core arbitration logic.
+     * This method groups all relevant UIDs by their unique combination of policies
+     * and creates a list of AppOptInDefaultNetworkPolicy objects representing the final,
+     * arbitrated state.
+     *
+     * @return A list of AppOptInDefaultNetworkPolicy objects.
+     */
+    private List<AppOptInDefaultNetworkPolicy> buildAppOptInDefaultNetworkPolicies() {
+
+        // Merge all uids of multiple users available for the SMS role.
+        final Set<Integer> mergedSatelliteRoleSmsUids = new ArraySet<>();
+        for (int i = 0; i < mSatelliteRoleSmsUids.size(); i++) {
+            mergedSatelliteRoleSmsUids.addAll(mSatelliteRoleSmsUids.valueAt(i));
+        }
+        mLog.i("SmsRoleUids:" + mergedSatelliteRoleSmsUids
+                + " Opt-InUids:" + mSatelliteDataOptInUids
+                + " ott-uids:" + mOttUidToStartTime);
+
+        // Group UIDs by their unique combination of policies using a bitmask.
+        // SparseArray is efficient for integer keys. ArraySet for the UID values.
+        final SparseArray<ArraySet<Integer>> uidsByPolicyFlags = new SparseArray<>();
+        final ArraySet<Integer> allUids = new ArraySet<>();
+        allUids.addAll(mergedSatelliteRoleSmsUids);
+        allUids.addAll(mSatelliteDataOptInUids);
+        for (int i = 0; i < mOttUidToStartTime.size(); i++) {
+            allUids.add(mOttUidToStartTime.keyAt(i));
+        }
+
+        for (int uid : allUids) {
+            final boolean hasSmsRole = mergedSatelliteRoleSmsUids.contains(uid);
+            final boolean hasOptedIn = mSatelliteDataOptInUids.contains(uid);
+            final boolean hasOtt = mOttUidToStartTime.indexOfKey(uid) >= 0;
+
+            int policyFlags = POLICY_NONE;
+            if (hasSmsRole) policyFlags |= POLICY_SATELLITE_ROLE_SMS;
+            if (hasOptedIn) policyFlags |= POLICY_SATELLITE_OPT_IN;
+            if (hasOtt) policyFlags |= POLICY_OTT;
+
+            ArraySet<Integer> uidsForPolicyFlags = uidsByPolicyFlags.get(policyFlags);
+            if (uidsForPolicyFlags == null) {
+                uidsForPolicyFlags = new ArraySet<>();
+                uidsByPolicyFlags.put(policyFlags, uidsForPolicyFlags);
+            }
+            uidsForPolicyFlags.add(uid);
+        }
+
+        // Convert the grouped UIDs into a list of AppOptInDefaultNetworkPolicy objects.
+        final List<AppOptInDefaultNetworkPolicy> policies = new ArrayList<>();
+        for (int i = 0; i < uidsByPolicyFlags.size(); i++) {
+            final int policyFlags = uidsByPolicyFlags.keyAt(i);
+            final Set<Integer> uids = uidsByPolicyFlags.valueAt(i);
+            policies.add(new AppOptInDefaultNetworkPolicy(policyFlags, uids));
+        }
+        return policies;
+    }
+
+    public void start() {
+        // register sms OnRoleHoldersChangedListener
+        mDefaultMessageRoleListener.register();
+    }
+
+    @CheckReturnValue
+    private boolean updateSatelliteRoleSmsUidListOnUserRemoval(int userIdRemoved) {
+        mLog.i("user id removed:" + userIdRemoved);
+        if (mSatelliteRoleSmsUids.contains(userIdRemoved)) {
+            mSatelliteRoleSmsUids.remove(userIdRemoved);
+            return true; // Changed.
+        }
+        return false; // Unchanged.
+    }
+
+    /**
+     * Called when a user is added. See {link #ACTION_USER_ADDED}.
+     *
+     * Note that this method will also be called at start up once on the handler thread
+     * to iterate through all existing users.
+     *
+     * @param userHandle The userHandle of the added user. See {@link #EXTRA_USER_HANDLE}.
+     * @param apps The list of packages which is installed on the user.
+     */
+    public void onUserAddedWithInstalledPackageList(@NonNull UserHandle userHandle,
+            @NonNull List<PackageInfo> apps) {
+        HandlerUtils.ensureRunningOnHandlerThread(mConnectivityServiceHandler);
+        // Store PackageManager for user for later use.
+        final PackageManager pmForUser = getPackageManagerForUser(userHandle);
+
+        // Obtain uids with role sms and satellite communication permission for the added user.
+        final boolean roleSmsUidsChanged = updateSatelliteRoleSmsUids(userHandle);
+
+        boolean optInUidsChanged = false;
+        final Set<Integer> satelliteDataOptInUidsForUser =
+                getSatelliteDataOptInUidsForUser(pmForUser, apps);
+        if (satelliteDataOptInUidsForUser.size() > 0) {
+            mLog.i("Add SatelliteDataOptInUids for user " + userHandle + ": "
+                    + satelliteDataOptInUidsForUser);
+            mSatelliteDataOptInUids.addAll(satelliteDataOptInUidsForUser);
+            optInUidsChanged = true;
+        }
+        if (roleSmsUidsChanged || optInUidsChanged) {
+            reportAppOptInDefaultNetworkPolicies();
+        }
+    }
+
+    /**
+     * Called when a user is removed. See {link #ACTION_USER_REMOVED}.
+     *
+     * @param userHandle The integer userHandle of the removed user. See {@link #EXTRA_USER_HANDLE}.
+     */
+    public void onUserRemoved(@NonNull UserHandle userHandle) {
+        HandlerUtils.ensureRunningOnHandlerThread(mConnectivityServiceHandler);
+        final boolean smsRoleUidsChanged =
+                updateSatelliteRoleSmsUidListOnUserRemoval(userHandle.getIdentifier());
+        final boolean satelliteOptInUidsChanged =
+                removeSatelliteDataOptInUidsForUser(userHandle.getIdentifier());
+        if (smsRoleUidsChanged || satelliteOptInUidsChanged) {
+            reportAppOptInDefaultNetworkPolicies();
+        }
+    }
+
+    /**
+     * Called when a package is added.
+     *
+     * @param packageName The name of the new package.
+     * @param uid The uid of the new package.
+     */
+    public void onPackageAdded(@NonNull final String packageName, final int uid) {
+        HandlerUtils.ensureRunningOnHandlerThread(mConnectivityServiceHandler);
+        if (addSatelliteDataOptInUid(getPackageManagerForUid(uid), packageName, uid)) {
+            reportAppOptInDefaultNetworkPolicies();
+        }
+    }
+
+    @CheckReturnValue
+    private boolean addSatelliteDataOptInUid(@NonNull final PackageManager pm,
+            @NonNull final String packageName, final int uid) {
+        if (isSatelliteDataOptimizedApp(pm, packageName)) {
+            mSatelliteDataOptInUids.add(uid);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Called when the availability of external applications changes.
+     *
+     * @param pkgList An array of package names that have become available.
+     */
+    public void onExternalApplicationsAvailable(String[] pkgList) {
+        HandlerUtils.ensureRunningOnHandlerThread(mConnectivityServiceHandler);
+        if (CollectionUtils.isEmpty(pkgList)) {
+            mLog.e("No available external application.");
+            return;
+        }
+
+        final UserManager um = mContext.getSystemService(UserManager.class);
+        if (um == null) {
+            mLog.wtf("UserManager not found.");
+            return;
+        }
+
+        boolean added = false;
+        for (final UserHandle user : um.getUserHandles(true /* excludeDying */)) {
+            final PackageManager pm = getPackageManagerForUser(user);
+            for (String app : pkgList) {
+                final int uid = getUidForPackage(pm, app);
+                if (uid != INVALID_UID && addSatelliteDataOptInUid(pm, app, uid)) {
+                    added = true;
+                }
+            }
+        }
+        if (added) {
+            reportAppOptInDefaultNetworkPolicies();
+        }
+    }
+
+    @NonNull
+    private PackageManager getPackageManagerForUid(int uid) {
+        return getPackageManagerForUser(UserHandle.getUserHandleForUid(uid));
+    }
+
+    /**
+     * Called when a package is removed.
+     *
+     * @param packageName The name of the removed package or null.
+     * @param uid containing the integer uid previously assigned to the package.
+     */
+    public void onPackageRemoved(@NonNull final String packageName, final int uid) {
+        HandlerUtils.ensureRunningOnHandlerThread(mConnectivityServiceHandler);
+
+        // Scan for all apps sharing the same uid.
+        final PackageManager pmForUser = getPackageManagerForUid(uid);
+        final String [] pkgs = pmForUser.getPackagesForUid(uid);
+        if (pkgs != null) {
+            for (String pkg : pkgs) {
+                if (!pkg.equals(packageName) && isSatelliteDataOptimizedApp(pmForUser, pkg)) {
+                    return; // Early return if another satellite-optimized app shares the UID
+                }
+            }
+        }
+        // If the loop completes without returning, it means no other
+        // satellite-optimized app shares the UID.
+        final boolean removed = mSatelliteDataOptInUids.remove(uid);
+        if (removed) {
+            reportAppOptInDefaultNetworkPolicies();
+        }
+    }
+
+    @NonNull
+    private Set<Integer> getSatelliteDataOptInUidsForUser(@NonNull PackageManager pmForUser,
+            @NonNull List<PackageInfo> apps) {
+        final ArraySet<Integer> uids = new ArraySet<>();
+        for (PackageInfo app : apps) {
+            if (null == app.applicationInfo || app.applicationInfo.uid < 0) continue;
+            if (isSatelliteDataOptimizedApp(pmForUser, app.packageName)) {
+                uids.add(app.applicationInfo.uid);
+            }
+        }
+        return uids;
+    }
+
+    private boolean isSatelliteDataOptimizedMetaData(Bundle metaData, @NonNull String packageName) {
+        if (metaData == null) return false;
+        // Retrieve the value as a generic Object to avoid Bundle warning log
+        // flooding when the format is mismatched.
+        final Object rawValue = metaData.get(PROPERTY_SATELLITE_DATA_OPTIMIZED);
+        if (rawValue == null) return false; // No expected meta-data.
+
+        // Check if the retrieved object is a matched String.
+        if (rawValue instanceof String
+                && TextUtils.equals((String) rawValue, packageName)) {
+            return true;
+        }
+        // Logging if the value is not expected (e.g., Boolean, wrong package name).
+        mLog.i("Wrong meta-data format: " + packageName);
+        return false;
+    }
+
+    private boolean isSatelliteDataOptimizedApp(@NonNull PackageManager pmForUser,
+            @NonNull String packageName) {
+        try {
+            // First check meta-data under application tag.
+            final ApplicationInfo appInfo = pmForUser.getApplicationInfo(
+                    packageName, PackageManager.GET_META_DATA);
+            if (isSatelliteDataOptimizedMetaData(appInfo.metaData, packageName)) return true;
+
+            // Then check meta-data under service tags.
+            final PackageInfo packageInfo = pmForUser.getPackageInfo(
+                    packageName, PackageManager.GET_SERVICES | PackageManager.GET_META_DATA
+                            | PackageManager.MATCH_DISABLED_COMPONENTS);
+            if (packageInfo != null && packageInfo.services != null) {
+                for (ServiceInfo serviceInfo : packageInfo.services) {
+                    if (isSatelliteDataOptimizedMetaData(serviceInfo.metaData, packageName)) {
+                        return true;
+                    }
+                }
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            // This is not an error. The package may not exist or have the required components.
+            return false;
+        }
+        return false;
+    }
+
+    // Return true if changed.
+    @CheckReturnValue
+    private boolean removeSatelliteDataOptInUidsForUser(int userIdToRemove) {
+        return mSatelliteDataOptInUids.removeIf(uid -> uid / PER_USER_RANGE == userIdToRemove);
+    }
+
+    @NonNull
+    private PackageManager getPackageManagerForUser(UserHandle user) {
+        return mContext.createContextAsUser(user, 0 /* flag */).getPackageManager();
+    }
+
+    /**
+     * Entry point for OTT call state changes, forwarded from ConnectivityService.
+     *
+     * <p>This method updates the internal {@code mOttUidToStartTime} map. A change to
+     * map results in a call to {@link #reportUidDefaultNetworkPolicies()}, which causes the
+     * controller to re-arbitrate all network policies and send an updated
+     * {@code List<AppOptInDefaultNetworkInfo>} to ConnectivityService.
+     *
+     * @param uid The UID of the application involved in the call state change.
+     * @param isAdded True if the call is new, false if it has ended.
+     */
+    public void onOttCallStateChanged(int uid, boolean isAdded) {
+        HandlerUtils.ensureRunningOnHandlerThread(mConnectivityServiceHandler);
+        mLog.i("ott call uid received: " + uid + ", isAdded: " + isAdded);
+
+        // TODO (b/448567932) : Adding Metrics for unexpected onCall events
+        if (isAdded) {
+            mOttUidToStartTime.put(uid, mDeps.elapsedRealtime());
+        } else {
+            final long startTime = mOttUidToStartTime.get(uid, INVALID_START_TIME);
+            if (startTime != INVALID_START_TIME) {
+                final long duration = mDeps.elapsedRealtime() - startTime;
+                mDeps.logOttSessionDuration(uid,duration);
+                mOttUidToStartTime.delete(uid);
+            }
+        }
+        reportAppOptInDefaultNetworkPolicies();
+    }
+
+    // Return cached opt-in uid list for metrics sampling.
+    // Should only be called on handler thread.
+    public int getCachedOptInUidsCount() {
+        return mSatelliteDataOptInUids.size();
+    }
+
+    /** Dump info to dumpsys */
+    public void dump(@NonNull IndentingPrintWriter pw) {
+        HandlerUtils.ensureRunningOnHandlerThread(mConnectivityServiceHandler);
+        pw.println("AppOptInDefaultNetworkController:");
+        pw.increaseIndent();
+        pw.print("Role-Sms Uids: ");
+        pw.print(mSatelliteRoleSmsUids);
+        pw.println();
+        pw.print("Opt-In Uids: ");
+        pw.print(mSatelliteDataOptInUids);
+        pw.println();
+        pw.print("OttSlicingUids: ");
+        final ArraySet<Integer> ottUids = new ArraySet<>();
+        for (int i = 0; i < mOttUidToStartTime.size(); i++) {
+            ottUids.add(mOttUidToStartTime.keyAt(i));
+        }
+        pw.print(ottUids);
+        pw.println();
+        pw.println("Log:");
+        mLog.reverseDump(pw);
+        pw.decreaseIndent();
+        pw.println();
+    }
+}

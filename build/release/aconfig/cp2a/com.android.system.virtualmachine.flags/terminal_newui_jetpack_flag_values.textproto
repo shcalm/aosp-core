@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.system.virtualmachine.flags"
+  name: "terminal_newui_jetpack"
+  state: ENABLED
+  permission: READ_ONLY
+}

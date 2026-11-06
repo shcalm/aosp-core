@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.appfunctions.flags"
+  name: "enable_request_response_logging"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "key_missing_count_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

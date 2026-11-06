@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "telecom_mainline_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

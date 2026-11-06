@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "satellite_improve_multi_thread_design"
+  state: ENABLED
+  permission: READ_ONLY
+}

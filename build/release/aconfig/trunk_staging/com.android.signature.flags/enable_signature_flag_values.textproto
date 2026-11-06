@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.signature.flags"
+  name: "enable_signature"
+  state: ENABLED
+  permission: READ_WRITE
+}

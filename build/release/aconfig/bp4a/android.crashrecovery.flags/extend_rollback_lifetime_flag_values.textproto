@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.crashrecovery.flags"
+  name: "extend_rollback_lifetime"
+  state: ENABLED
+  permission: READ_ONLY
+}

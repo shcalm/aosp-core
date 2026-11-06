@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "embedded_ui_uses_host_window_id"
+  state: ENABLED
+  permission: READ_WRITE
+}

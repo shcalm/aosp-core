@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libvulkan.flags"
+  name: "vk_khr_present_wait2_gpu"
+  state: ENABLED
+  permission: READ_ONLY
+}

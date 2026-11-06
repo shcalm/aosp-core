@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bips.flags"
+  name: "collate_by_default"
+  state: ENABLED
+  permission: READ_ONLY
+}

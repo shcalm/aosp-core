@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "show_confirmation_toast_on_user_deletion"
+  state: ENABLED
+  permission: READ_ONLY
+}

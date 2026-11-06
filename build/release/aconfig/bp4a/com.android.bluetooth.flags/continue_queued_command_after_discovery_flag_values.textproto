@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "continue_queued_command_after_discovery"
+  state: ENABLED
+  permission: READ_ONLY
+}

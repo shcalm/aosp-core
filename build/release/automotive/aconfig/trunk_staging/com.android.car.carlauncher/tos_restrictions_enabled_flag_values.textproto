@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.car.carlauncher"
+  name: "tos_restrictions_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

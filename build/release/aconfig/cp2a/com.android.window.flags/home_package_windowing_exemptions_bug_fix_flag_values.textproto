@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "home_package_windowing_exemptions_bug_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

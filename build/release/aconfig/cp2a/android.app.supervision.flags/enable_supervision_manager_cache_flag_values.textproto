@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "enable_supervision_manager_cache"
+  state: ENABLED
+  permission: READ_ONLY
+}

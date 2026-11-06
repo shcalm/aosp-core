@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_fix_allocation_in_codec_config"
+  state: ENABLED
+  permission: READ_ONLY
+}

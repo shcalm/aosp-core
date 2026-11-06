@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubble_notification_showing_in_lock_screen"
+  state: ENABLED
+  permission: READ_WRITE
+}

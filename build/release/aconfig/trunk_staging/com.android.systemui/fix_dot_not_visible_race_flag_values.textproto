@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fix_dot_not_visible_race"
+  state: ENABLED
+  permission: READ_WRITE
+}

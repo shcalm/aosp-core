@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "disable_carrier_network_change_on_carrier_app_lost"
+  state: ENABLED
+  permission: READ_WRITE
+}

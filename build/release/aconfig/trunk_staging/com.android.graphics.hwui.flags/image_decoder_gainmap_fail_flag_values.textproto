@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.hwui.flags"
+  name: "image_decoder_gainmap_fail"
+  state: ENABLED
+  permission: READ_WRITE
+}

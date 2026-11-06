@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "edt_not_allowed_on_status_bar"
+  state: ENABLED
+  permission: READ_WRITE
+}

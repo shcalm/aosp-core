@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.vibrator"
+  name: "keyboard_intensity_slider_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

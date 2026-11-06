@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.camera.flags"
+  name: "on_camera_closed_at_hal_crash"
+  state: ENABLED
+  permission: READ_WRITE
+}

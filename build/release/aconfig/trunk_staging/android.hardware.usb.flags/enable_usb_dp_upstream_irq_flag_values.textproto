@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.usb.flags"
+  name: "enable_usb_dp_upstream_irq"
+  state: ENABLED
+  permission: READ_WRITE
+}

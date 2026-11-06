@@ -1,0 +1,921 @@
+/*
+ * Copyright (C) 2023 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.server
+
+import android.annotation.SuppressLint
+import android.app.AlarmManager
+import android.app.AppOpsManager
+import android.bluetooth.BluetoothManager
+import android.content.BroadcastReceiver
+import android.content.ContentResolver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.content.pm.UserInfo
+import android.content.res.Resources
+import android.database.ContentObserver
+import android.net.ConnectivityManager
+import android.net.IDnsResolver
+import android.net.INetd
+import android.net.INetd.PERMISSION_INTERNET
+import android.net.InetAddresses
+import android.net.LinkProperties
+import android.net.LocalNetworkConfig
+import android.net.Network
+import android.net.NetworkAgentConfig
+import android.net.NetworkCapabilities
+import android.net.NetworkCapabilities.NET_CAPABILITY_NOT_SUSPENDED
+import android.net.NetworkCapabilities.TRANSPORT_BLUETOOTH
+import android.net.NetworkCapabilities.TRANSPORT_CELLULAR
+import android.net.NetworkCapabilities.TRANSPORT_ETHERNET
+import android.net.NetworkCapabilities.TRANSPORT_TEST
+import android.net.NetworkCapabilities.TRANSPORT_VPN
+import android.net.NetworkCapabilities.TRANSPORT_WIFI
+import android.net.NetworkPolicyManager
+import android.net.NetworkProvider
+import android.net.NetworkScore
+import android.net.NetworkScore.KEEP_CONNECTED_FOR_TEST
+import android.net.PacProxyManager
+import android.net.ProxyInfo
+import android.net.Uri
+import android.net.connectivity.ConnectivityCompatChanges.ENABLE_MATCH_LOCAL_NETWORK
+import android.net.networkstack.NetworkStackClientBase
+import android.net.platform.flags.Flags.FLAG_CONNECTIVITY_SERVICE_MODIFY_QDISC_CLSACT
+import android.os.BatteryStatsManager
+import android.os.Bundle
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.Looper
+import android.os.Process
+import android.os.UserHandle
+import android.os.UserManager
+import android.permission.PermissionManager.PermissionResult
+import android.telephony.SubscriptionManager
+import android.telephony.TelephonyManager
+import android.testing.TestableContext
+import android.util.Range
+import android.util.SparseArray
+import androidx.test.platform.app.InstrumentationRegistry
+import com.android.internal.app.IBatteryStats
+import com.android.internal.util.test.BroadcastInterceptingContext
+import com.android.internal.util.test.FakeSettingsProvider
+import com.android.metrics.DefaultNetworkRematchMetrics
+import com.android.metrics.SatelliteCoarseUsageMetricsCollector
+import com.android.metrics.SatisfiedByLocalNetworkMetrics
+import com.android.modules.utils.build.SdkLevel
+import com.android.net.module.util.ArrayTrackRecord
+import com.android.net.module.util.SharedLog
+import com.android.net.module.util.netlink.NetlinkMessage
+import com.android.server.connectivity.AppOptInDefaultNetworkController
+import com.android.server.connectivity.AppOptInDefaultNetworkPolicy
+import com.android.server.connectivity.AutomaticOnOffKeepaliveTracker
+import com.android.server.connectivity.CarrierPrivilegeAuthenticator
+import com.android.server.connectivity.ClatCoordinator
+import com.android.server.connectivity.ConnectivityFlags
+import com.android.server.connectivity.IProxyTracker
+import com.android.server.connectivity.InterfaceTracker
+import com.android.server.connectivity.LocalNetEventListener
+import com.android.server.connectivity.MulticastRoutingCoordinatorService
+import com.android.server.connectivity.MultinetworkPolicyTracker
+import com.android.server.connectivity.MultinetworkPolicyTrackerTestDependencies
+import com.android.server.connectivity.NetworkAgentInfo
+import com.android.server.connectivity.NetworkRequestStateStatsMetrics
+import com.android.server.connectivity.PermissionMonitor
+import com.android.server.connectivity.QuicConnectionCloser
+import com.android.testutils.ContentResolverWithFakeSettingsProvider
+import com.android.testutils.visibleOnHandlerThread
+import com.android.testutils.waitForIdle
+import com.android.tethering.flags.Flags.FLAG_ENABLE_MULTI_PROXY_SYSTEM
+import com.android.tethering.mainline.beta.Flags.FLAG_QUEUE_NETWORK_AGENT_EVENTS_IN_SYSTEM_SERVER
+import java.net.InetAddress
+import java.net.NetworkInterface
+import java.util.Enumeration
+import java.util.concurrent.Executors
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
+import java.util.function.BiConsumer
+import java.util.function.Consumer
+import kotlin.annotation.AnnotationRetention.RUNTIME
+import kotlin.annotation.AnnotationTarget.FUNCTION
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.fail
+import org.junit.After
+import org.junit.Before
+import org.junit.Rule
+import org.junit.rules.TestName
+import org.mockito.AdditionalAnswers.delegatesTo
+import org.mockito.ArgumentMatchers.anyInt
+import org.mockito.Mockito.doAnswer
+import org.mockito.Mockito.doReturn
+import org.mockito.Mockito.mock
+
+internal const val HANDLER_TIMEOUT_MS = 2_000L
+internal const val HANDLER_SHORT_TIMEOUT_MS = 100L
+internal const val BROADCAST_TIMEOUT_MS = 3_000L
+internal const val TEST_PACKAGE_NAME = "com.android.test.package"
+internal const val WIFI_WOL_IFNAME = "test_wlan_wol"
+internal val LOCAL_IPV4_ADDRESS = InetAddresses.parseNumericAddress("192.0.2.1")
+
+open class FromS<Type>(val value: Type)
+
+internal const val VERSION_UNMOCKED = -1
+internal const val VERSION_S = 2
+internal const val VERSION_T = 3
+internal const val VERSION_U = 4
+internal const val VERSION_V = 5
+internal const val VERSION_B = 6
+internal const val VERSION_25Q4 = 7
+internal const val VERSION_MAX = VERSION_25Q4
+
+internal const val CALLING_UID_UNMOCKED = Process.INVALID_UID
+
+private fun NetworkCapabilities.getLegacyType() =
+        when (transportTypes.getOrElse(0) { TRANSPORT_WIFI }) {
+            TRANSPORT_BLUETOOTH -> ConnectivityManager.TYPE_BLUETOOTH
+            TRANSPORT_CELLULAR -> ConnectivityManager.TYPE_MOBILE
+            TRANSPORT_ETHERNET -> ConnectivityManager.TYPE_ETHERNET
+            TRANSPORT_TEST -> ConnectivityManager.TYPE_TEST
+            TRANSPORT_VPN -> ConnectivityManager.TYPE_VPN
+            TRANSPORT_WIFI -> ConnectivityManager.TYPE_WIFI
+            else -> ConnectivityManager.TYPE_NONE
+        }
+
+/**
+ * Base class for tests testing ConnectivityService and its satellites.
+ *
+ * This class sets up a ConnectivityService running locally in the test.
+ */
+// TODO (b/272685721) : make ConnectivityServiceTest smaller and faster by moving the setup
+// parts into this class and moving the individual tests to multiple separate classes.
+@SuppressLint("VisibleForTests", "MissingPermission")
+open class CSTest {
+    @get:Rule
+    val testNameRule = TestName()
+
+    companion object {
+        val CSTestExecutor = Executors.newSingleThreadExecutor()
+    }
+
+    val instrumentationContext =
+            TestableContext(InstrumentationRegistry.getInstrumentation().context)
+    val context = CSContext(instrumentationContext).also {
+        // TestableContext uses its own fake settings provider. Reset it so that
+        // the code uses the ContentResolverWithFakeSettingsProvider initialized later.
+        FakeSettingsProvider.clearSettingsProvider()
+    }
+
+    // See constructor for default-enabled features. All queried features must be either enabled
+    // or disabled, because the test can't hold READ_DEVICE_CONFIG and device config utils query
+    // permissions using static contexts.
+    val enabledFeatures = HashMap<String, Boolean>().also {
+        it[ConnectivityFlags.NO_REMATCH_ALL_REQUESTS_ON_REGISTER] = true
+        it[ConnectivityService.KEY_DESTROY_FROZEN_SOCKETS_VERSION] = true
+        it[ConnectivityService.ALLOW_SYSUI_CONNECTIVITY_REPORTS] = true
+        it[ConnectivityService.ALLOW_SATALLITE_NETWORK_FALLBACK] = true
+        it[ConnectivityFlags.INGRESS_TO_VPN_ADDRESS_FILTERING] = true
+        it[ConnectivityFlags.BACKGROUND_FIREWALL_CHAIN] = true
+        it[ConnectivityFlags.DELAY_DESTROY_SOCKETS] = true
+        it[ConnectivityFlags.USE_DECLARED_METHODS_FOR_CALLBACKS] = true
+        it[ConnectivityFlags.QUEUE_CALLBACKS_FOR_FROZEN_APPS] = true
+        it[ConnectivityFlags.QUEUE_NETWORK_AGENT_EVENTS_AFTER_B] = true
+        it[FLAG_QUEUE_NETWORK_AGENT_EVENTS_IN_SYSTEM_SERVER] = true
+        it[ConnectivityFlags.CLOSE_QUIC_CONNECTION] = true
+        it[ConnectivityFlags.EARLY_LINK_PROPERTIES_UPDATE_FOR_VPN] = true
+        it[ConnectivityFlags.CONSTRAINED_DATA_SATELLITE_METRICS] = true
+        it[ConnectivityFlags.SATISFIED_BY_LOCAL_NETWORK_METRICS] = true
+        it[ConnectivityFlags.USE_SATELLITE_REPORTED_SUSPENDED_AND_ROAMING] = true
+        it[FLAG_CONNECTIVITY_SERVICE_MODIFY_QDISC_CLSACT] = false
+        it[ConnectivityFlags.OTT_NETWORK_SLICING] = true
+        it[FLAG_ENABLE_MULTI_PROXY_SYSTEM] = false
+    }
+    fun setFeatureEnabled(flag: String, enabled: Boolean) = enabledFeatures.set(flag, enabled)
+
+    // When adding new members, consider if it's not better to build the object in CSTestHelpers
+    // to keep this file clean of implementation details. Generally, CSTestHelpers should only
+    // need changes when new details of instrumentation are needed.
+    val contentResolver = ContentResolverWithFakeSettingsProvider()
+
+    val PRIMARY_USER = 0
+    val PRIMARY_USER_INFO = UserInfo(
+            PRIMARY_USER,
+            "", // name
+            UserInfo.FLAG_PRIMARY
+    )
+    val PRIMARY_USER_HANDLE = UserHandle(PRIMARY_USER)
+    val userManager = makeMockUserManager(PRIMARY_USER_INFO, PRIMARY_USER_HANDLE)
+    val activityManager = makeActivityManager()
+
+    val networkStack = mock<NetworkStackClientBase>()
+    val csHandlerThread = HandlerThread("CSTestHandler")
+    val sysResources = mock<Resources>().also { initMockedResources(it) }
+    val packageManager = makeMockPackageManager(instrumentationContext)
+    val connResources = makeMockConnResources(sysResources, packageManager)
+
+    val netd = mock<INetd>()
+    val interfaceTracker = mock<InterfaceTracker>()
+    val bpfNetMaps = mock<BpfNetMaps>().also {
+        doReturn(PERMISSION_INTERNET).`when`(it).getNetPermForUid(anyInt())
+    }
+    val clatCoordinator = mock<ClatCoordinator>()
+    val networkRequestStateStatsMetrics = mock<NetworkRequestStateStatsMetrics>()
+    val proxyTracker = mock<IProxyTracker>().also {
+        var globalProxy: ProxyInfo? = null
+        doAnswer { invocation -> globalProxy = invocation.getArgument(0); null }
+            .`when`(it).setGlobalProxy(any())
+        doAnswer { globalProxy }.`when`(it).getGlobalProxy()
+    }
+    val systemConfigManager = makeMockSystemConfigManager()
+    val batteryStats = mock<IBatteryStats>()
+    val batteryManager = BatteryStatsManager(batteryStats)
+    val appOpsManager = mock<AppOpsManager>()
+    val telephonyManager = mock<TelephonyManager>().also {
+        doReturn(true).`when`(it).isDataCapable()
+        // This will return the same object for all subscription IDs. This is
+        // fine for all tests at the time of this writing, but if the difference
+        // becomes important for all tests, then it may be necessary to create a
+        // new one per subId. See [createContextAsUser] above for a model.
+        doReturn(it).`when`(it).createForSubscriptionId(any())
+    }
+    val subscriptionManager = mock<SubscriptionManager>()
+    val bluetoothManager = mock<BluetoothManager>()
+
+    val multicastRoutingCoordinatorService = mock<MulticastRoutingCoordinatorService>()
+    val appOptInDefaultNetworkController = mock<AppOptInDefaultNetworkController>()
+    val satelliteCoarseUsageMetricsCollector = mock<SatelliteCoarseUsageMetricsCollector>()
+    val defaultNetworkRematchMetrics = mock<DefaultNetworkRematchMetrics>()
+    val satisfiedByLocalNetworkMetrics = mock<SatisfiedByLocalNetworkMetrics>()
+    val quicConnectionCloser = mock<QuicConnectionCloser>()
+    val destroySocketsWrapper = mock<DestroySocketsWrapper>()
+    val dnsResolver = mock<IDnsResolver>()
+
+    val localNetEventListener = mock<LocalNetEventListener>()
+
+    val deps = CSDeps()
+    val permDeps = PermDeps()
+
+    // Initializations that start threads are done from setUp to avoid thread leak
+    lateinit var alarmHandlerThread: HandlerThread
+    lateinit var alarmManager: AlarmManager
+    lateinit var service: ConnectivityService
+    lateinit var cm: ConnectivityManager
+    lateinit var csHandler: Handler
+
+    // Tests can use this annotation to set flag values before constructing ConnectivityService
+    // e.g. @FeatureFlags([Flag(flagName1, true/false), Flag(flagName2, true/false)])
+    @Retention(RUNTIME)
+    @Target(FUNCTION)
+    annotation class FeatureFlags(val flags: Array<Flag>)
+
+    @Retention(RUNTIME)
+    @Target(FUNCTION)
+    annotation class Flag(val name: String, val enabled: Boolean)
+
+    @Retention(RUNTIME)
+    @Target(FUNCTION)
+    annotation class ConfigProperty(
+        val bools: Array<BoolConfig> = [],
+    )
+
+    @Retention(RUNTIME)
+    @Target(FUNCTION)
+    annotation class BoolConfig(val index: Int, val value: Boolean)
+
+
+    @Retention(RUNTIME)
+    @Target(FUNCTION)
+    annotation class SystemFeature(val name: String, val supported: Boolean)
+
+    @Before
+    open fun setUp() {
+        handleTestAnnotations()
+
+        alarmHandlerThread = HandlerThread("TestAlarmManager").also { it.start() }
+        alarmManager = makeMockAlarmManager(alarmHandlerThread)
+        service = makeConnectivityService(context, netd, deps, permDeps, dnsResolver).also {
+            it.systemReadyInternal()
+        }
+        cm = ConnectivityManager(context, service)
+        // csHandler initialization must be after makeConnectivityService since ConnectivityService
+        // constructor starts csHandlerThread
+        csHandler = Handler(csHandlerThread.looper)
+    }
+
+    protected fun handleTestAnnotations() {
+        val testMethodName = testNameRule.methodName
+        try {
+            val testMethod = this::class.java.getMethod(testMethodName)
+            // Set feature flags before constructing ConnectivityService
+            val featureFlags = testMethod.getAnnotation(FeatureFlags::class.java)
+            if (featureFlags != null) {
+                for (flag in featureFlags.flags) {
+                    setFeatureEnabled(flag.name, flag.enabled)
+                }
+            }
+
+            val configProperty = testMethod.getAnnotation(ConfigProperty::class.java)
+            if (configProperty != null) {
+                for (config in configProperty.bools) {
+                    doReturn(config.value).`when`(sysResources).getBoolean(config.index)
+                }
+            }
+
+            val systemFeature = testMethod.getAnnotation(SystemFeature::class.java)
+            if (systemFeature != null) {
+                doReturn(systemFeature.supported).`when`(packageManager)
+                        .hasSystemFeature(systemFeature.name)
+            }
+        } catch (ignored: NoSuchMethodException) {
+            // This is expected for parameterized tests
+        }
+    }
+
+    @After
+    fun tearDown() {
+        csHandlerThread.quitSafely()
+        csHandlerThread.join()
+        alarmHandlerThread.quitSafely()
+        alarmHandlerThread.join()
+    }
+
+    // Class to be mocked and used to verify destroy sockets methods call
+    // TODO: Move to use TestableCallback-style object with a TrackRecord inside to check.
+    open inner class DestroySocketsWrapper {
+        open fun destroyLiveTcpSocketsByOwnerUids(ownerUids: Set<Int>) {}
+        open fun destroyLiveTcpSocketsByLocalAddress(
+            address: InetAddress,
+            netIdRange: Set<Range<Int>>?,
+            uidRanges: Set<Range<Int>>?
+        ) {}
+        open fun destroyLiveTcpSocketsByLocalAddress(
+            address: InetAddress?,
+            interfaceId: Int
+        ) {}
+        open fun destroyLiveTcpSocketsLackingPermission(
+            netId: Int,
+            permission: Int
+        ) {}
+    }
+
+    data class BpfProgramAttachInfo(
+            val ifIndex: Int,
+            val ingress: Boolean,
+            val prio: Short,
+            val protocol: Short
+    )
+
+    inner class CSDeps : ConnectivityService.Dependencies() {
+        var capturedMultiProxyEnabled: Boolean? = null
+        override fun getResources(ctx: Context) = connResources
+        override fun isMultiProxyEnabled() =
+            enabledFeatures[FLAG_ENABLE_MULTI_PROXY_SYSTEM]
+                ?: fail("Unmocked FLAG_ENABLE_MULTI_PROXY_SYSTEM, " +
+                        " see CSTest.enableFeatures")
+        override fun getBpfNetMaps(
+            context: Context,
+            netd: INetd,
+            interfaceTracker: InterfaceTracker
+        ) = this@CSTest.bpfNetMaps
+
+        override fun getInterfaceTracker(context: Context?) = this@CSTest.interfaceTracker
+        override fun getClatCoordinator(netd: INetd?) = this@CSTest.clatCoordinator
+        override fun getNetworkStack() = this@CSTest.networkStack
+        override fun getLocalNetEventListener(
+            context: Context?,
+            looper: Looper?,
+            metricsEnabled: Boolean,
+            noteOpsEnabled: Boolean
+        ) = this@CSTest.localNetEventListener
+
+        override fun makeHandlerThread(tag: String) = csHandlerThread
+        override fun makeProxyTracker(
+            context: Context,
+            connServiceHandler: Handler,
+        ): IProxyTracker {
+            capturedMultiProxyEnabled = false
+            return proxyTracker
+        }
+
+        override fun makeMultiProxyTracker(
+            context: Context,
+            connServiceHandler: Handler,
+        ): IProxyTracker {
+            capturedMultiProxyEnabled = true
+            return proxyTracker
+        }
+
+        override fun queryUserAccess(uid: Int, network: Network, cs: ConnectivityService) = true
+        override fun makeMulticastRoutingCoordinatorService(handler: Handler) =
+                this@CSTest.multicastRoutingCoordinatorService
+
+        override fun registerContentObserver(
+            cr: ContentResolver,
+            uri: Uri,
+            notifyForDescendants: Boolean,
+            observer: ContentObserver
+        ) =
+            (cr as ContentResolverWithFakeSettingsProvider).registerContentObserver(uri, observer)
+
+        override fun registerContentObserverAsUser(
+            cr: ContentResolver,
+            uri: Uri,
+            notifyForDescendants: Boolean,
+            observer: ContentObserver,
+            userHandle: UserHandle
+        ) =
+            context.getContentResolver().registerContentObserverAsUser(uri, observer, userHandle)
+
+        override fun makeCarrierPrivilegeAuthenticator(
+                context: Context,
+                tm: TelephonyManager,
+                requestRestrictedWifiEnabled: Boolean,
+                listener: BiConsumer<Int, Int>,
+                handler: Handler
+        ) = if (SdkLevel.isAtLeastT()) mock<CarrierPrivilegeAuthenticator>() else null
+        var appOptInDefaultNetworkPoliciesUpdate =
+                Consumer<List<AppOptInDefaultNetworkPolicy>> { _ -> }
+        override fun makeAppOptInDefaultNetworkController(
+                context: Context,
+                updateAppOptInDefaultNetworkPolicies: Consumer<List<AppOptInDefaultNetworkPolicy>>,
+                csHandlerThread: Handler
+        ): AppOptInDefaultNetworkController? {
+            appOptInDefaultNetworkPoliciesUpdate = updateAppOptInDefaultNetworkPolicies
+            return appOptInDefaultNetworkController
+        }
+
+        override fun makeSatelliteCoarseUsageMetricsCollector(
+                context: Context
+        ) = satelliteCoarseUsageMetricsCollector
+
+        override fun makeDefaultNetworkRematchMetrics(): DefaultNetworkRematchMetrics? {
+            return defaultNetworkRematchMetrics
+        }
+
+        override fun makeSatisfiedByLocalNetworkMetrics(context: Context, handler: Handler):
+                SatisfiedByLocalNetworkMetrics {
+            return satisfiedByLocalNetworkMetrics
+        }
+
+        private inner class AOOKTDeps(c: Context) : AutomaticOnOffKeepaliveTracker.Dependencies(c) {
+            override fun isTetheringFeatureNotChickenedOut(name: String): Boolean {
+                return isFeatureEnabled(context, name)
+            }
+        }
+        override fun makeAutomaticOnOffKeepaliveTracker(c: Context, h: Handler) =
+                AutomaticOnOffKeepaliveTracker(c, h, AOOKTDeps(c))
+
+        override fun makeMultinetworkPolicyTracker(c: Context, h: Handler, r: Runnable) =
+                MultinetworkPolicyTracker(
+                        c,
+                        h,
+                        r,
+                        MultinetworkPolicyTrackerTestDependencies(connResources.get())
+                )
+
+        override fun makeNetworkRequestStateStatsMetrics(c: Context) =
+                this@CSTest.networkRequestStateStatsMetrics
+
+        // All queried features must be mocked, because the test cannot hold the
+        // READ_DEVICE_CONFIG permission and device config utils use static methods for
+        // checking permissions.
+        override fun isFeatureEnabled(context: Context?, name: String?) =
+                enabledFeatures[name] ?: fail("Unmocked feature $name, see CSTest.enabledFeatures")
+        override fun isFeatureNotChickenedOut(context: Context?, name: String?) =
+                enabledFeatures[name] ?: fail("Unmocked feature $name, see CSTest.enabledFeatures")
+
+        // Mocked change IDs
+        private val enabledChangeIds = arrayListOf(ENABLE_MATCH_LOCAL_NETWORK)
+        fun setChangeIdEnabled(enabled: Boolean, changeId: Long) {
+            // enabledChangeIds is read on the handler thread and maybe the test thread, so
+            // make sure both threads see it before continuing.
+            visibleOnHandlerThread(csHandler) {
+                if (enabled) {
+                    enabledChangeIds.add(changeId)
+                } else {
+                    enabledChangeIds.remove(changeId)
+                }
+            }
+        }
+
+        // Need a non-zero value to avoid disarming the timer.
+        val defaultCellDataInactivityTimeoutForTest: Int = 81
+        override fun getDefaultCellularDataInactivityTimeout(): Int {
+            return defaultCellDataInactivityTimeoutForTest
+        }
+
+        // Need a non-zero value to avoid disarming the timer.
+        val defaultWifiDataInactivityTimeoutForTest: Int = 121
+        override fun getDefaultWifiDataInactivityTimeout(): Int {
+            return defaultWifiDataInactivityTimeoutForTest
+        }
+
+        var networkSuspendedTimeoutForTestMs: Int = 10
+        override fun getNetworkSuspendedTimeoutMs(): Int {
+            return networkSuspendedTimeoutForTestMs
+        }
+
+        // Enable the feature for testing.
+        override fun isShortNetworkSuspensionEnforced(context: Context?): Boolean {
+            return true
+        }
+
+        override fun isChangeEnabled(changeId: Long, pkg: String, user: UserHandle) =
+                changeId in enabledChangeIds
+        override fun isChangeEnabled(changeId: Long, uid: Int) =
+                changeId in enabledChangeIds
+
+        // In AOSP, build version codes can't always distinguish between some versions (e.g. at the
+        // time of this writing U == V). Define custom ones.
+        private var sdkLevel = VERSION_UNMOCKED
+        private val isSdkUnmocked get() = sdkLevel == VERSION_UNMOCKED
+
+        fun setBuildSdk(sdkLevel: Int) {
+            require(sdkLevel <= VERSION_MAX) {
+                "setBuildSdk must not be called with Build.VERSION constants but " +
+                        "CsTest.VERSION_* constants"
+            }
+            visibleOnHandlerThread(csHandler) { this.sdkLevel = sdkLevel }
+        }
+
+        override fun isAtLeastS() = if (isSdkUnmocked) super.isAtLeastS() else sdkLevel >= VERSION_S
+        override fun isAtLeastT() = if (isSdkUnmocked) super.isAtLeastT() else sdkLevel >= VERSION_T
+        override fun isAtLeastU() = if (isSdkUnmocked) super.isAtLeastU() else sdkLevel >= VERSION_U
+        override fun isAtLeastV() = if (isSdkUnmocked) super.isAtLeastV() else sdkLevel >= VERSION_V
+        override fun isAtLeastB() = if (isSdkUnmocked) super.isAtLeastB() else sdkLevel >= VERSION_B
+        override fun isAtLeast25Q4() = if (isSdkUnmocked) {
+            super.isAtLeast25Q4()
+        } else {
+            sdkLevel >= VERSION_25Q4
+        }
+
+        private var callingUid = CALLING_UID_UNMOCKED
+
+        fun unmockCallingUid() {
+            setCallingUid(CALLING_UID_UNMOCKED)
+        }
+
+        fun setCallingUid(callingUid: Int) {
+            visibleOnHandlerThread(csHandler) { this.callingUid = callingUid }
+        }
+
+        override fun getCallingUid() =
+                if (callingUid == CALLING_UID_UNMOCKED) super.getCallingUid() else callingUid
+
+        private var mockedElapsedTime = 0L
+
+        override fun getElapsedRealtime() = mockedElapsedTime
+
+        fun setElapsedRealtime(time: Long) {
+            visibleOnHandlerThread(csHandler) { mockedElapsedTime = time }
+        }
+
+        override fun destroyLiveTcpSocketsByOwnerUids(ownerUids: Set<Int>) {
+            // Call mocked destroyLiveTcpSocketsByOwnerUids so that test can verify this method call
+            destroySocketsWrapper.destroyLiveTcpSocketsByOwnerUids(ownerUids)
+        }
+
+        override fun makeL2capNetworkProvider(context: Context) = null
+
+        override fun makeQuicConnectionCloser(
+                networkForNetId: SparseArray<NetworkAgentInfo>,
+                handler: Handler
+        ): QuicConnectionCloser = quicConnectionCloser
+
+        override fun flagConnectivityServiceDestroySocket() = true
+
+        override fun destroyLiveTcpSocketsByLocalAddress(
+            address: InetAddress,
+            netIdRange: Set<Range<Int>>?,
+            uidRanges: Set<Range<Int>>?
+        ) {
+            // Call mocked destroyLiveTcpSocketsByLocalAddress so that test can verify this method
+            // call
+            destroySocketsWrapper.destroyLiveTcpSocketsByLocalAddress(
+                address,
+                netIdRange,
+                uidRanges
+            )
+        }
+
+        override fun destroyLiveTcpSocketsByLocalAddress(
+            address: InetAddress,
+            interfaceId: Int
+        ) {
+            // Call mocked destroyLiveTcpSocketsByLocalAddress so that test can verify this method
+            // call
+            destroySocketsWrapper.destroyLiveTcpSocketsByLocalAddress(
+                address,
+                interfaceId
+            )
+        }
+
+        override fun destroyLiveTcpSocketsLackingPermission(
+            netId: Int,
+            permission: Int
+        ) {
+            destroySocketsWrapper.destroyLiveTcpSocketsLackingPermission(
+                netId,
+                permission
+            )
+        }
+
+        var netlinkMessageUpdate = Consumer<NetlinkMessage> {_ -> }
+        override fun makeAddressUpdateMonitor(
+            h: Handler,
+            log: SharedLog,
+            tag: String,
+            consumer: Consumer<NetlinkMessage>
+        ): ConnectivityService.AddressUpdateMonitor {
+            netlinkMessageUpdate = consumer
+            return ConnectivityService.AddressUpdateMonitor(h, log, tag, consumer)
+        }
+
+        override fun shouldBluetoothTetheringUseRandomAddress() = false
+
+        override fun shouldQueueNetworkAgentEventsInSystemServer() =
+                enabledFeatures[FLAG_QUEUE_NETWORK_AGENT_EVENTS_IN_SYSTEM_SERVER]
+                        ?: fail("Unmocked FLAG_QUEUE_NETWORK_AGENT_EVENTS_IN_SYSTEM_SERVER," +
+                                " see CSTest.enabledFeatures")
+
+        override fun flagConnectivityServiceModifyQdiscClsact() =
+                enabledFeatures[FLAG_CONNECTIVITY_SERVICE_MODIFY_QDISC_CLSACT]
+                        ?: fail("Unmocked FLAG_CONNECTIVITY_SERVICE_MODIFY_QDISC_CLSACT, " +
+                                " see CSTest.enableFeatures")
+
+        internal val ifnameToIndexMap = HashMap<String, Int>()
+        override fun if_nametoindex(ifname: String): Int =
+            ifnameToIndexMap.getOrDefault(ifname, 0)
+
+        override fun getNetworkInterfaces(): Enumeration<NetworkInterface?>? {
+            return null
+        }
+
+        internal var orderedRtmQdiscClsactHistory =
+            ArrayTrackRecord<Pair<Int, Boolean>>().newReadHead()
+
+        internal var orderedL4sEgressProgramHistory =
+            ArrayTrackRecord<Pair<BpfProgramAttachInfo, String>>().newReadHead()
+
+        override fun sendNewRtmQdiscClsactRequest(ifIndex: Int): Boolean {
+            return orderedRtmQdiscClsactHistory.add(Pair(ifIndex, true))
+        }
+
+        override fun sendDelRtmQdiscClsactRequest(ifIndex: Int): Boolean {
+            return orderedRtmQdiscClsactHistory.add(Pair(ifIndex, false))
+        }
+
+        internal val ethIntfIfname = HashSet<String>()
+        override fun isEthernet(iface: String?): Boolean {
+            return ethIntfIfname.contains(iface)
+        }
+
+        fun expectRtmQdiscClsactRequest(
+            ifIndex: Int,
+            add: Boolean,
+            timeoutMs: Long = HANDLER_TIMEOUT_MS
+        ) {
+            assertNotNull(
+                orderedRtmQdiscClsactHistory.poll(timeoutMs)
+                { it.first == ifIndex && it.second == add }
+            )
+        }
+
+        fun expectNoRtmQdiscClsactRequest(timeoutMs: Long = HANDLER_SHORT_TIMEOUT_MS) {
+            assertNull(orderedRtmQdiscClsactHistory.poll(timeoutMs))
+        }
+
+        override fun attachBpfProgram(
+            ifIndex: Int,
+            ingress: Boolean,
+            prio: Short,
+            protocol: Short,
+            bpfProgPath: String
+        ) {
+            orderedL4sEgressProgramHistory.add(
+                Pair(BpfProgramAttachInfo(ifIndex, ingress, prio, protocol), bpfProgPath)
+            )
+        }
+
+        fun expectAttachBpfProgram(
+            ifIndex: Int,
+            ingress: Boolean,
+            prio: Short,
+            protocol: Short,
+            bpfProgPath: String,
+            timeoutMs: Long = HANDLER_TIMEOUT_MS
+        ) {
+            val attachInfo = BpfProgramAttachInfo(ifIndex, ingress, prio, protocol)
+            assertNotNull(
+                orderedL4sEgressProgramHistory.poll(timeoutMs)
+                { it.first == attachInfo && it.second == bpfProgPath }
+            )
+        }
+
+        fun expectNoAttachBpfProgram(timeoutMs: Long = HANDLER_SHORT_TIMEOUT_MS) {
+            assertNull(orderedL4sEgressProgramHistory.poll(timeoutMs))
+        }
+
+        override fun isLnpDeveloperOptInEnabled() = true
+    }
+
+    inner class PermDeps : PermissionMonitor.Dependencies() {
+        override fun isOptedInToLocalNetworkRestrictions(uid: Int) = false
+        override fun isFeatureNotChickenedOut(context: Context?, name: String?) = true
+    }
+
+    inner class CSContext(base: Context) : BroadcastInterceptingContext(base) {
+        val pacProxyManager = mock<PacProxyManager>()
+        val networkPolicyManager = mock<NetworkPolicyManager>()
+
+        // Map of permission name -> PermissionManager.Permission_{GRANTED|DENIED} constant
+        // For permissions granted across the board, the key is only the permission name.
+        // For permissions only granted to a combination of uid/pid, the key
+        // is "<permission name>,<pid>,<uid>". PID+UID permissions have priority over generic ones.
+        private val mMockedPermissions: HashMap<String, Int> = HashMap()
+        private val mStartedActivities = LinkedBlockingQueue<Intent>()
+        override fun getPackageManager() = this@CSTest.packageManager
+        override fun getContentResolver() = this@CSTest.contentResolver
+
+        // If the permission result does not set in the mMockedPermissions, it will be
+        // considered as PERMISSION_GRANTED as existing design to prevent breaking other tests.
+        override fun checkPermission(permission: String, pid: Int, uid: Int) =
+            checkMockedPermission(permission, pid, uid, PERMISSION_GRANTED)
+
+        override fun enforceCallingOrSelfPermission(permission: String, message: String?) {
+            // If the permission result does not set in the mMockedPermissions, it will be
+            // considered as PERMISSION_GRANTED as existing design to prevent breaking other tests.
+            val granted = checkMockedPermission(
+                permission,
+                Process.myPid(),
+                Process.myUid(),
+                PERMISSION_GRANTED
+            )
+            if (!granted.equals(PERMISSION_GRANTED)) {
+                throw SecurityException("[Test] permission denied: " + permission)
+            }
+        }
+
+        // If the permission result does not set in the mMockedPermissions, it will be
+        // considered as PERMISSION_GRANTED as existing design to prevent breaking other tests.
+        override fun checkCallingOrSelfPermission(permission: String) =
+            checkMockedPermission(permission, Process.myPid(), Process.myUid(), PERMISSION_GRANTED)
+
+        private fun checkMockedPermission(
+                permission: String,
+                pid: Int,
+                uid: Int,
+                default: Int
+        ): Int {
+            val processSpecificKey = "$permission,$pid,$uid"
+            return mMockedPermissions[processSpecificKey]
+                    ?: mMockedPermissions[permission] ?: default
+        }
+
+        /**
+         * Mock checks for the specified permission, and have them behave as per `granted` or
+         * `denied`.
+         *
+         * This will apply to all calls no matter what the checked UID and PID are.
+         *
+         * @param granted One of {@link PackageManager#PermissionResult}.
+         */
+        fun setPermission(permission: String, @PermissionResult granted: Int) {
+            mMockedPermissions.put(permission, granted)
+        }
+
+        /**
+         * Mock checks for the specified permission, and have them behave as per `granted` or
+         * `denied`.
+         *
+         * This will only apply to the passed UID and PID.
+         *
+         * @param granted One of {@link PackageManager#PermissionResult}.
+         */
+        fun setPermission(permission: String, pid: Int, uid: Int, @PermissionResult granted: Int) {
+            mMockedPermissions.put("$permission,$pid,$uid", granted)
+        }
+
+        // Necessary for MultinetworkPolicyTracker, which tries to register a receiver for
+        // all users. The test can't do that since it doesn't hold INTERACT_ACROSS_USERS.
+        // TODO : ensure MultinetworkPolicyTracker's BroadcastReceiver is tested ; ideally,
+        // just returning null should not have tests pass
+        override fun registerReceiverForAllUsers(
+                receiver: BroadcastReceiver?,
+                filter: IntentFilter,
+                broadcastPermission: String?,
+                scheduler: Handler?
+        ): Intent? = null
+
+        // Create and cache user managers on the fly as necessary.
+        val userManagers = HashMap<UserHandle, UserManager>()
+        override fun createContextAsUser(user: UserHandle, flags: Int): Context {
+            val asUser = mock(Context::class.java, delegatesTo<Any>(this))
+            doReturn(user).`when`(asUser).getUser()
+            doAnswer { userManagers.computeIfAbsent(user) {
+                mock(UserManager::class.java, delegatesTo<Any>(userManager)) }
+            }.`when`(asUser).getSystemService(Context.USER_SERVICE)
+            return asUser
+        }
+
+        // List of mocked services. Add additional services here or in subclasses.
+        override fun getSystemService(serviceName: String) = when (serviceName) {
+            Context.CONNECTIVITY_SERVICE -> cm
+            Context.PAC_PROXY_SERVICE -> pacProxyManager
+            Context.NETWORK_POLICY_SERVICE -> networkPolicyManager
+            Context.ALARM_SERVICE -> alarmManager
+            Context.USER_SERVICE -> userManager
+            Context.ACTIVITY_SERVICE -> activityManager
+            Context.SYSTEM_CONFIG_SERVICE -> systemConfigManager
+            Context.TELEPHONY_SERVICE -> telephonyManager
+            Context.TELEPHONY_SUBSCRIPTION_SERVICE -> subscriptionManager
+            Context.BATTERY_STATS_SERVICE -> batteryManager
+            Context.STATS_MANAGER -> null // Stats manager is final and can't be mocked
+            Context.APP_OPS_SERVICE -> appOpsManager
+            Context.BLUETOOTH_SERVICE -> bluetoothManager
+            else -> super.getSystemService(serviceName)
+        }
+
+        internal val orderedBroadcastAsUserHistory = ArrayTrackRecord<Intent>().newReadHead()
+
+        fun expectNoDataActivityBroadcast(timeoutMs: Int) {
+            assertNull(orderedBroadcastAsUserHistory.poll(timeoutMs.toLong()))
+        }
+
+        override fun sendOrderedBroadcastAsUser(
+                intent: Intent,
+                user: UserHandle,
+                receiverPermission: String?,
+                resultReceiver: BroadcastReceiver?,
+                scheduler: Handler?,
+                initialCode: Int,
+                initialData: String?,
+                initialExtras: Bundle?
+        ) {
+            orderedBroadcastAsUserHistory.add(intent)
+        }
+
+        override fun startActivityAsUser(intent: Intent, handle: UserHandle) {
+            mStartedActivities.put(intent)
+        }
+
+        fun expectStartActivityIntent(timeoutMs: Long = HANDLER_TIMEOUT_MS): Intent {
+            val intent = mStartedActivities.poll(timeoutMs, TimeUnit.MILLISECONDS)
+            assertNotNull(intent, "Did not receive sign-in intent after " + timeoutMs + "ms")
+            return intent
+        }
+    }
+
+    // Utility methods for subclasses to use
+    fun waitForIdle() = csHandlerThread.waitForIdle(HANDLER_TIMEOUT_MS)
+
+    // Network agents. See CSAgentWrapper. This class contains utility methods to simplify
+    // creation.
+    fun Agent(
+            nc: NetworkCapabilities = defaultNc(),
+            nac: NetworkAgentConfig = emptyAgentConfig(nc.getLegacyType()),
+            lp: LinkProperties = defaultLp(),
+            lnc: FromS<LocalNetworkConfig>? = null,
+            score: FromS<NetworkScore> = defaultScore(),
+            provider: NetworkProvider? = null
+    ) = CSAgentWrapper(context, deps, csHandlerThread, networkStack,
+            nac, nc, lp, lnc, score, provider)
+    fun Agent(
+        vararg transports: Int,
+        baseNc: NetworkCapabilities = defaultNc(),
+        lp: LinkProperties = defaultLp()
+    ): CSAgentWrapper {
+        val nc = NetworkCapabilities.Builder(baseNc).apply {
+            transports.forEach {
+                addTransportType(it)
+            }
+        }.addCapability(NET_CAPABILITY_NOT_SUSPENDED)
+                .build()
+        return Agent(nc = nc, lp = lp)
+    }
+    fun Agent(interfaceName: String, transport: Int, vararg caps: Int) = Agent(
+        nc = nc(transport, *caps),
+        lp = defaultLp().apply { this.interfaceName = interfaceName },
+        score = keepScore()
+    )
+
+    // This allows keeping all the networks connected without having to file individual requests
+    // for them.
+    fun keepScore() = FromS(
+        NetworkScore.Builder().setKeepConnectedReason(KEEP_CONNECTED_FOR_TEST).build()
+    )
+}

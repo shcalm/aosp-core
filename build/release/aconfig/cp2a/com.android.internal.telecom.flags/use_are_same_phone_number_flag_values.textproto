@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telecom.flags"
+  name: "use_are_same_phone_number"
+  state: ENABLED
+  permission: READ_ONLY
+}

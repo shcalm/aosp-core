@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.platform.flags"
+  name: "use_netstats_per_query_flags"
+  state: ENABLED
+  permission: READ_ONLY
+}

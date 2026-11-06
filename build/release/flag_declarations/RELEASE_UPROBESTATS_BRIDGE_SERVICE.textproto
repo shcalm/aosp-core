@@ -1,0 +1,12 @@
+name: "RELEASE_UPROBESTATS_BRIDGE_SERVICE"
+namespace: "responsible_apis"
+description: "If true, then the system service UprobeStatsBridgeService is enabled"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"
+containers: "com.android.uprobestats"

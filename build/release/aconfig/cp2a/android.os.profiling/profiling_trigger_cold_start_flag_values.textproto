@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.profiling"
+  name: "profiling_trigger_cold_start"
+  state: ENABLED
+  permission: READ_ONLY
+}

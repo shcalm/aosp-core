@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.org.conscrypt.net.flags"
+  name: "network_security_config_localhost"
+  state: ENABLED
+  permission: READ_ONLY
+}

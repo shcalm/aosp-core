@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.aconfig_new_storage"
+  name: "detect_device_build_switch"
+  state: ENABLED
+  permission: READ_ONLY
+}

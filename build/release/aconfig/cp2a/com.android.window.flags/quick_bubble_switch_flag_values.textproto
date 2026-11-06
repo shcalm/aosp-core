@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "quick_bubble_switch"
+  state: ENABLED
+  permission: READ_ONLY
+}

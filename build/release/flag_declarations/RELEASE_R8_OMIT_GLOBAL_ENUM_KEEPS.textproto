@@ -1,0 +1,8 @@
+name:  "RELEASE_R8_OMIT_GLOBAL_ENUM_KEEPS"
+namespace:  "system_performance"
+description:  "Enables removal of global R8 keep rules for enum values"
+workflow:  LAUNCH
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "check_application_thread_called_by_system"
+  state: ENABLED
+  permission: READ_WRITE
+}

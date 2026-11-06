@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "use_candidate_save_value_when_update_save_assist_structure"
+  state: ENABLED
+  permission: READ_ONLY
+}

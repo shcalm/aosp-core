@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "remove_device_with_connection_manager"
+  state: ENABLED
+  permission: READ_ONLY
+}

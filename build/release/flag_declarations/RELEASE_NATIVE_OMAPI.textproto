@@ -1,0 +1,5 @@
+name: "RELEASE_NATIVE_OMAPI"
+namespace: "hardware_backed_security"
+description:  "Whether to use native (Rust) OMAPI service instead of Java app"
+workflow: MANUAL
+containers: "system"

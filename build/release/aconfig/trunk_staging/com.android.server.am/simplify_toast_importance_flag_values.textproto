@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "simplify_toast_importance"
+  state: ENABLED
+  permission: READ_WRITE
+}

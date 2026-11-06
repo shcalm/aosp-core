@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "audio_stream_scan_with_filter"
+  state: ENABLED
+  permission: READ_WRITE
+}

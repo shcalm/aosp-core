@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "filter_voip_call_logs"
+  state: ENABLED
+  permission: READ_ONLY
+}

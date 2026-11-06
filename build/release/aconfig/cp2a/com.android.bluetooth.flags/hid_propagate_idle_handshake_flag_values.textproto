@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hid_propagate_idle_handshake"
+  state: ENABLED
+  permission: READ_ONLY
+}

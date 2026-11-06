@@ -1,0 +1,11 @@
+name: "RELEASE_USE_RUST_BZIP2"
+namespace: "security"
+description: "Use Rust implementation of bzip2 library"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

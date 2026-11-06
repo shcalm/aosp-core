@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "android_build": {
+      "command": "python3",
+      "args": [
+        "${ANDROID_BUILD_TOP}/build/soong/scripts/ai/android_build/interface/cli.py"
+      ],
+      "env": {
+        "PYTHONPATH": "${ANDROID_BUILD_TOP}/build/soong/scripts/ai/android_build"
+      }
+    }
+  }
+}

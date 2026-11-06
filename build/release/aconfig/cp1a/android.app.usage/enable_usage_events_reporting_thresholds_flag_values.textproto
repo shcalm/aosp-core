@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.usage"
+  name: "enable_usage_events_reporting_thresholds"
+  state: ENABLED
+  permission: READ_ONLY
+}

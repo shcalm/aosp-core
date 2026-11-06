@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hid_dont_reconnect_on_uhid_timeout"
+  state: ENABLED
+  permission: READ_ONLY
+}

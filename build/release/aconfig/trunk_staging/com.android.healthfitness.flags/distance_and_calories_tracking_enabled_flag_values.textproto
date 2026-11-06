@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "distance_and_calories_tracking_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

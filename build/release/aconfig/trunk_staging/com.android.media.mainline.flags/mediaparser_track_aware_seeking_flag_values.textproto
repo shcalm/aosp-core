@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mainline.flags"
+  name: "mediaparser_track_aware_seeking"
+  state: ENABLED
+  permission: READ_WRITE
+}

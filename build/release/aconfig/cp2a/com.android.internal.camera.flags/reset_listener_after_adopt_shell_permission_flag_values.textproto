@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.camera.flags"
+  name: "reset_listener_after_adopt_shell_permission"
+  state: ENABLED
+  permission: READ_ONLY
+}

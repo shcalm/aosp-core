@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "enable_magnify_magnification_key_gesture_dialog"
+  state: ENABLED
+  permission: READ_WRITE
+}

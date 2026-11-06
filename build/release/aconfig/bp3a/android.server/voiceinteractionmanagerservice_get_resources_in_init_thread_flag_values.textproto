@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.server"
+  name: "voiceinteractionmanagerservice_get_resources_in_init_thread"
+  state: ENABLED
+  permission: READ_ONLY
+}

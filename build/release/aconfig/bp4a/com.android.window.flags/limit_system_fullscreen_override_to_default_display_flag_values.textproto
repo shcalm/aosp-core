@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "limit_system_fullscreen_override_to_default_display"
+  state: ENABLED
+  permission: READ_ONLY
+}

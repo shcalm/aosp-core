@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.chooser"
+  name: "do_not_delay_chooser_adapter_notify_data_change"
+  state: ENABLED
+  permission: READ_ONLY
+}

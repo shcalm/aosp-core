@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "read_device_config_constants"
+  state: ENABLED
+  permission: READ_ONLY
+}

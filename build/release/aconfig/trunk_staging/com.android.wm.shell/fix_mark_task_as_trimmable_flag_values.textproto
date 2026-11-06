@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_mark_task_as_trimmable"
+  state: ENABLED
+  permission: READ_WRITE
+}

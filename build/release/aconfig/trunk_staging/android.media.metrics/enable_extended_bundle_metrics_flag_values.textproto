@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.metrics"
+  name: "enable_extended_bundle_metrics"
+  state: ENABLED
+  permission: READ_WRITE
+}

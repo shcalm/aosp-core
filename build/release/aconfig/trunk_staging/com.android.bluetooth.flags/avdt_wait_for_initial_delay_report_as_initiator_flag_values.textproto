@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "avdt_wait_for_initial_delay_report_as_initiator"
+  state: ENABLED
+  permission: READ_WRITE
+}

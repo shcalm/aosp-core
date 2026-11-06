@@ -1,0 +1,9 @@
+# Flag to toggle between TrichromeWebView and Standalone WebView.
+# When true, the build will use the "WebView.apk" binaries.
+# When false (default), it will use "TrichromeWebView.apk".
+name: "RELEASE_USE_STANDALONE_WEBVIEW"
+namespace: "webview"
+description: "Controls whether to use standalone WebView instead of TrichromeWebView."
+workflow: LAUNCH
+containers: "product"
+containers: "system"

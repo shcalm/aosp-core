@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "hearing_input_change_when_comm_device"
+  state: ENABLED
+  permission: READ_WRITE
+}

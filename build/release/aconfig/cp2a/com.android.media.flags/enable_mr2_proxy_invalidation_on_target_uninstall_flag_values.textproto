@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "enable_mr2_proxy_invalidation_on_target_uninstall"
+  state: ENABLED
+  permission: READ_ONLY
+}

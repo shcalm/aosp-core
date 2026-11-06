@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_desktop_close_task_animation_in_dtc_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_freeform_fallback_transition_observer"
+  state: ENABLED
+  permission: READ_ONLY
+}

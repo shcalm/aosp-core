@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.optimization"
+  name: "checkin_history_start_time"
+  state: ENABLED
+  permission: READ_ONLY
+}

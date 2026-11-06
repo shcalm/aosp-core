@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "dispose_task_fragment_synchronously"
+  state: ENABLED
+  permission: READ_ONLY
+}

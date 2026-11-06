@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "cache_content_capture_service"
+  state: ENABLED
+  permission: READ_ONLY
+}

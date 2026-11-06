@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "associate_disallow_grant_admin_with_permission"
+  state: ENABLED
+  permission: READ_ONLY
+}

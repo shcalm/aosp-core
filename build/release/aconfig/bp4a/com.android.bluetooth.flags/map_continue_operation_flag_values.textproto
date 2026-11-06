@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "map_continue_operation"
+  state: ENABLED
+  permission: READ_ONLY
+}

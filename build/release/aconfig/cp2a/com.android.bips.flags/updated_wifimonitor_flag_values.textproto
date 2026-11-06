@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bips.flags"
+  name: "updated_wifimonitor"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.example.android.aconfig.demo.flags"
+  name: "mainline_beta_test_flag_2"
+  state: ENABLED
+  permission: READ_WRITE
+}

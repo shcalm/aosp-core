@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "release_surface_on_transition_finish"
+  state: ENABLED
+  permission: READ_ONLY
+}

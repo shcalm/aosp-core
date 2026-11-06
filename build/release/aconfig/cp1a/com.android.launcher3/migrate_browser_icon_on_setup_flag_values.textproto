@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "migrate_browser_icon_on_setup"
+  state: ENABLED
+  permission: READ_ONLY
+}

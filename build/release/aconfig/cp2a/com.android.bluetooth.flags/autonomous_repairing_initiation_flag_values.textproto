@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "autonomous_repairing_initiation"
+  state: ENABLED
+  permission: READ_ONLY
+}

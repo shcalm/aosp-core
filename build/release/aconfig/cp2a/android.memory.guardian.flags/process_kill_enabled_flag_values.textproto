@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.memory.guardian.flags"
+  name: "process_kill_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.mmd.flags"
+  name: "mmd_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.textclassifier"
+  name: "textclassifier_skip_redundant_icon_rewriting"
+  state: ENABLED
+  permission: READ_WRITE
+}

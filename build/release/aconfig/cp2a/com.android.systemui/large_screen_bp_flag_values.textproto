@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "large_screen_bp"
+  state: ENABLED
+  permission: READ_ONLY
+}

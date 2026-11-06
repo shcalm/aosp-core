@@ -1,0 +1,8 @@
+[package]
+name = "resolvrs_utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+nix = { version = "0.29.0", features = ["fs", "net", "socket", "uio"] }
+tokio = { version = "1.47.2", features = ["net"] }

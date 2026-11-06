@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "ringer_vibration_user_aware"
+  state: ENABLED
+  permission: READ_ONLY
+}

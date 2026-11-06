@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "pseudo_addr_in_socket_connect_signal"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "frame_rate_mapping_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "delete_after_scroll_capture"
+  state: ENABLED
+  permission: READ_WRITE
+}

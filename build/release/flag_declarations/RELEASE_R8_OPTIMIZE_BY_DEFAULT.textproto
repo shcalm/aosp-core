@@ -1,0 +1,8 @@
+name:  "RELEASE_R8_OPTIMIZE_BY_DEFAULT"
+namespace:  "system_performance"
+description:  "Enables more aggressive R8 optimization as the default for app targets, in addition to the current shrinking default"
+workflow:  LAUNCH
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

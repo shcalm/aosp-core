@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "set_a2dp_active_device_through_adapter_service"
+  state: ENABLED
+  permission: READ_WRITE
+}

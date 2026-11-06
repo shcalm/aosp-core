@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.flags"
+  name: "surface_view_max_hdr_headroom"
+  state: ENABLED
+  permission: READ_WRITE
+}

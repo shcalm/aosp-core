@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.factory_reset"
+  name: "fix_factory_reset_preference_on_restriction_change"
+  state: ENABLED
+  permission: READ_WRITE
+}

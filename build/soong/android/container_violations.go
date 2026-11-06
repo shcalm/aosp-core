@@ -1,0 +1,1497 @@
+// Copyright 2024 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+package android
+
+var ContainerDependencyViolationAllowlist = map[string][]string{
+	// go/keep-sorted start case=no block=yes newline_separated=yes
+	"AdExtServicesApkUITestsAppConsent": {
+		"framework", // cts -> unstable
+	},
+
+	"adservices-service-core": {
+		"gson", // apex [com.android.adservices, com.android.extservices] -> apex [com.android.virt]
+	},
+
+	"AdServicesSharedLibrariesUnitTests": {
+		"framework", // cts -> unstable
+	},
+
+	"android.car-module.impl": {
+		"modules-utils-preconditions", // apex [com.android.car.framework] -> apex [com.android.adservices, com.android.appsearch, com.android.cellbroadcast, com.android.extservices, com.android.ondevicepersonalization, com.android.tethering, com.android.uwb, com.android.wifi, test_com.android.cellbroadcast, test_com.android.wifi]
+	},
+
+	"AppInstalledOnMultipleUsers": {
+		"framework", // cts -> unstable
+	},
+
+	"AppSearchMockingServicesTests": {
+		"framework", // cts -> unstable
+	},
+
+	"AppSearchServicesTests": {
+		"framework", // cts -> unstable
+	},
+
+	"AppsIndexerTests": {
+		"framework", // cts -> unstable
+	},
+
+	"art-aconfig-flags-java-lib": {
+		"framework-api-annotations-lib", // apex [com.android.art, com.android.art.debug, com.android.art.testing, test_imgdiag_com.android.art, test_jitzygote_com.android.art] -> system
+	},
+
+	"AvfRkpdAppIntegrationTests": {
+		"framework", // cts -> unstable
+	},
+
+	"BitmapTestApp": {
+		"framework", // cts -> unstable
+	},
+
+	"Bluetooth": {
+		"app-compat-annotations",         // apex [com.android.bt] -> system
+		"framework-bluetooth-pre-jarjar", // apex [com.android.bt] -> system
+	},
+
+	"bluetooth-nano-protos": {
+		"libprotobuf-java-nano", // apex [com.android.bt] -> apex [com.android.wifi, test_com.android.wifi]
+	},
+
+	"bluetooth.change-ids": {
+		"app-compat-annotations", // apex [com.android.bt] -> system
+	},
+
+	"CaptivePortalLoginTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CarServiceUpdatable": {
+		"modules-utils-os",                    // apex [com.android.car.framework] -> apex [com.android.permission, test_com.android.permission]
+		"modules-utils-preconditions",         // apex [com.android.car.framework] -> apex [com.android.adservices, com.android.appsearch, com.android.cellbroadcast, com.android.extservices, com.android.ondevicepersonalization, com.android.tethering, com.android.uwb, com.android.wifi, test_com.android.cellbroadcast, test_com.android.wifi]
+		"modules-utils-shell-command-handler", // apex [com.android.car.framework] -> apex [com.android.adservices, com.android.art, com.android.art.debug, com.android.art.testing, com.android.bt, com.android.configinfrastructure, com.android.mediaprovider, com.android.nfcservices, com.android.permission, com.android.scheduling, com.android.tethering, com.android.uwb, com.android.wifi, test_com.android.mediaprovider, test_com.android.permission, test_com.android.wifi, test_imgdiag_com.android.art, test_jitzygote_com.android.art]
+	},
+
+	"cellbroadcastreceiver_aconfig_flags_lib": {
+		"ext",       // apex [com.android.cellbroadcast, test_com.android.cellbroadcast] -> system
+		"framework", // apex [com.android.cellbroadcast, test_com.android.cellbroadcast] -> system
+	},
+
+	"CellBroadcastReceiverComplianceTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CellBroadcastReceiverOemUnitTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CellBroadcastServiceTests": {
+		"framework", // cts -> unstable
+	},
+
+	"connectivity-net-module-utils-bpf": {
+		"net-utils-device-common-struct-base", // apex [com.android.tethering] -> system
+	},
+
+	"ConnectivityCoverageTests": {
+		"framework", // cts -> unstable
+	},
+
+	"conscrypt-aconfig-flags-lib": {
+		"aconfig-annotations-lib-sdk-none", // apex [com.android.conscrypt, test_com.android.conscrypt] -> system
+	},
+
+	"ContactsIndexerTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CrashRecoveryModuleTests": {
+		"framework", // cts -> unstable
+	},
+
+	"cronet_aml_base_base_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+		"jsr305", // apex [com.android.tethering] -> apex [com.android.adservices, com.android.devicelock, com.android.extservices, com.android.healthfitness, com.android.media, com.android.mediaprovider, test_com.android.media, test_com.android.mediaprovider]
+	},
+
+	"cronet_aml_build_android_build_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_components_cronet_android_base_feature_overrides_java_proto": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_components_cronet_android_cronet_api_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_components_cronet_android_cronet_impl_common_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_components_cronet_android_cronet_impl_native_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+		"jsr305", // apex [com.android.tethering] -> apex [com.android.adservices, com.android.devicelock, com.android.extservices, com.android.healthfitness, com.android.media, com.android.mediaprovider, test_com.android.media, test_com.android.mediaprovider]
+	},
+
+	"cronet_aml_components_cronet_android_cronet_jni_registration_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_components_cronet_android_cronet_shared_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_components_cronet_android_cronet_stats_log_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_components_cronet_android_cronet_urlconnection_impl_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_components_cronet_android_flags_java_proto": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_components_cronet_android_request_context_config_java_proto": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_net_android_net_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+		"jsr305", // apex [com.android.tethering] -> apex [com.android.adservices, com.android.devicelock, com.android.extservices, com.android.healthfitness, com.android.media, com.android.mediaprovider, test_com.android.media, test_com.android.mediaprovider]
+	},
+
+	"cronet_aml_net_android_net_thread_stats_uid_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_third_party_jni_zero_jni_zero_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"cronet_aml_url_url_java": {
+		"framework-connectivity-pre-jarjar-without-cronet", // apex [com.android.tethering] -> system
+	},
+
+	"CtsAdservicesHostTestApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAdServicesNotInAllowListEndToEndTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAdServicesPermissionsAppOptOutEndToEndTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAdServicesPermissionsNoPermEndToEndTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAdServicesPermissionsValidEndToEndTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAlarmManagerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAndroidAppTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAppExitTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAppFgsStartTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAppFgsTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAppFunctionTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAppLocalesBackupApp1": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAppLocalesBackupApp2": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAppOpsTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAppSearchTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAppStartTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAppTestStubsApp2": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsAudioHostTestApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsBackgroundActivityAppAllowCrossUidFlagDefault": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsBackupRestoreEventLoggerApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsBatterySavingTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsBluetoothTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsBootDisplayModeApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsBroadcastTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsBRSTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsCompanionDeviceManagerCoreTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsCompanionDeviceManagerMultiProcessTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsCompanionDeviceManagerUiAutomationTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsContentProviderTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsContentResolverTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsContentSuggestionsTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsContentTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsCredentialManagerBackupRestoreApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsCrossProfileEnabledApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsCrossProfileEnabledNoPermsApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsCrossProfileNotEnabledApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsCrossProfileUserEnabledApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDeviceAndProfileOwnerApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDeviceAndProfileOwnerApp23": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDeviceAndProfileOwnerApp25": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDeviceAndProfileOwnerApp30": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDeviceLockTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDeviceOwnerApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDevicePolicySimTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDevicePolicyTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDocumentContentTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDreamsTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsDrmTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsEmptyTestApp_RejectedByVerifier": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsEphemeralTestsEphemeralApp1": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsFgsBootCompletedTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsFgsBootCompletedTestCasesApi35": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsFgsStartTestHelperApi34": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsFgsStartTestHelperCurrent": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsFgsTimeoutTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsFileDescriptorTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsFingerprintTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsFullBackupApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsHostsideCompatChangeTestsApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsHostsideNetworkPolicyTestsApp2": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsIdentityTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsIkeTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsInstalledLoadingProgressDeviceTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsInstantAppTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsIntentSenderApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsJobSchedulerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsKeystoreTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsKeyValueBackupApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsLegacyNotification27TestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsLibcoreTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsLibcoreWycheproofConscryptTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsListeningPortsTest": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsLocationCoarseTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsLocationFineTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsLocationNoneTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsLocationPrivilegedTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsManagedProfileApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaAudioTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaCodecTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaDecoderTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaDrmFrameworkTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaEncoderTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaExtractorTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaMiscTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaMuxerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaPerformanceClassTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaPlayerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaProjectionSDK33TestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaProjectionSDK34TestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaProjectionTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaProviderTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaProviderTranscodeTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaRecorderTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaRouterHostSideTestBluetoothPermissionsApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaRouterHostSideTestMediaRoutingControlApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaRouterHostSideTestModifyAudioRoutingApp": {
+		"framework", // cts -> unstable
+	},
+
+	// TODO(b/387499846): Remove once migrated to sdk_version.
+	"CtsMediaRouterTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	// TODO(b/387500109): Remove once migrated to sdk_version.
+	"CtsMediaSessionTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMediaV2TestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMimeMapTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsModifyQuietModeEnabledApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsMusicRecognitionTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsNativeMediaAAudioTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsNetTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsNetTestCasesLegacyApi22": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsNetTestCasesMaxTargetSdk30": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsNetTestCasesMaxTargetSdk31": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsNetTestCasesMaxTargetSdk33": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsNetTestCasesUpdateStatsPermission": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsNfcTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsOnDeviceIntelligenceServiceTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsOnDevicePersonalizationTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsPackageInstallerApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsPackageManagerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsPackageSchemeTestsWithoutVisibility": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsPackageSchemeTestsWithVisibility": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsPackageWatchdogTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsPermissionBackupApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsPermissionBackupApp22": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsPermissionsSyncTestApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsPreservedSettingsApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsProtoTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsProviderTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsProxyMediaRouterTestHelperApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsRebootReadinessTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsResourcesLoaderTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsResourcesTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsRestrictedModeNoActionApp1": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsRestrictedModeNoActionApp2": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsRestrictedModeOptedInApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsRestrictedModeOptedOutApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsRootBluetoothTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSandboxedAdIdManagerTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSandboxedAppSetIdManagerTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSandboxedFledgeManagerTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSandboxedMeasurementManagerTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSandboxedTopicsManagerTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSdkExtensionsTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSdkSandboxInprocessTests": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSecureElementTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSecurityTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSelinuxEphemeralTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSelinuxTargetSdk25TestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSelinuxTargetSdk27TestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSelinuxTargetSdk28TestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSelinuxTargetSdk29TestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSelinuxTargetSdk30TestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSelinuxTargetSdkCurrentTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSettingsDeviceOwnerApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSharedUserMigrationTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsShortFgsTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSimRestrictedApisTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSliceTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSpeechTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsStatsSecurityApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSuspendAppsTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSyncManagerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsSystemUiTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsTareTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsTelephonySatelliteTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsTelephonyTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsTetheringTest": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsThreadNetworkTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsTvInputTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsTvTunerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsUsageStatsTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsUsbManagerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsUserRestrictionTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsUtilTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsUwbTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsVcnTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsVideoCodecTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsVideoTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsViewReceiveContentTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsVirtualDevicesAppLaunchTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsVirtualDevicesAudioTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsVirtualDevicesCameraTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsVirtualDevicesSensorTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsVirtualDevicesTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsWearableSensingServiceTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsWebViewCompatChangeApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsWidgetTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsWidgetTestCases29": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsWifiNonUpdatableTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsWifiTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsWindowManagerExternalApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsWindowManagerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"CtsZipValidateApp": {
+		"framework", // cts -> unstable
+	},
+
+	"CVE-2021-0965": {
+		"framework", // cts -> unstable
+	},
+
+	"device_config_reboot_flags_java_lib": {
+		"ext",       // apex [com.android.configinfrastructure] -> system
+		"framework", // apex [com.android.configinfrastructure] -> system
+	},
+
+	"devicelockcontroller-lib": {
+		"modules-utils-expresslog", // apex [com.android.devicelock] -> apex [com.android.bt, com.android.car.framework]
+	},
+
+	"DisruptiveTestApp": {
+		"framework", // cts -> unstable
+	},
+
+	"DocumentsUITests": {
+		"framework", // cts -> unstable
+	},
+
+	"FederatedCompute": {
+		"auto_value_annotations", // apex [com.android.ondevicepersonalization] -> apex [com.android.adservices, com.android.extservices, com.android.extservices_tplus]
+	},
+
+	"framework-adservices.impl": {
+		"adservices_flags_lib", // apex [com.android.adservices, com.android.extservices] -> system
+	},
+
+	"framework-bluetooth.impl": {
+		"app-compat-annotations", // apex [com.android.bt] -> system
+	},
+
+	"framework-configinfrastructure.impl": {
+		"configinfra_framework_flags_java_lib", // apex [com.android.configinfrastructure] -> system
+	},
+
+	// TODO(b/382743602): Remove "app-compat-annotations" and depend on the stub version jar
+	// TODO(b/382301972): Remove the violations and use jarjar_rename or jarjar_prefix
+	"framework-connectivity-b.impl": {
+		"app-compat-annotations",            // apex [com.android.tethering] -> system
+		"framework-connectivity-pre-jarjar", // apex [com.android.tethering] -> system
+	},
+
+	"framework-connectivity-t.impl": {
+		"app-compat-annotations",            // apex [com.android.tethering] -> system
+		"framework-connectivity-pre-jarjar", // apex [com.android.tethering] -> system
+	},
+
+	"framework-connectivity.impl": {
+		"app-compat-annotations", // apex [com.android.tethering] -> system
+	},
+
+	"framework-ondevicepersonalization.impl": {
+		"app-compat-annotations",            // apex [com.android.ondevicepersonalization] -> system
+		"ondevicepersonalization_flags_lib", // apex [com.android.ondevicepersonalization] -> system
+	},
+
+	"framework-pdf-v.impl": {
+		"app-compat-annotations",      // apex [com.android.mediaprovider, test_com.android.mediaprovider] -> system
+		"modules-utils-preconditions", // apex [com.android.mediaprovider, test_com.android.mediaprovider] -> apex [com.android.adservices, com.android.appsearch, com.android.cellbroadcast, com.android.extservices, com.android.ondevicepersonalization, com.android.tethering, com.android.uwb, com.android.wifi, test_com.android.cellbroadcast, test_com.android.wifi]
+	},
+
+	"framework-pdf.impl": {
+		"modules-utils-preconditions", // apex [com.android.mediaprovider, test_com.android.mediaprovider] -> apex [com.android.adservices, com.android.appsearch, com.android.cellbroadcast, com.android.extservices, com.android.ondevicepersonalization, com.android.tethering, com.android.uwb, com.android.wifi, test_com.android.cellbroadcast, test_com.android.wifi]
+	},
+
+	"framework-permission-s.impl": {
+		"app-compat-annotations", // apex [com.android.permission, test_com.android.permission] -> system
+	},
+
+	"framework-wifi.impl": {
+		"aconfig_storage_reader_java", // apex [com.android.wifi, test_com.android.wifi] -> system
+		"app-compat-annotations",      // apex [com.android.wifi, test_com.android.wifi] -> system
+	},
+
+	"FrameworksIkeTests": {
+		"framework", // cts -> unstable
+	},
+
+	"FrameworksVcnTests": {
+		"framework", // cts -> unstable
+	},
+
+	"FrameworksWifiApiTests": {
+		"framework", // cts -> unstable
+	},
+
+	"FrameworksWifiTests": {
+		"framework", // cts -> unstable
+	},
+
+	"grpc-java-core-internal": {
+		"gson",             // apex [com.android.adservices, com.android.devicelock, com.android.extservices] -> apex [com.android.virt]
+		"perfmark-api-lib", // apex [com.android.adservices, com.android.devicelock, com.android.extservices] -> system
+	},
+
+	"httpclient_impl": {
+		"httpclient_api", // apex [com.android.tethering] -> system
+	},
+
+	"IncrementalTestAppValidator": {
+		"framework", // cts -> unstable
+	},
+
+	"libcore-aconfig-flags-lib": {
+		"framework-api-annotations-lib", // apex [com.android.art, com.android.art.debug, com.android.art.testing, test_imgdiag_com.android.art, test_jitzygote_com.android.art] -> system
+	},
+
+	"LibStatsPullTests": {
+		"framework", // cts -> unstable
+	},
+
+	"libtextclassifier_java_tests": {
+		"framework", // cts -> unstable
+	},
+
+	"loadlibrarytest_product_app": {
+		"libnativeloader_vendor_shared_lib", // product -> vendor
+	},
+
+	"loadlibrarytest_testlib": {
+		"libnativeloader_vendor_shared_lib", // system -> vendor
+	},
+
+	"MctsMediaCodecTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MctsMediaDecoderTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MctsMediaDrmFrameworkTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MctsMediaEncoderTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MctsMediaExtractorTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MctsMediaMiscTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MctsMediaMuxerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MctsMediaPlayerTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MctsMediaRecorderTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	// TODO(b/387499846): Remove once migrated to sdk_version.
+	"MctsMediaRouterTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	// TODO(b/387500109): Remove once migrated to sdk_version.
+	"MctsMediaSessionTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MctsMediaTranscodingTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MctsMediaV2TestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MediaProvider": {
+		"app-compat-annotations", // apex [com.android.mediaprovider, test_com.android.mediaprovider] -> system
+	},
+
+	"mediaprovider_flags_java_lib": {
+		"ext",       // apex [com.android.mediaprovider, test_com.android.mediaprovider] -> system
+		"framework", // apex [com.android.mediaprovider, test_com.android.mediaprovider] -> system
+	},
+
+	"MediaProviderClientTests": {
+		"framework", // cts -> unstable
+	},
+
+	"MediaProviderTests": {
+		"framework", // cts -> unstable
+	},
+
+	"MediaRouterServiceTests": {
+		"framework", // cts -> unstable
+	},
+
+	"MockPointingUiApp": {
+		"framework", // cts -> unstable
+	},
+
+	"MockSatelliteGatewayServiceApp": {
+		"framework", // cts -> unstable
+	},
+
+	"MockSatelliteServiceApp": {
+		"framework", // cts -> unstable
+	},
+
+	"MtsConscryptFdSocketTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MtsConscryptTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MtsLibcoreBouncyCastleTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MtsLibcoreOkHttpTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"MtsTetheringTestLatestSdk": {
+		"framework", // cts -> unstable
+	},
+
+	"MtsWifiTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"net-utils-device-common-netlink": {
+		"net-utils-device-common-struct-base", // apex [com.android.tethering] -> system
+	},
+
+	"net-utils-device-common-struct": {
+		"net-utils-device-common-struct-base", // apex [com.android.tethering] -> system
+	},
+
+	// TODO(b/468297164): Delete once tot_cronet_NetHttpCoverageTests is hooked on presubmit.
+	"NetHttpCoverageTests": {
+		"framework", // cts -> unstable
+	},
+
+	"NetworkStackCoverageTests": {
+		"framework", // cts -> unstable
+	},
+
+	"NetworkStackRootTests": {
+		"framework", // cts -> unstable
+	},
+
+	"NetworkStackTests": {
+		"framework", // cts -> unstable
+	},
+
+	"NfcManagerTests": {
+		"framework", // cts -> unstable
+	},
+
+	"NfcNciApex": {
+		// TODO(b/383782511): Remove the violations once the infra is fixed.
+		"android.nfc.flags-aconfig-java",        // apex [com.android.nfcservices] -> system
+		"android.permission.flags-aconfig-java", // apex [com.android.nfcservices] -> apex [com.android.permission, test_com.android.permission]
+		// TODO(b/383782511): Remove the violations once the infra is fixed.
+		"framework-nfc.impl", // apex [com.android.nfcservices] -> system
+	},
+
+	"NfcNciUnitTests": {
+		"framework", // cts -> unstable
+	},
+
+	"NfcTestCases": {
+		"framework", // cts -> unstable
+	},
+
+	"okhttp-norepackage": {
+		"okhttp-android-util-log", // apex [com.android.adservices, com.android.devicelock, com.android.extservices] -> system
+	},
+
+	"ondevicepersonalization-plugin-lib": {
+		"auto_value_annotations", // apex [com.android.ondevicepersonalization] -> apex [com.android.adservices, com.android.extservices, com.android.extservices_tplus]
+	},
+
+	"opencensus-java-api": {
+		"auto_value_annotations", // apex [com.android.devicelock] -> apex [com.android.adservices, com.android.extservices, com.android.extservices_tplus]
+	},
+
+	"PackageWatchdogTest": {
+		"framework", // cts -> unstable
+	},
+
+	"PermissionController-lib": {
+		"safety-center-annotations", // apex [com.android.permission, test_com.android.permission] -> system
+	},
+
+	"PermissionControllerOutOfProcessTests": {
+		"framework", // cts -> unstable
+	},
+
+	"PlatformProperties": {
+		"sysprop-library-stub-platform", // apex [com.android.bt, com.android.nfcservices, com.android.tethering, com.android.virt, com.android.wifi, test_com.android.wifi] -> system
+	},
+
+	"pts-bot-mts": {
+		"framework", // cts -> unstable
+	},
+
+	"RebootReadinessUnitTests": {
+		"framework", // cts -> unstable
+	},
+
+	"RkpdAppIntegrationTests": {
+		"framework", // cts -> unstable
+	},
+
+	"RkpdAppStressTests": {
+		"framework", // cts -> unstable
+	},
+
+	"RkpdAppUnitTests": {
+		"framework", // cts -> unstable
+	},
+
+	"RollbackPackageHealthObserverTests": {
+		"framework", // cts -> unstable
+	},
+
+	"safety-center-config": {
+		"safety-center-annotations", // apex [com.android.permission, test_com.android.permission] -> system
+	},
+
+	"safety-center-internal-data": {
+		"safety-center-annotations", // apex [com.android.permission, test_com.android.permission] -> system
+	},
+
+	"safety-center-pending-intents": {
+		"safety-center-annotations", // apex [com.android.permission, test_com.android.permission] -> system
+	},
+
+	"safety-center-persistence": {
+		"safety-center-annotations", // apex [com.android.permission, test_com.android.permission] -> system
+	},
+
+	"safety-center-resources-lib": {
+		"safety-center-annotations", // apex [com.android.permission, test_com.android.permission] -> system
+	},
+
+	"SdkSandboxFrameworkUnitTests": {
+		"framework", // cts -> unstable
+	},
+
+	"SdkSandboxManagerDisabledTests": {
+		"framework", // cts -> unstable
+	},
+
+	"SdkSandboxManagerServiceUnitTests": {
+		"framework", // cts -> unstable
+	},
+
+	"SdkSandboxManagerTests": {
+		"framework", // cts -> unstable
+	},
+
+	"SdkSandboxRestrictionsTests": {
+		"framework", // cts -> unstable
+	},
+
+	"SdkSandboxUnitTests": {
+		"framework", // cts -> unstable
+	},
+
+	"service-art.impl": {
+		"auto_value_annotations", // apex [com.android.art, com.android.art.debug, com.android.art.testing, test_imgdiag_com.android.art, test_jitzygote_com.android.art] -> apex [com.android.adservices, com.android.extservices, com.android.extservices_tplus]
+	},
+
+	"service-bluetooth-pre-jarjar": {
+		"framework-bluetooth-pre-jarjar", // apex [com.android.bt] -> system
+		"service-bluetooth.change-ids",   // apex [com.android.bt] -> system
+	},
+
+	"service-connectivity": {
+		"libprotobuf-java-nano", // apex [com.android.tethering] -> apex [com.android.wifi, test_com.android.wifi]
+	},
+
+	// TODO(b/382301972): Remove the violations and use jarjar_rename or jarjar_prefix
+	"service-connectivity-b-pre-jarjar": {
+		"framework-connectivity-pre-jarjar",   // apex [com.android.tethering] -> system
+		"framework-connectivity-b-pre-jarjar", // apex [com.android.tethering] -> system
+		"framework-connectivity-t-pre-jarjar", // apex [com.android.tethering] -> system
+	},
+
+	"service-connectivity-pre-jarjar": {
+		"framework-connectivity-pre-jarjar", // apex [com.android.tethering] -> system
+	},
+
+	"service-connectivity-protos": {
+		"libprotobuf-java-nano", // apex [com.android.tethering] -> apex [com.android.wifi, test_com.android.wifi]
+	},
+
+	"service-connectivity-tiramisu-pre-jarjar": {
+		"framework-connectivity-pre-jarjar",   // apex [com.android.tethering] -> system
+		"framework-connectivity-t-pre-jarjar", // apex [com.android.tethering] -> system
+	},
+
+	"service-entitlement": {
+		"auto_value_annotations", // apex [com.android.wifi, test_com.android.wifi] -> apex [com.android.adservices, com.android.extservices, com.android.extservices_tplus]
+	},
+
+	"service-entitlement-api": {
+		"auto_value_annotations", // apex [com.android.wifi, test_com.android.wifi] -> apex [com.android.adservices, com.android.extservices, com.android.extservices_tplus]
+	},
+
+	"service-entitlement-data": {
+		"auto_value_annotations", // apex [com.android.wifi, test_com.android.wifi] -> apex [com.android.adservices, com.android.extservices, com.android.extservices_tplus]
+	},
+
+	"service-entitlement-impl": {
+		"auto_value_annotations", // apex [com.android.wifi, test_com.android.wifi] -> apex [com.android.adservices, com.android.extservices, com.android.extservices_tplus]
+	},
+
+	"service-healthfitness.impl": {
+		"modules-utils-preconditions", // apex [com.android.healthfitness] -> apex [com.android.adservices, com.android.appsearch, com.android.cellbroadcast, com.android.extservices, com.android.ondevicepersonalization, com.android.tethering, com.android.uwb, com.android.wifi, test_com.android.cellbroadcast, test_com.android.wifi]
+	},
+
+	"service-networksecurity-pre-jarjar": {
+		"framework-connectivity-pre-jarjar", // apex [com.android.tethering] -> system
+	},
+
+	"service-permission.impl": {
+		"jsr305",                    // apex [com.android.permission, test_com.android.permission] -> apex [com.android.adservices, com.android.devicelock, com.android.extservices, com.android.healthfitness, com.android.media, com.android.mediaprovider, test_com.android.media, test_com.android.mediaprovider]
+		"safety-center-annotations", // apex [com.android.permission, test_com.android.permission] -> system
+	},
+
+	"service-remoteauth-pre-jarjar": {
+		"framework-connectivity-pre-jarjar",   // apex [com.android.tethering] -> system
+		"framework-connectivity-t-pre-jarjar", // apex [com.android.tethering] -> system
+	},
+
+	"service-rkp-unittest": {
+		"framework", // cts -> unstable
+	},
+
+	"service-thread-pre-jarjar": {
+		"framework-connectivity-pre-jarjar",   // apex [com.android.tethering] -> system
+		"framework-connectivity-t-pre-jarjar", // apex [com.android.tethering] -> system
+	},
+
+	"service-uwb-pre-jarjar": {
+		"framework-uwb-pre-jarjar", // apex [com.android.uwb] -> system
+	},
+
+	"service-wifi": {
+		"auto_value_annotations", // apex [com.android.wifi, test_com.android.wifi] -> apex [com.android.adservices, com.android.extservices, com.android.extservices_tplus]
+	},
+
+	"ServiceBluetoothTests": {
+		"framework", // cts -> unstable
+	},
+
+	"ServiceUwbTests": {
+		"framework", // cts -> unstable
+	},
+
+	"stable_cronet_NetHttpCoverageTests": {
+		"framework", // cts -> unstable
+	},
+
+	"StatsdTestUtilsTest": {
+		"framework", // cts -> unstable
+	},
+
+	"TelephonyDeviceTest": {
+		"framework", // cts -> unstable
+	},
+
+	"TeleServiceTests": {
+		"framework", // cts -> unstable
+	},
+
+	"tensorflowlite_java": {
+		"android-support-annotations", // apex [com.android.adservices, com.android.extservices, com.android.ondevicepersonalization] -> system
+	},
+
+	"TestExternalImsServiceApp": {
+		"framework", // cts -> unstable
+	},
+
+	"TestSmsRetrieverApp": {
+		"framework", // cts -> unstable
+	},
+
+	"TetheringApiCurrentLib": {
+		"connectivity-internal-api-util", // apex [com.android.tethering] -> system
+	},
+
+	"TetheringNext": {
+		"connectivity-internal-api-util", // apex [com.android.tethering] -> system
+	},
+
+	"TetheringPrivilegedTests": {
+		"framework", // cts -> unstable
+	},
+
+	"tetheringstatsprotos": {
+		"ext",       // apex [com.android.tethering] -> system
+		"framework", // apex [com.android.tethering] -> system
+	},
+
+	"TetheringTests": {
+		"framework-minus-apex", // cts -> unstable
+	},
+
+	"TextClassifierNotificationTests": {
+		"framework", // cts -> unstable
+	},
+
+	"ThreadBorderRouterIntegrationTests": {
+		"framework", // cts -> unstable
+	},
+
+	"ThreadNetworkIntegrationTests": {
+		"framework", // cts -> unstable
+	},
+
+	"ThreadNetworkTrelDisabledTests": {
+		"framework", // cts -> unstable
+	},
+
+	"tot_cronet_NetHttpCoverageTests": {
+		"framework", // cts -> unstable
+	},
+
+	"uwb_aconfig_flags_lib": {
+		"ext",       // apex [com.android.uwb] -> system
+		"framework", // apex [com.android.uwb] -> system
+	},
+
+	"uwb_androidx_backend": {
+		"android-support-annotations", // apex [com.android.tethering] -> system
+	},
+
+	"wifi-service-pre-jarjar": {
+		"app-compat-annotations",    // apex [com.android.wifi, test_com.android.wifi] -> system
+		"auto_value_annotations",    // apex [com.android.wifi, test_com.android.wifi] -> apex [com.android.adservices, com.android.extservices, com.android.extservices_tplus]
+		"framework-wifi-pre-jarjar", // apex [com.android.wifi, test_com.android.wifi] -> system
+		"jsr305",                    // apex [com.android.wifi, test_com.android.wifi] -> apex [com.android.adservices, com.android.devicelock, com.android.extservices, com.android.healthfitness, com.android.media, com.android.mediaprovider, test_com.android.media, test_com.android.mediaprovider]
+	},
+	// go/keep-sorted end
+}

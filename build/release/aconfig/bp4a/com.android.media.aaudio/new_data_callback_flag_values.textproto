@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.aaudio"
+  name: "new_data_callback"
+  state: ENABLED
+  permission: READ_ONLY
+}

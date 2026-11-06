@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.downloads.flags"
+  name: "set_visible_downloads_as_uidt"
+  state: ENABLED
+  permission: READ_WRITE
+}

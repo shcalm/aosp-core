@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "enable_braille_suw_immediate_connections"
+  state: ENABLED
+  permission: READ_WRITE
+}

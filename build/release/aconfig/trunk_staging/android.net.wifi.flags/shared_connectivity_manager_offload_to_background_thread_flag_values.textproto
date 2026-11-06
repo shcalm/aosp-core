@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.wifi.flags"
+  name: "shared_connectivity_manager_offload_to_background_thread"
+  state: ENABLED
+  permission: READ_WRITE
+}

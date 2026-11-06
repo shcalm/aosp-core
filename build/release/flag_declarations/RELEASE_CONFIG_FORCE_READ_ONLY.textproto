@@ -1,0 +1,11 @@
+name: "RELEASE_CONFIG_FORCE_READ_ONLY"
+namespace: "core_experiments_team_internal"
+description: "If true, aconfig will always set aconfig flag permissions to READ_ONLY."
+value: {
+  bool_value: false
+}
+workflow: MANUAL
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "reduce_interactive_delay_with_magnification"
+  state: ENABLED
+  permission: READ_WRITE
+}

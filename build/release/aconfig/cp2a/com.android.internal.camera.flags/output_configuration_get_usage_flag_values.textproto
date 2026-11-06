@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.camera.flags"
+  name: "output_configuration_get_usage"
+  state: ENABLED
+  permission: READ_ONLY
+}

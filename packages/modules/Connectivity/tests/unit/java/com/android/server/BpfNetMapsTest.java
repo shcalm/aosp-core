@@ -1,0 +1,2583 @@
+/*
+ * Copyright (C) 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.server;
+
+import static android.net.BpfNetMapsConstants.ALLOW_CHAINS;
+import static android.net.BpfNetMapsConstants.BACKGROUND_MATCH;
+import static android.net.BpfNetMapsConstants.CURRENT_STATS_MAP_CONFIGURATION_KEY;
+import static android.net.BpfNetMapsConstants.DATA_SAVER_DISABLED;
+import static android.net.BpfNetMapsConstants.DATA_SAVER_ENABLED;
+import static android.net.BpfNetMapsConstants.DATA_SAVER_ENABLED_KEY;
+import static android.net.BpfNetMapsConstants.DENY_CHAINS;
+import static android.net.BpfNetMapsConstants.DOZABLE_MATCH;
+import static android.net.BpfNetMapsConstants.HAPPY_BOX_MATCH;
+import static android.net.BpfNetMapsConstants.IIF_MATCH;
+import static android.net.BpfNetMapsConstants.LOCKDOWN_VPN_MATCH;
+import static android.net.BpfNetMapsConstants.LOW_POWER_STANDBY_MATCH;
+import static android.net.BpfNetMapsConstants.NO_MATCH;
+import static android.net.BpfNetMapsConstants.OEM_DENY_1_MATCH;
+import static android.net.BpfNetMapsConstants.OEM_DENY_2_MATCH;
+import static android.net.BpfNetMapsConstants.OEM_DENY_3_MATCH;
+import static android.net.BpfNetMapsConstants.PENALTY_BOX_ADMIN_MATCH;
+import static android.net.BpfNetMapsConstants.PENALTY_BOX_USER_MATCH;
+import static android.net.BpfNetMapsConstants.POWERSAVE_MATCH;
+import static android.net.BpfNetMapsConstants.RESTRICTED_MATCH;
+import static android.net.BpfNetMapsConstants.STANDBY_MATCH;
+import static android.net.BpfNetMapsConstants.UID_RULES_CONFIGURATION_KEY;
+import static android.net.ConnectivityManager.BLOCKED_METERED_REASON_ADMIN_DISABLED;
+import static android.net.ConnectivityManager.BLOCKED_METERED_REASON_DATA_SAVER;
+import static android.net.ConnectivityManager.BLOCKED_METERED_REASON_USER_RESTRICTED;
+import static android.net.ConnectivityManager.BLOCKED_REASON_APP_BACKGROUND;
+import static android.net.ConnectivityManager.BLOCKED_REASON_APP_STANDBY;
+import static android.net.ConnectivityManager.BLOCKED_REASON_BATTERY_SAVER;
+import static android.net.ConnectivityManager.BLOCKED_REASON_DOZE;
+import static android.net.ConnectivityManager.BLOCKED_REASON_NONE;
+import static android.net.ConnectivityManager.BLOCKED_REASON_OEM_DENY;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_DOZABLE;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_LOW_POWER_STANDBY;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_METERED_ALLOW;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_METERED_DENY_ADMIN;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_METERED_DENY_USER;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_OEM_DENY_1;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_OEM_DENY_2;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_OEM_DENY_3;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_POWERSAVE;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_RESTRICTED;
+import static android.net.ConnectivityManager.FIREWALL_CHAIN_STANDBY;
+import static android.net.ConnectivityManager.FIREWALL_RULE_ALLOW;
+import static android.net.ConnectivityManager.FIREWALL_RULE_DENY;
+import static android.net.INetd.PERMISSION_INTERNET;
+import static android.net.INetd.PERMISSION_NONE;
+import static android.net.INetd.PERMISSION_UNINSTALLED;
+import static android.net.INetd.PERMISSION_UPDATE_DEVICE_STATS;
+import static android.net.InetAddresses.parseNumericAddress;
+import static android.permission.flags.Flags.FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED;
+import static android.permission.flags.Flags.FLAG_USE_LOOPBACK_INTERFACE_PERMISSION_ENABLED;
+import static android.system.OsConstants.EINVAL;
+import static android.system.OsConstants.ENOMEM;
+import static android.system.OsConstants.ENOSPC;
+import static android.system.OsConstants.EPERM;
+
+import static com.android.net.module.util.bpf.UidPermissionChunk.PERMISSION_BIT_ACCESS_LOCAL_NETWORK;
+import static com.android.net.module.util.bpf.UidPermissionChunk.PERMISSION_BIT_NONE;
+import static com.android.net.module.util.bpf.UidPermissionChunk.PERMISSION_BIT_NO_INTERNET;
+import static com.android.net.module.util.bpf.UidPermissionChunk.PERMISSION_BIT_UPDATE_DEVICE_STATS;
+import static com.android.net.module.util.bpf.UidPermissionChunk.PERMISSION_BIT_USE_LOOPBACK_INTERFACE;
+import static com.android.net.module.util.bpf.UidPermissionChunk.PERMISSION_BIT_FORCE_USE_LOOPBACK_INTERFACE;
+import static com.android.net.module.util.bpf.UidPermissionChunk.PERMISSION_BIT_INTERACT_ACROSS_USERS_FULL;
+import static com.android.net.module.util.bpf.UidPermissionChunk.PERMISSION_BIT_INTERACT_ACROSS_USERS_OR_PROFILES;
+import static com.android.net.module.util.bpf.UidPermissionChunk.UIDS_PER_INT64;
+import static com.android.net.module.util.bpf.UidPermissionChunk.getChunkId;
+import static com.android.server.ConnectivityStatsLog.CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_HOST_ENOMEM;
+import static com.android.server.ConnectivityStatsLog.CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_NET_ENOMEM;
+import static com.android.server.ConnectivityStatsLog.CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_HOST_ENOSPC;
+import static com.android.server.ConnectivityStatsLog.CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_HOST_ERROR;
+import static com.android.server.ConnectivityStatsLog.CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_NET_ENOSPC;
+import static com.android.server.ConnectivityStatsLog.CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_NET_ERROR;
+import static com.android.server.ConnectivityStatsLog.CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_NETD_SET_PERMISSION_INTERNET;
+import static com.android.server.ConnectivityStatsLog.CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_NETD_SET_PERMISSION_UNINSTALLED;
+import static com.android.server.ConnectivityStatsLog.CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_NETD_SET_PERMISSION_UPDATE_DEVICE_STATS;
+import static com.android.server.ConnectivityStatsLog.CORE_NETWORKING_TERRIBLE_ERROR_OCCURRED__ERROR_TYPE__TYPE_INVALID_NET_PERM_SENT_TO_NETD;
+import static com.android.server.ConnectivityStatsLog.NETWORK_BPF_MAP_INFO;
+import static com.android.server.connectivity.NetworkPermissions.TRAFFIC_PERMISSION_ACCESS_LOCAL_NETWORK;
+import static com.android.server.connectivity.NetworkPermissions.TRAFFIC_PERMISSION_INTERNET;
+import static com.android.server.connectivity.NetworkPermissions.TRAFFIC_PERMISSION_UNINSTALLED;
+import static com.android.server.connectivity.NetworkPermissions.TRAFFIC_PERMISSION_UPDATE_DEVICE_STATS;
+import static com.android.tethering.flags.Flags.FLAG_COLLECT_BETA_METRICS;
+import static com.android.tethering.flags.Flags.FLAG_LOOPBACK_ACCESS_METRICS;
+import static com.android.tethering.flags.Flags.FLAG_PERMISSION_MAP_UID_MIGRATION;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
+import android.app.StatsManager;
+import android.content.Context;
+import android.net.BpfNetMapsUtils;
+import android.net.INetd;
+import android.net.UidOwnerValue;
+import android.os.Build;
+import android.os.Process;
+import android.os.ServiceSpecificException;
+import android.os.UserHandle;
+import android.system.ErrnoException;
+import android.util.ArraySet;
+import android.util.IndentingPrintWriter;
+import android.util.SparseIntArray;
+
+import androidx.test.filters.SmallTest;
+
+import com.android.modules.utils.build.SdkLevel;
+import com.android.net.module.util.BpfBoolean;
+import com.android.net.module.util.IBpfMap;
+import com.android.net.module.util.SdkUtil;
+import com.android.net.module.util.Struct.Bool;
+import com.android.net.module.util.Struct.S32;
+import com.android.net.module.util.Struct.S64;
+import com.android.net.module.util.Struct.U32;
+import com.android.net.module.util.Struct.U8;
+import com.android.net.module.util.bpf.CookieTagMapValue;
+import com.android.net.module.util.bpf.IngressDiscardKey;
+import com.android.net.module.util.bpf.IngressDiscardValue;
+import com.android.net.module.util.bpf.LocalNetAccessKey;
+import com.android.net.module.util.bpf.LocalNetUidHostAllowlistKey;
+import com.android.net.module.util.bpf.UidPermissionChunk;
+import com.android.server.connectivity.InterfaceTracker;
+import com.android.testutils.DevSdkIgnoreRule;
+import com.android.testutils.DevSdkIgnoreRule.IgnoreAfter;
+import com.android.testutils.DevSdkIgnoreRule.IgnoreUpTo;
+import com.android.testutils.DevSdkIgnoreRunner;
+import com.android.testutils.TestBpfMap;
+import com.android.testutils.com.android.testutils.SetFeatureFlagsRule;
+import com.android.testutils.com.android.testutils.SetFeatureFlagsRule.FeatureFlag;
+
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.io.FileDescriptor;
+import java.io.StringWriter;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+@RunWith(DevSdkIgnoreRunner.class)
+@SmallTest
+@DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.R)
+public final class BpfNetMapsTest {
+    private static final String TAG = "BpfNetMapsTest";
+
+    @Rule
+    public final DevSdkIgnoreRule ignoreRule = new DevSdkIgnoreRule();
+
+    final HashMap<String, Boolean> mFeatureFlags = new HashMap<>();
+    // This will set feature flags from @FeatureFlag annotations
+    // into the map before setUp() runs.
+    @Rule
+    public final SetFeatureFlagsRule mSetFeatureFlagsRule =
+            new SetFeatureFlagsRule((name, enabled) -> {
+                mFeatureFlags.put(name, enabled);
+                return null;
+            }, (name) -> mFeatureFlags.getOrDefault(name, false));
+
+    private static final int MOCK_USER_ID1 = 0;
+    private static final int MOCK_USER_ID2 = 10;
+    private static final UserHandle MOCK_USER1 = UserHandle.of(MOCK_USER_ID1);
+    private static final UserHandle MOCK_USER2 = UserHandle.of(MOCK_USER_ID2);
+    private static final int TEST_APP_ID_1 = 10002;
+    private static final int TEST_APP_ID_2 = 10003;
+    private static final int TEST_UID = 10086;
+    private static final int TEST_UID_1 = MOCK_USER1.getUid(TEST_APP_ID_1);
+    private static final int TEST_UID_2 = MOCK_USER1.getUid(TEST_APP_ID_2);
+    private static final int TEST_SECONDARY_USER_UID = MOCK_USER2.getUid(TEST_APP_ID_1);
+    private static final int TEST_UID_NO_PERMISSION = 99999;
+    private static final int[] TEST_UIDS = {TEST_UID_1, TEST_UID_2};
+    private static final int[] CORE_AIDS = {
+            Process.ROOT_UID,
+            Process.SYSTEM_UID,
+            Process.FIRST_APPLICATION_UID - 10,
+            Process.FIRST_APPLICATION_UID - 1,
+    };
+    private static final String TEST_IF_NAME = "wlan0";
+    private static final int TEST_IF_INDEX = 7;
+    private static final int NO_IIF = 0;
+    private static final int NULL_IIF = 0;
+    private static final Inet4Address TEST_V4_ADDRESS =
+            (Inet4Address) parseNumericAddress("192.0.2.1");
+    private static final Inet6Address TEST_V6_ADDRESS =
+            (Inet6Address) parseNumericAddress("2001:db8::1");
+    private static final String CHAINNAME = "fw_dozable";
+
+    private static final long STATS_SELECT_MAP_A = 0;
+    private static final long STATS_SELECT_MAP_B = 1;
+
+    private static final List<Integer> FIREWALL_CHAINS = new ArrayList<>();
+    static {
+        FIREWALL_CHAINS.addAll(ALLOW_CHAINS);
+        FIREWALL_CHAINS.addAll(DENY_CHAINS);
+    }
+
+    private BpfNetMaps mBpfNetMaps;
+
+    @Mock INetd mNetd;
+    @Mock BpfNetMaps.Dependencies mDeps;
+    @Mock Context mContext;
+
+    @Mock InterfaceTracker mInterfaceTracker;
+    private final IBpfMap<S32, U32> mConfigurationMap = new TestBpfMap<>(S32.class, U32.class);
+    private final IBpfMap<S32, UidOwnerValue> mUidOwnerMap =
+            new TestBpfMap<>(S32.class, UidOwnerValue.class);
+    private final IBpfMap<S32, U8> mUidPermissionMap = new TestBpfMap<>(S32.class, U8.class);
+    private final IBpfMap<U32, Bool> mLocalNetBlockedUidMap =
+            new TestBpfMap<>(U32.class, Bool.class);
+    private final IBpfMap<LocalNetAccessKey, Bool> mLocalNetAccessMap =
+            spy(new TestBpfMap<>(LocalNetAccessKey.class, Bool.class));
+    private final IBpfMap<LocalNetUidHostAllowlistKey, Bool> mLocalNetUidHostAllowlistMap =
+            spy(new TestBpfMap<>(LocalNetUidHostAllowlistKey.class, Bool.class));
+    private final IBpfMap<U32, S64> mLocalNetCacheGenerationIdMap =
+            new TestBpfMap<>(U32.class, S64.class);
+    private final IBpfMap<S64, CookieTagMapValue> mCookieTagMap =
+            spy(new TestBpfMap<>(S64.class, CookieTagMapValue.class));
+    private final IBpfMap<S32, U8> mDataSaverEnabledMap = new TestBpfMap<>(S32.class, U8.class);
+    private final IBpfMap<IngressDiscardKey, IngressDiscardValue> mIngressDiscardMap =
+            new TestBpfMap<>(IngressDiscardKey.class, IngressDiscardValue.class);
+    private final IBpfMap<S32, UidPermissionChunk> mUidPermissionChunkMap =
+            new TestBpfMap<>(S32.class, UidPermissionChunk.class);
+    private final BpfBoolean mUidMigrationEnabledBpfBoolean =
+            new BpfBoolean(new TestBpfMap<>(S32.class, Bool.class));
+    private final BpfBoolean mPermissionPropagationEnabledBpfBoolean =
+            new BpfBoolean(new TestBpfMap<>(S32.class, Bool.class));
+    private final BpfBoolean mLocalNetNoteOpsEnabledBpfBoolean =
+            new BpfBoolean(new TestBpfMap<>(S32.class, Bool.class));
+    private final BpfBoolean mL4sEnabledMap =
+            new BpfBoolean(new TestBpfMap<>(S32.class, Bool.class));
+    private final BpfBoolean mLoopbackAccessMetricsEnabledBpfBoolean =
+            new BpfBoolean(new TestBpfMap<>(S32.class, Bool.class));
+    private final BpfBoolean mLoopbackChecksEnabledBpfBoolean =
+            new BpfBoolean(new TestBpfMap<>(S32.class, Bool.class));
+
+    @Before
+    public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
+        doReturn(TEST_IF_INDEX).when(mDeps).getIfIndex(TEST_IF_NAME);
+        doReturn(TEST_IF_INDEX).when(mInterfaceTracker).getInterfaceIndex(TEST_IF_NAME);
+        doReturn(TEST_IF_NAME).when(mDeps).getIfName(TEST_IF_INDEX);
+        doReturn(0).when(mDeps).synchronizeKernelRCU();
+        doAnswer(invocation -> mFeatureFlags.getOrDefault(FLAG_PERMISSION_MAP_UID_MIGRATION, false))
+                .when(mDeps).isPermissionMapUidMigrationEnabled();
+        doAnswer(invocation -> mFeatureFlags.getOrDefault(
+                        FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, true))
+                .when(mDeps).isAccessLocalNetworkPermissionEnabled();
+        doAnswer(invocation -> mFeatureFlags.getOrDefault(FLAG_LOOPBACK_ACCESS_METRICS, false))
+                .when(mDeps).isLoopbackAccessMetricsEnabled();
+        doAnswer(invocation -> mFeatureFlags.getOrDefault(
+                        FLAG_USE_LOOPBACK_INTERFACE_PERMISSION_ENABLED, false))
+                .when(mDeps).isLoopbackChecksEnabled();
+        doAnswer(invocation -> mFeatureFlags.getOrDefault(
+                FLAG_COLLECT_BETA_METRICS, false))
+                .when(mDeps).isBetaMetricsEnabled();
+        doReturn(SdkUtil.isAtLeast26Q2()).when(mDeps).isL4sProgramLoaded();
+        BpfNetMaps.setConfigurationMapForTest(mConfigurationMap);
+        mConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(0));
+        mConfigurationMap.updateEntry(
+                CURRENT_STATS_MAP_CONFIGURATION_KEY, new U32(STATS_SELECT_MAP_A));
+        mLocalNetCacheGenerationIdMap.insertEntry(new U32(0), new S64(0));
+        BpfNetMaps.setUidOwnerMapForTest(mUidOwnerMap);
+        BpfNetMaps.setUidPermissionMapForTest(mUidPermissionMap);
+        BpfNetMaps.setLocalNetAccessMapForTest(mLocalNetAccessMap);
+        BpfNetMaps.setLocalNetBlockedUidMapForTest(mLocalNetBlockedUidMap);
+        BpfNetMaps.setLocalNetUidHostAllowlistMapForTest(mLocalNetUidHostAllowlistMap);
+        BpfNetMaps.setLocalNetCacheGenerationIdMapForTest(mLocalNetCacheGenerationIdMap);
+        BpfNetMaps.setCookieTagMapForTest(mCookieTagMap);
+        BpfNetMaps.setDataSaverEnabledMapForTest(mDataSaverEnabledMap);
+        BpfNetMaps.setL4sEnabledMapForTest(mL4sEnabledMap);
+        mDataSaverEnabledMap.updateEntry(DATA_SAVER_ENABLED_KEY, new U8(DATA_SAVER_DISABLED));
+        BpfNetMaps.setIngressDiscardMapForTest(mIngressDiscardMap);
+        BpfNetMaps.setUidMigrationEnabledBpfBooleanForTest(mUidMigrationEnabledBpfBoolean);
+        BpfNetMaps.setPermissionPropagationEnabledBpfBooleanForTest(
+                mPermissionPropagationEnabledBpfBoolean);
+        BpfNetMaps.setLocalNetNoteOpsEnabledBpfBooleanForTest(mLocalNetNoteOpsEnabledBpfBoolean);
+        BpfNetMaps.setUidPermissionChunkMapForTest(mUidPermissionChunkMap);
+        BpfNetMaps.setLoopbackAccessMetricsEnabledBpfBooleanForTest(
+                mLoopbackAccessMetricsEnabledBpfBoolean);
+        BpfNetMaps.setLoopbackChecksEnabledBpfBooleanForTest(mLoopbackChecksEnabledBpfBoolean);
+        BpfNetMaps.setInitializedForTest(false);
+        mBpfNetMaps = new BpfNetMaps(mContext, mNetd, mDeps, mInterfaceTracker);
+    }
+
+    @Test
+    public void testBpfNetMapsBeforeT() throws Exception {
+        assumeFalse(SdkLevel.isAtLeastT());
+        mBpfNetMaps.addUidInterfaceRules(TEST_IF_NAME, TEST_UIDS);
+        verify(mNetd).firewallAddUidInterfaceRules(TEST_IF_NAME, TEST_UIDS);
+        mBpfNetMaps.removeUidInterfaceRules(TEST_UIDS);
+        verify(mNetd).firewallRemoveUidInterfaceRules(TEST_UIDS);
+        mBpfNetMaps.setNetPermForUids(PERMISSION_INTERNET, TEST_UIDS);
+        verify(mNetd).trafficSetNetPermForUids(PERMISSION_INTERNET, TEST_UIDS);
+        verify(mDeps).writeStats(
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_NETD_SET_PERMISSION_INTERNET,
+                TEST_UIDS.length
+        );
+    }
+
+    private long getMatch(final List<Integer> chains) {
+        long match = 0;
+        for (final int chain: chains) {
+            match |= BpfNetMapsUtils.getMatchByFirewallChain(chain);
+        }
+        return match;
+    }
+
+    private void doTestIsChainEnabled(final List<Integer> enableChains) throws Exception {
+        mConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(getMatch(enableChains)));
+
+        for (final int chain: FIREWALL_CHAINS) {
+            final String testCase = "EnabledChains: " + enableChains + " CheckedChain: " + chain;
+            if (enableChains.contains(chain)) {
+                assertTrue("Expected isChainEnabled returns True, " + testCase,
+                        mBpfNetMaps.isChainEnabled(chain));
+            } else {
+                assertFalse("Expected isChainEnabled returns False, " + testCase,
+                        mBpfNetMaps.isChainEnabled(chain));
+            }
+        }
+    }
+
+    private void doTestIsChainEnabled(final int enableChain) throws Exception {
+        doTestIsChainEnabled(List.of(enableChain));
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetAccessBeforeV() {
+        assertThrows(UnsupportedOperationException.class, () ->
+                mBpfNetMaps.addLocalNetAccess(0, TEST_IF_NAME, Inet6Address.ANY, 0, 0, true));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetAccessAfterV() throws Exception {
+        assertTrue(mLocalNetAccessMap.isEmpty());
+        long oldGenId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+
+        mBpfNetMaps.addLocalNetAccess(160, TEST_IF_NAME,
+                Inet4Address.getByName("196.68.0.0"), 0, 0, true);
+
+        assertNotNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("196.68.0.0"), 0, 0)));
+        assertNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("100.68.0.0"), 0, 0)));
+        long newGenId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        assertEquals(oldGenId + 2, newGenId);
+    }
+
+    private void doTestAddLocalNetAccessMapEvent(int errno, int event) throws Exception {
+        if (errno != 0) {
+            doThrow(new ErrnoException("updateEntry", errno))
+                    .when(mLocalNetAccessMap).updateEntry(any(), any());
+        } else {
+            doNothing().when(mLocalNetAccessMap).updateEntry(any(), any());
+        }
+
+        mBpfNetMaps.addLocalNetAccess(160, TEST_IF_NAME,
+                Inet4Address.getByName("196.68.0.0"), 0, 0, true);
+
+        verify(mDeps).writeStats(event, 1);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetAccessMapFailure_ENOMEM() throws Exception {
+        doTestAddLocalNetAccessMapEvent(ENOMEM,
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_NET_ENOMEM);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetAccessMapFailure_ENOSPC() throws Exception {
+        doTestAddLocalNetAccessMapEvent(ENOSPC,
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_NET_ENOSPC);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetAccessMapFailure_EINVAL() throws Exception {
+        doTestAddLocalNetAccessMapEvent(EINVAL,
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_NET_ERROR);
+    }
+
+    private void doTestAddLocalNetUidHostAccessMapEvent(int errno, int event) throws Exception {
+        if (errno != 0) {
+            doThrow(new ErrnoException("updateEntry", errno))
+                    .when(mLocalNetUidHostAllowlistMap).updateEntry(any(), any());
+        } else {
+            doNothing().when(mLocalNetUidHostAllowlistMap).updateEntry(any(), any());
+        }
+
+        mBpfNetMaps.addLocalNetUidAccess(TEST_UID, TEST_IF_NAME);
+
+        verify(mDeps).writeStats(event, 1);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetUidAccessMapFailure_ENOMEM() throws Exception {
+        doTestAddLocalNetUidHostAccessMapEvent(ENOMEM,
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_HOST_ENOMEM);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetUidAccessMapFailure_ENOSPC() throws Exception {
+        doTestAddLocalNetUidHostAccessMapEvent(ENOSPC,
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_HOST_ENOSPC);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetUidAccessMapFailure_EINVAL() throws Exception {
+        doTestAddLocalNetUidHostAccessMapEvent(EINVAL,
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_LNP_TRIE_HOST_ERROR);
+    }
+
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetAccessAfterV_withIPv6() throws Exception {
+        assertTrue(mLocalNetAccessMap.isEmpty());
+
+        mBpfNetMaps.addLocalNetAccess(160, TEST_IF_NAME,
+                Inet6Address.getByName("fe80::1cf1:35ff:fe8c:db87"), 0, 0,
+                true);
+
+        assertNotNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet6Address.getByName("fe80::1cf1:35ff:fe8c:db87"), 0, 0)));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetAccessWithNullInterfaceAfterV() throws Exception {
+        assertTrue(mLocalNetAccessMap.isEmpty());
+
+        mBpfNetMaps.addLocalNetAccess(160, null,
+                Inet4Address.getByName("196.68.0.0"), 0, 0, true);
+
+        // As we tried to add null interface, it would be skipped and map should be empty.
+        assertTrue(mLocalNetAccessMap.isEmpty());
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetAccessAfterVWithIncorrectInterface() throws Exception {
+        assertTrue(mLocalNetAccessMap.isEmpty());
+
+        // wlan2 is an incorrect interface
+        mBpfNetMaps.addLocalNetAccess(160, "wlan2",
+                Inet4Address.getByName("196.68.0.0"), 0, 0, true);
+
+        // As we tried to add incorrect interface, it would be skipped and map should be empty.
+        assertTrue(mLocalNetAccessMap.isEmpty());
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testGetLocalNetAccessBeforeV() {
+        assertThrows(UnsupportedOperationException.class, () ->
+                mBpfNetMaps.getLocalNetAccess(0, TEST_IF_NAME, Inet6Address.ANY, 0, 0));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testGetLocalNetAccessAfterV() throws Exception {
+        assertTrue(mLocalNetAccessMap.isEmpty());
+
+        mLocalNetAccessMap.updateEntry(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("196.68.0.0"), 0, 0),
+                new Bool(false));
+
+        assertNotNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("196.68.0.0"), 0, 0)));
+
+        assertFalse(mBpfNetMaps.getLocalNetAccess(160, TEST_IF_NAME,
+                Inet4Address.getByName("196.68.0.0"), 0, 0));
+        assertTrue(mBpfNetMaps.getLocalNetAccess(160, TEST_IF_NAME,
+                Inet4Address.getByName("100.68.0.0"), 0, 0));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testGetLocalNetAccessWithNullInterfaceAfterV() throws Exception {
+        assertTrue(mBpfNetMaps.getLocalNetAccess(160, null,
+                Inet4Address.getByName("100.68.0.0"), 0, 0));
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testRemoveLocalNetAccessBeforeV() {
+        assertThrows(UnsupportedOperationException.class, () ->
+                mBpfNetMaps.removeLocalNetAccess(0, TEST_IF_NAME, Inet6Address.ANY, 0, 0));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testRemoveLocalNetAccessAfterV() throws Exception {
+        assertTrue(mLocalNetAccessMap.isEmpty());
+
+        mBpfNetMaps.addLocalNetAccess(160, TEST_IF_NAME,
+                Inet4Address.getByName("196.68.0.0"), 0, 0, true);
+
+        assertNotNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("196.68.0.0"), 0, 0)));
+        assertNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("100.68.0.0"), 0, 0)));
+
+        long oldGenId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        mBpfNetMaps.removeLocalNetAccess(160, TEST_IF_NAME,
+                Inet4Address.getByName("196.68.0.0"), 0, 0);
+        assertNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("196.68.0.0"), 0, 0)));
+        assertNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("100.68.0.0"), 0, 0)));
+
+        long newGenId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        assertEquals(oldGenId + 2, newGenId);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testRemoveLocalNetAccessAfterVWithIncorrectInterface() throws Exception {
+        assertTrue(mLocalNetAccessMap.isEmpty());
+
+        mBpfNetMaps.addLocalNetAccess(160, TEST_IF_NAME,
+                Inet4Address.getByName("196.68.0.0"), 0, 0, true);
+
+        assertNotNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("196.68.0.0"), 0, 0)));
+        assertNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("100.68.0.0"), 0, 0)));
+
+        mBpfNetMaps.removeLocalNetAccess(160, "wlan2",
+                Inet4Address.getByName("196.68.0.0"), 0, 0);
+        assertNotNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("196.68.0.0"), 0, 0)));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testRemoveLocalNetAccessAfterVWithNullInterface() throws Exception {
+        assertTrue(mLocalNetAccessMap.isEmpty());
+
+        mBpfNetMaps.addLocalNetAccess(160, TEST_IF_NAME,
+                Inet4Address.getByName("196.68.0.0"), 0, 0, true);
+
+        assertNotNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("196.68.0.0"), 0, 0)));
+        assertNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("100.68.0.0"), 0, 0)));
+
+        mBpfNetMaps.removeLocalNetAccess(160, null,
+                Inet4Address.getByName("196.68.0.0"), 0, 0);
+        assertNotNull(mLocalNetAccessMap.getValue(new LocalNetAccessKey(160, TEST_IF_INDEX,
+                Inet4Address.getByName("196.68.0.0"), 0, 0)));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void initsEvenLocalNetCacheGenId() throws Exception {
+        // Start initialization with an odd LNP generation ID
+        BpfNetMaps.setInitializedForTest(false);
+        mLocalNetCacheGenerationIdMap.updateEntry(new U32(0), new S64(1));
+
+        mBpfNetMaps = new BpfNetMaps(mContext, mNetd, mDeps, mInterfaceTracker);
+
+        // Ensure the generation ID is incremented
+        long genId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        assertEquals(2, genId);
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddUidToLocalNetBlockMapBeforeV() {
+        assertThrows(UnsupportedOperationException.class, () ->
+                mBpfNetMaps.addUidToLocalNetBlockMap(0));
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testIsUidBlockedFromUsingLocalNetworkBeforeV() {
+        assertThrows(UnsupportedOperationException.class, () ->
+                mBpfNetMaps.isUidBlockedFromUsingLocalNetwork(0));
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testRemoveUidFromLocalNetBlockMapBeforeV() {
+        assertThrows(UnsupportedOperationException.class, () ->
+                mBpfNetMaps.removeUidFromLocalNetBlockMap(0));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddUidFromLocalNetBlockMapAfterV() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+
+        assertTrue(mLocalNetAccessMap.isEmpty());
+
+        mBpfNetMaps.addUidToLocalNetBlockMap(uid0);
+        assertTrue(mLocalNetBlockedUidMap.getValue(new U32(uid0)).val);
+        assertNull(mLocalNetBlockedUidMap.getValue(new U32(uid1)));
+
+        mBpfNetMaps.addUidToLocalNetBlockMap(uid1);
+        assertTrue(mLocalNetBlockedUidMap.getValue(new U32(uid1)).val);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testIsUidBlockedFromUsingLocalNetworkAfterV() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+
+        assertTrue(mLocalNetAccessMap.isEmpty());
+
+        mLocalNetBlockedUidMap.updateEntry(new U32(uid0), new Bool(true));
+        assertTrue(mBpfNetMaps.isUidBlockedFromUsingLocalNetwork(uid0));
+        assertFalse(mBpfNetMaps.isUidBlockedFromUsingLocalNetwork(uid1));
+
+        mLocalNetBlockedUidMap.updateEntry(new U32(uid1), new Bool(true));
+        assertTrue(mBpfNetMaps.isUidBlockedFromUsingLocalNetwork(uid1));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testRemoveUidFromLocalNetBlockMapAfterV() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+
+        assertTrue(mLocalNetAccessMap.isEmpty());
+
+        mLocalNetBlockedUidMap.updateEntry(new U32(uid0), new Bool(true));
+        mLocalNetBlockedUidMap.updateEntry(new U32(uid1), new Bool(true));
+
+        assertTrue(mLocalNetBlockedUidMap.getValue(new U32(uid0)).val);
+        assertTrue(mLocalNetBlockedUidMap.getValue(new U32(uid1)).val);
+
+        mBpfNetMaps.removeUidFromLocalNetBlockMap(uid0);
+        assertNull(mLocalNetBlockedUidMap.getValue(new U32(uid0)));
+        assertTrue(mLocalNetBlockedUidMap.getValue(new U32(uid1)).val);
+
+        mBpfNetMaps.removeUidFromLocalNetBlockMap(uid1);
+        assertNull(mLocalNetBlockedUidMap.getValue(new U32(uid1)));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetUidAccessAfterV() throws Exception {
+        assertTrue(mLocalNetUidHostAllowlistMap.isEmpty());
+        long oldGenId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        mBpfNetMaps.addLocalNetUidAccess(TEST_UID, TEST_IF_NAME);
+
+        final Bool value = mLocalNetUidHostAllowlistMap.getValue(
+                new LocalNetUidHostAllowlistKey(TEST_UID, TEST_IF_INDEX));
+        assertNotNull(value);
+        assertTrue(value.val);
+        long genId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        assertEquals(oldGenId + 2, genId);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testRemoveLocalNetUidAccessAfterV() throws Exception {
+        mBpfNetMaps.addLocalNetUidAccess(TEST_UID, TEST_IF_NAME);
+        assertNotNull(mLocalNetUidHostAllowlistMap.getValue(
+                new LocalNetUidHostAllowlistKey(TEST_UID, TEST_IF_INDEX)));
+
+        long oldGenId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        mBpfNetMaps.removeLocalNetUidAccess(TEST_UID, TEST_IF_NAME);
+        assertNull(mLocalNetUidHostAllowlistMap.getValue(
+                new LocalNetUidHostAllowlistKey(TEST_UID, TEST_IF_INDEX)));
+        long genId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        assertEquals(oldGenId + 2, genId);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testAddLocalNetUidHostAccessAfterV() throws Exception {
+        assertTrue(mLocalNetUidHostAllowlistMap.isEmpty()); // Necessary ?
+        long oldGenId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        mBpfNetMaps.addLocalNetUidHostAccess(TEST_UID, TEST_IF_INDEX,
+                parseNumericAddress("196.0.2.123"));
+
+        final Bool value = mLocalNetUidHostAllowlistMap.getValue(
+                new LocalNetUidHostAllowlistKey(TEST_UID, TEST_IF_INDEX,
+                        parseNumericAddress("196.0.2.123")));
+        assertNotNull(value);
+        assertTrue(value.val);
+        long genId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        assertEquals(oldGenId + 2, genId);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testRemoveLocalNetHostAllowlistForInterfaceAfterV() throws Exception {
+        assertTrue(mLocalNetUidHostAllowlistMap.isEmpty()); // Necessary ?
+        mBpfNetMaps.addLocalNetUidHostAccess(TEST_UID_1, TEST_IF_INDEX,
+                parseNumericAddress("196.0.2.123"));
+        mBpfNetMaps.addLocalNetUidHostAccess(TEST_UID_2, TEST_IF_INDEX,
+                parseNumericAddress("196.0.2.124"));
+        mBpfNetMaps.addLocalNetUidHostAccess(TEST_UID_2, TEST_IF_INDEX + 1,
+                parseNumericAddress("196.0.2.125"));
+        long oldGenId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+
+        mBpfNetMaps.removeLocalNetHostAllowlistForInterface(TEST_IF_INDEX);
+
+        final LocalNetUidHostAllowlistKey expectedKey = new LocalNetUidHostAllowlistKey(
+                TEST_UID_2, TEST_IF_INDEX + 1, parseNumericAddress("196.0.2.125"));
+        assertEquals(expectedKey, mLocalNetUidHostAllowlistMap.getFirstKey());
+        assertNull(mLocalNetUidHostAllowlistMap.getNextKey(expectedKey));
+        long genId = mLocalNetCacheGenerationIdMap.getValue(new U32(0)).val;
+        assertEquals(oldGenId + 2, genId);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testIsChainEnabled() throws Exception {
+        doTestIsChainEnabled(FIREWALL_CHAIN_DOZABLE);
+        doTestIsChainEnabled(FIREWALL_CHAIN_STANDBY);
+        doTestIsChainEnabled(FIREWALL_CHAIN_POWERSAVE);
+        doTestIsChainEnabled(FIREWALL_CHAIN_RESTRICTED);
+        doTestIsChainEnabled(FIREWALL_CHAIN_LOW_POWER_STANDBY);
+        doTestIsChainEnabled(FIREWALL_CHAIN_OEM_DENY_1);
+        doTestIsChainEnabled(FIREWALL_CHAIN_OEM_DENY_2);
+        doTestIsChainEnabled(FIREWALL_CHAIN_OEM_DENY_3);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testIsChainEnabledMultipleChainEnabled() throws Exception {
+        doTestIsChainEnabled(List.of(
+                FIREWALL_CHAIN_DOZABLE,
+                FIREWALL_CHAIN_STANDBY));
+        doTestIsChainEnabled(List.of(
+                FIREWALL_CHAIN_DOZABLE,
+                FIREWALL_CHAIN_STANDBY,
+                FIREWALL_CHAIN_POWERSAVE,
+                FIREWALL_CHAIN_RESTRICTED));
+        doTestIsChainEnabled(FIREWALL_CHAINS);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testIsChainEnabledInvalidChain() {
+        final Class<ServiceSpecificException> expected = ServiceSpecificException.class;
+        assertThrows(expected, () -> mBpfNetMaps.isChainEnabled(-1 /* childChain */));
+        assertThrows(expected, () -> mBpfNetMaps.isChainEnabled(1000 /* childChain */));
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    public void testIsChainEnabledBeforeT() {
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBpfNetMaps.isChainEnabled(FIREWALL_CHAIN_DOZABLE));
+    }
+
+    private void doTestSetChildChain(final List<Integer> testChains) throws Exception {
+        long expectedMatch = 0;
+        for (final int chain: testChains) {
+            expectedMatch |= BpfNetMapsUtils.getMatchByFirewallChain(chain);
+        }
+
+        assertEquals(0, mConfigurationMap.getValue(UID_RULES_CONFIGURATION_KEY).val);
+
+        for (final int chain: testChains) {
+            mBpfNetMaps.setChildChain(chain, true /* enable */);
+        }
+        assertEquals(expectedMatch, mConfigurationMap.getValue(UID_RULES_CONFIGURATION_KEY).val);
+
+        for (final int chain: testChains) {
+            mBpfNetMaps.setChildChain(chain, false /* enable */);
+        }
+        assertEquals(0, mConfigurationMap.getValue(UID_RULES_CONFIGURATION_KEY).val);
+    }
+
+    private void doTestSetChildChain(final int testChain) throws Exception {
+        doTestSetChildChain(List.of(testChain));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetChildChain() throws Exception {
+        mConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(0));
+        doTestSetChildChain(FIREWALL_CHAIN_DOZABLE);
+        doTestSetChildChain(FIREWALL_CHAIN_STANDBY);
+        doTestSetChildChain(FIREWALL_CHAIN_POWERSAVE);
+        doTestSetChildChain(FIREWALL_CHAIN_RESTRICTED);
+        doTestSetChildChain(FIREWALL_CHAIN_LOW_POWER_STANDBY);
+        doTestSetChildChain(FIREWALL_CHAIN_OEM_DENY_1);
+        doTestSetChildChain(FIREWALL_CHAIN_OEM_DENY_2);
+        doTestSetChildChain(FIREWALL_CHAIN_OEM_DENY_3);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetChildChainMultipleChain() throws Exception {
+        mConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(0));
+        doTestSetChildChain(List.of(
+                FIREWALL_CHAIN_DOZABLE,
+                FIREWALL_CHAIN_STANDBY));
+        doTestSetChildChain(List.of(
+                FIREWALL_CHAIN_DOZABLE,
+                FIREWALL_CHAIN_STANDBY,
+                FIREWALL_CHAIN_POWERSAVE,
+                FIREWALL_CHAIN_RESTRICTED));
+        doTestSetChildChain(FIREWALL_CHAINS);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetChildChainInvalidChain() {
+        final Class<ServiceSpecificException> expected = ServiceSpecificException.class;
+        assertThrows(expected,
+                () -> mBpfNetMaps.setChildChain(-1 /* childChain */, true /* enable */));
+        assertThrows(expected,
+                () -> mBpfNetMaps.setChildChain(1000 /* childChain */, true /* enable */));
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    public void testSetChildChainBeforeT() {
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBpfNetMaps.setChildChain(FIREWALL_CHAIN_DOZABLE, true /* enable */));
+    }
+
+    private void checkUidOwnerValue(final int uid, final int expectedIif,
+            final long expectedMatch) throws Exception {
+        final UidOwnerValue config = mUidOwnerMap.getValue(new S32(uid));
+        if (expectedMatch == 0) {
+            assertNull(config);
+        } else {
+            assertEquals(expectedIif, config.iif);
+            assertEquals(expectedMatch, config.rule);
+        }
+    }
+
+    private void doTestUpdateUidLockdownRule(final int iif, final long match, final boolean add)
+            throws Exception {
+        if (match != NO_MATCH) {
+            mUidOwnerMap.updateEntry(new S32(TEST_UID), new UidOwnerValue(iif, match));
+        }
+
+        mBpfNetMaps.updateUidLockdownRule(TEST_UID, add);
+
+        final long expectedMatch = add ? match | LOCKDOWN_VPN_MATCH : match & ~LOCKDOWN_VPN_MATCH;
+        checkUidOwnerValue(TEST_UID, iif, expectedMatch);
+    }
+
+    private static final boolean ADD = true;
+    private static final boolean REMOVE = false;
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testUpdateUidLockdownRuleAddLockdown() throws Exception {
+        doTestUpdateUidLockdownRule(NO_IIF, NO_MATCH, ADD);
+
+        // Other matches are enabled
+        doTestUpdateUidLockdownRule(
+                NO_IIF, DOZABLE_MATCH | POWERSAVE_MATCH | RESTRICTED_MATCH, ADD);
+
+        // IIF_MATCH is enabled
+        doTestUpdateUidLockdownRule(TEST_IF_INDEX, DOZABLE_MATCH, ADD);
+
+        // LOCKDOWN_VPN_MATCH is already enabled
+        doTestUpdateUidLockdownRule(NO_IIF, LOCKDOWN_VPN_MATCH | DOZABLE_MATCH, ADD);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testUpdateUidLockdownRuleRemoveLockdown() throws Exception {
+        doTestUpdateUidLockdownRule(NO_IIF, LOCKDOWN_VPN_MATCH, REMOVE);
+
+        // LOCKDOWN_VPN_MATCH with other matches
+        doTestUpdateUidLockdownRule(
+                NO_IIF, LOCKDOWN_VPN_MATCH | POWERSAVE_MATCH | RESTRICTED_MATCH, REMOVE);
+
+        // LOCKDOWN_VPN_MATCH with IIF_MATCH
+        doTestUpdateUidLockdownRule(TEST_IF_INDEX, LOCKDOWN_VPN_MATCH | IIF_MATCH, REMOVE);
+
+        // LOCKDOWN_VPN_MATCH is not enabled
+        doTestUpdateUidLockdownRule(NO_IIF, POWERSAVE_MATCH | RESTRICTED_MATCH, REMOVE);
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    public void testUpdateUidLockdownRuleBeforeT() {
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBpfNetMaps.updateUidLockdownRule(TEST_UID, true /* add */));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testAddUidInterfaceRules() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+
+        mBpfNetMaps.addUidInterfaceRules(TEST_IF_NAME, TEST_UIDS);
+
+        checkUidOwnerValue(uid0, TEST_IF_INDEX, IIF_MATCH);
+        checkUidOwnerValue(uid1, TEST_IF_INDEX, IIF_MATCH);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testAddUidInterfaceRulesWithOtherMatch() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        final long match0 = DOZABLE_MATCH;
+        final long match1 = DOZABLE_MATCH | POWERSAVE_MATCH | RESTRICTED_MATCH;
+        mUidOwnerMap.updateEntry(new S32(uid0), new UidOwnerValue(NO_IIF, match0));
+        mUidOwnerMap.updateEntry(new S32(uid1), new UidOwnerValue(NO_IIF, match1));
+
+        mBpfNetMaps.addUidInterfaceRules(TEST_IF_NAME, TEST_UIDS);
+
+        checkUidOwnerValue(uid0, TEST_IF_INDEX, match0 | IIF_MATCH);
+        checkUidOwnerValue(uid1, TEST_IF_INDEX, match1 | IIF_MATCH);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testAddUidInterfaceRulesWithExistingIifMatch() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        final long match0 = IIF_MATCH;
+        final long match1 = IIF_MATCH | DOZABLE_MATCH | POWERSAVE_MATCH | RESTRICTED_MATCH;
+        mUidOwnerMap.updateEntry(new S32(uid0), new UidOwnerValue(TEST_IF_INDEX + 1, match0));
+        mUidOwnerMap.updateEntry(new S32(uid1), new UidOwnerValue(NULL_IIF, match1));
+
+        mBpfNetMaps.addUidInterfaceRules(TEST_IF_NAME, TEST_UIDS);
+
+        checkUidOwnerValue(uid0, TEST_IF_INDEX, match0);
+        checkUidOwnerValue(uid1, TEST_IF_INDEX, match1);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testAddUidInterfaceRulesGetIfIndexFail() {
+        doReturn(0).when(mDeps).getIfIndex(TEST_IF_NAME);
+        assertThrows(ServiceSpecificException.class,
+                () -> mBpfNetMaps.addUidInterfaceRules(TEST_IF_NAME, TEST_UIDS));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testAddUidInterfaceRulesWithNullInterface() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        final long match0 = IIF_MATCH;
+        final long match1 = IIF_MATCH | DOZABLE_MATCH | POWERSAVE_MATCH | RESTRICTED_MATCH;
+        mUidOwnerMap.updateEntry(new S32(uid0), new UidOwnerValue(TEST_IF_INDEX, match0));
+        mUidOwnerMap.updateEntry(new S32(uid1), new UidOwnerValue(NULL_IIF, match1));
+
+        mBpfNetMaps.addUidInterfaceRules(null /* ifName */, TEST_UIDS);
+
+        checkUidOwnerValue(uid0, NULL_IIF, match0);
+        checkUidOwnerValue(uid1, NULL_IIF, match1);
+    }
+
+    private void doTestRemoveUidInterfaceRules(final int iif0, final long match0,
+            final int iif1, final long match1) throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        mUidOwnerMap.updateEntry(new S32(uid0), new UidOwnerValue(iif0, match0));
+        mUidOwnerMap.updateEntry(new S32(uid1), new UidOwnerValue(iif1, match1));
+
+        mBpfNetMaps.removeUidInterfaceRules(TEST_UIDS);
+
+        checkUidOwnerValue(uid0, NO_IIF, match0 & ~IIF_MATCH);
+        checkUidOwnerValue(uid1, NO_IIF, match1 & ~IIF_MATCH);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testRemoveUidInterfaceRules() throws Exception {
+        doTestRemoveUidInterfaceRules(TEST_IF_INDEX, IIF_MATCH, NULL_IIF, IIF_MATCH);
+
+        // IIF_MATCH and other matches are enabled
+        doTestRemoveUidInterfaceRules(TEST_IF_INDEX, IIF_MATCH | DOZABLE_MATCH,
+                NULL_IIF, IIF_MATCH | DOZABLE_MATCH | RESTRICTED_MATCH);
+
+        // IIF_MATCH is not enabled
+        doTestRemoveUidInterfaceRules(NO_IIF, DOZABLE_MATCH,
+                NO_IIF, DOZABLE_MATCH | POWERSAVE_MATCH | RESTRICTED_MATCH);
+    }
+
+    private void doTestSetUidRule(final List<Integer> testChains) throws Exception {
+        mUidOwnerMap.updateEntry(new S32(TEST_UID), new UidOwnerValue(TEST_IF_INDEX, IIF_MATCH));
+
+        for (final int chain: testChains) {
+            final int ruleToAddMatch = BpfNetMapsUtils.isFirewallAllowList(chain)
+                    ? FIREWALL_RULE_ALLOW : FIREWALL_RULE_DENY;
+            mBpfNetMaps.setUidRule(chain, TEST_UID, ruleToAddMatch);
+        }
+
+        checkUidOwnerValue(TEST_UID, TEST_IF_INDEX, IIF_MATCH | getMatch(testChains));
+
+        for (final int chain: testChains) {
+            final int ruleToRemoveMatch = BpfNetMapsUtils.isFirewallAllowList(chain)
+                    ? FIREWALL_RULE_DENY : FIREWALL_RULE_ALLOW;
+            mBpfNetMaps.setUidRule(chain, TEST_UID, ruleToRemoveMatch);
+        }
+
+        checkUidOwnerValue(TEST_UID, TEST_IF_INDEX, IIF_MATCH);
+    }
+
+    private void doTestSetUidRule(final int testChain) throws Exception {
+        doTestSetUidRule(List.of(testChain));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetUidRule() throws Exception {
+        doTestSetUidRule(FIREWALL_CHAIN_DOZABLE);
+        doTestSetUidRule(FIREWALL_CHAIN_STANDBY);
+        doTestSetUidRule(FIREWALL_CHAIN_POWERSAVE);
+        doTestSetUidRule(FIREWALL_CHAIN_RESTRICTED);
+        doTestSetUidRule(FIREWALL_CHAIN_LOW_POWER_STANDBY);
+        doTestSetUidRule(FIREWALL_CHAIN_OEM_DENY_1);
+        doTestSetUidRule(FIREWALL_CHAIN_OEM_DENY_2);
+        doTestSetUidRule(FIREWALL_CHAIN_OEM_DENY_3);
+        doTestSetUidRule(FIREWALL_CHAIN_METERED_ALLOW);
+        doTestSetUidRule(FIREWALL_CHAIN_METERED_DENY_USER);
+        doTestSetUidRule(FIREWALL_CHAIN_METERED_DENY_ADMIN);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetUidRuleMultipleChain() throws Exception {
+        doTestSetUidRule(List.of(
+                FIREWALL_CHAIN_DOZABLE,
+                FIREWALL_CHAIN_STANDBY));
+        doTestSetUidRule(List.of(
+                FIREWALL_CHAIN_DOZABLE,
+                FIREWALL_CHAIN_STANDBY,
+                FIREWALL_CHAIN_POWERSAVE,
+                FIREWALL_CHAIN_RESTRICTED));
+        doTestSetUidRule(FIREWALL_CHAINS);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetUidRuleRemoveRuleFromUidWithNoRule() {
+        final Class<ServiceSpecificException> expected = ServiceSpecificException.class;
+        assertThrows(expected,
+                () -> mBpfNetMaps.setUidRule(FIREWALL_CHAIN_DOZABLE, TEST_UID, FIREWALL_RULE_DENY));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetUidRuleInvalidChain() {
+        final Class<ServiceSpecificException> expected = ServiceSpecificException.class;
+        assertThrows(expected,
+                () -> mBpfNetMaps.setUidRule(-1 /* childChain */, TEST_UID, FIREWALL_RULE_ALLOW));
+        assertThrows(expected,
+                () -> mBpfNetMaps.setUidRule(1000 /* childChain */, TEST_UID, FIREWALL_RULE_ALLOW));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetUidRuleInvalidRule() {
+        final Class<ServiceSpecificException> expected = ServiceSpecificException.class;
+        assertThrows(expected, () ->
+                mBpfNetMaps.setUidRule(FIREWALL_CHAIN_DOZABLE, TEST_UID, -1 /* firewallRule */));
+        assertThrows(expected, () ->
+                mBpfNetMaps.setUidRule(FIREWALL_CHAIN_DOZABLE, TEST_UID, 1000 /* firewallRule */));
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    public void testSetUidRuleBeforeT() {
+        assertThrows(UnsupportedOperationException.class, () ->
+                mBpfNetMaps.setUidRule(FIREWALL_CHAIN_DOZABLE, TEST_UID, FIREWALL_RULE_ALLOW));
+    }
+
+    private void doTestGetUidRule(final List<Integer> enableChains) throws Exception {
+        mUidOwnerMap.updateEntry(new S32(TEST_UID), new UidOwnerValue(0, getMatch(enableChains)));
+
+        for (final int chain: FIREWALL_CHAINS) {
+            final String testCase = "EnabledChains: " + enableChains + " CheckedChain: " + chain;
+            if (enableChains.contains(chain)) {
+                final int expectedRule = BpfNetMapsUtils.isFirewallAllowList(chain)
+                        ? FIREWALL_RULE_ALLOW : FIREWALL_RULE_DENY;
+                assertEquals(testCase, expectedRule, mBpfNetMaps.getUidRule(chain, TEST_UID));
+            } else {
+                final int expectedRule = BpfNetMapsUtils.isFirewallAllowList(chain)
+                        ? FIREWALL_RULE_DENY : FIREWALL_RULE_ALLOW;
+                assertEquals(testCase, expectedRule, mBpfNetMaps.getUidRule(chain, TEST_UID));
+            }
+        }
+    }
+
+    private void doTestGetUidRule(final int enableChain) throws Exception {
+        doTestGetUidRule(List.of(enableChain));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testGetUidRule() throws Exception {
+        doTestGetUidRule(FIREWALL_CHAIN_DOZABLE);
+        doTestGetUidRule(FIREWALL_CHAIN_STANDBY);
+        doTestGetUidRule(FIREWALL_CHAIN_POWERSAVE);
+        doTestGetUidRule(FIREWALL_CHAIN_RESTRICTED);
+        doTestGetUidRule(FIREWALL_CHAIN_LOW_POWER_STANDBY);
+        doTestGetUidRule(FIREWALL_CHAIN_OEM_DENY_1);
+        doTestGetUidRule(FIREWALL_CHAIN_OEM_DENY_2);
+        doTestGetUidRule(FIREWALL_CHAIN_OEM_DENY_3);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testGetUidRuleMultipleChainEnabled() throws Exception {
+        doTestGetUidRule(List.of(
+                FIREWALL_CHAIN_DOZABLE,
+                FIREWALL_CHAIN_STANDBY));
+        doTestGetUidRule(List.of(
+                FIREWALL_CHAIN_DOZABLE,
+                FIREWALL_CHAIN_STANDBY,
+                FIREWALL_CHAIN_POWERSAVE,
+                FIREWALL_CHAIN_RESTRICTED));
+        doTestGetUidRule(FIREWALL_CHAINS);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testGetUidRuleNoEntry() throws Exception {
+        mUidOwnerMap.clear();
+        for (final int chain: FIREWALL_CHAINS) {
+            final int expectedRule = BpfNetMapsUtils.isFirewallAllowList(chain)
+                    ? FIREWALL_RULE_DENY : FIREWALL_RULE_ALLOW;
+            assertEquals(expectedRule, mBpfNetMaps.getUidRule(chain, TEST_UID));
+        }
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testGetUidRuleInvalidChain() {
+        final Class<ServiceSpecificException> expected = ServiceSpecificException.class;
+        assertThrows(expected, () -> mBpfNetMaps.getUidRule(-1 /* childChain */, TEST_UID));
+        assertThrows(expected, () -> mBpfNetMaps.getUidRule(1000 /* childChain */, TEST_UID));
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    public void testGetUidRuleBeforeT() {
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBpfNetMaps.getUidRule(FIREWALL_CHAIN_DOZABLE, TEST_UID));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testReplaceUidChain() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+
+        mBpfNetMaps.replaceUidChain(FIREWALL_CHAIN_DOZABLE, TEST_UIDS);
+
+        checkUidOwnerValue(uid0, NO_IIF, DOZABLE_MATCH);
+        checkUidOwnerValue(uid1, NO_IIF, DOZABLE_MATCH);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testReplaceUidChainWithOtherMatch() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        final long match0 = POWERSAVE_MATCH;
+        final long match1 = POWERSAVE_MATCH | RESTRICTED_MATCH;
+        mUidOwnerMap.updateEntry(new S32(uid0), new UidOwnerValue(NO_IIF, match0));
+        mUidOwnerMap.updateEntry(new S32(uid1), new UidOwnerValue(NO_IIF, match1));
+
+        mBpfNetMaps.replaceUidChain(FIREWALL_CHAIN_DOZABLE, new int[]{uid1});
+
+        checkUidOwnerValue(uid0, NO_IIF, match0);
+        checkUidOwnerValue(uid1, NO_IIF, match1 | DOZABLE_MATCH);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testReplaceUidChainWithExistingIifMatch() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        final long match0 = IIF_MATCH;
+        final long match1 = IIF_MATCH | POWERSAVE_MATCH | RESTRICTED_MATCH;
+        mUidOwnerMap.updateEntry(new S32(uid0), new UidOwnerValue(TEST_IF_INDEX, match0));
+        mUidOwnerMap.updateEntry(new S32(uid1), new UidOwnerValue(NULL_IIF, match1));
+
+        mBpfNetMaps.replaceUidChain(FIREWALL_CHAIN_DOZABLE, TEST_UIDS);
+
+        checkUidOwnerValue(uid0, TEST_IF_INDEX, match0 | DOZABLE_MATCH);
+        checkUidOwnerValue(uid1, NULL_IIF, match1 | DOZABLE_MATCH);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testReplaceUidChainRemoveExistingMatch() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        final long match0 = IIF_MATCH | DOZABLE_MATCH;
+        final long match1 = IIF_MATCH | POWERSAVE_MATCH | RESTRICTED_MATCH;
+        mUidOwnerMap.updateEntry(new S32(uid0), new UidOwnerValue(TEST_IF_INDEX, match0));
+        mUidOwnerMap.updateEntry(new S32(uid1), new UidOwnerValue(NULL_IIF, match1));
+
+        mBpfNetMaps.replaceUidChain(FIREWALL_CHAIN_DOZABLE, new int[]{uid1});
+
+        checkUidOwnerValue(uid0, TEST_IF_INDEX, match0 & ~DOZABLE_MATCH);
+        checkUidOwnerValue(uid1, NULL_IIF, match1 | DOZABLE_MATCH);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testReplaceUidChainInvalidChain() {
+        final Class<IllegalArgumentException> expected = IllegalArgumentException.class;
+        assertThrows(expected, () -> mBpfNetMaps.replaceUidChain(-1 /* chain */, TEST_UIDS));
+        assertThrows(expected, () -> mBpfNetMaps.replaceUidChain(1000 /* chain */, TEST_UIDS));
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    public void testReplaceUidChainBeforeT() {
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBpfNetMaps.replaceUidChain(FIREWALL_CHAIN_DOZABLE, TEST_UIDS));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetNetPermForUidsGrantInternetPermission() throws Exception {
+        mBpfNetMaps.setNetPermForUids(PERMISSION_INTERNET, TEST_UIDS);
+
+        assertTrue(mUidPermissionMap.isEmpty());
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetNetPermForUidsGrantUpdateStatsPermission() throws Exception {
+        mBpfNetMaps.setNetPermForUids(PERMISSION_UPDATE_DEVICE_STATS, TEST_UIDS);
+
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        assertEquals(PERMISSION_UPDATE_DEVICE_STATS, mUidPermissionMap.getValue(new S32(uid0)).val);
+        assertEquals(PERMISSION_UPDATE_DEVICE_STATS, mUidPermissionMap.getValue(new S32(uid1)).val);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetNetPermForUidsGrantMultiplePermissions() throws Exception {
+        final int permission = PERMISSION_INTERNET | PERMISSION_UPDATE_DEVICE_STATS;
+        mBpfNetMaps.setNetPermForUids(permission, TEST_UIDS);
+
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        assertEquals(permission, mUidPermissionMap.getValue(new S32(uid0)).val);
+        assertEquals(permission, mUidPermissionMap.getValue(new S32(uid1)).val);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetNetPermForUidsRevokeInternetPermission() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        mBpfNetMaps.setNetPermForUids(PERMISSION_INTERNET, TEST_UIDS);
+        mBpfNetMaps.setNetPermForUids(PERMISSION_NONE, new int[]{uid0});
+
+        assertEquals(PERMISSION_NONE, mUidPermissionMap.getValue(new S32(uid0)).val);
+        assertNull(mUidPermissionMap.getValue(new S32(uid1)));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetNetPermForUidsRevokeUpdateDeviceStatsPermission() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        mBpfNetMaps.setNetPermForUids(PERMISSION_UPDATE_DEVICE_STATS, TEST_UIDS);
+        mBpfNetMaps.setNetPermForUids(PERMISSION_NONE, new int[]{uid0});
+
+        assertEquals(PERMISSION_NONE, mUidPermissionMap.getValue(new S32(uid0)).val);
+        assertEquals(PERMISSION_UPDATE_DEVICE_STATS, mUidPermissionMap.getValue(new S32(uid1)).val);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetNetPermForUidsRevokeMultiplePermissions() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        final int permission = PERMISSION_INTERNET | PERMISSION_UPDATE_DEVICE_STATS;
+        mBpfNetMaps.setNetPermForUids(permission, TEST_UIDS);
+        mBpfNetMaps.setNetPermForUids(PERMISSION_NONE, new int[]{uid0});
+
+        assertEquals(PERMISSION_NONE, mUidPermissionMap.getValue(new S32(uid0)).val);
+        assertEquals(permission, mUidPermissionMap.getValue(new S32(uid1)).val);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetNetPermForUidsPermissionUninstalled() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        final int permission = PERMISSION_INTERNET | PERMISSION_UPDATE_DEVICE_STATS;
+        mBpfNetMaps.setNetPermForUids(permission, TEST_UIDS);
+        mBpfNetMaps.setNetPermForUids(PERMISSION_UNINSTALLED, new int[]{uid0});
+
+        assertNull(mUidPermissionMap.getValue(new S32(uid0)));
+        assertEquals(permission, mUidPermissionMap.getValue(new S32(uid1)).val);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetNetPermForUidsDuplicatedRequestSilentlyIgnored() throws Exception {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        final int permission = PERMISSION_INTERNET | PERMISSION_UPDATE_DEVICE_STATS;
+
+        mBpfNetMaps.setNetPermForUids(permission, TEST_UIDS);
+        assertEquals(permission, mUidPermissionMap.getValue(new S32(uid0)).val);
+        assertEquals(permission, mUidPermissionMap.getValue(new S32(uid1)).val);
+
+        mBpfNetMaps.setNetPermForUids(permission, TEST_UIDS);
+        assertEquals(permission, mUidPermissionMap.getValue(new S32(uid0)).val);
+        assertEquals(permission, mUidPermissionMap.getValue(new S32(uid1)).val);
+
+        mBpfNetMaps.setNetPermForUids(PERMISSION_NONE, TEST_UIDS);
+        assertEquals(PERMISSION_NONE, mUidPermissionMap.getValue(new S32(uid0)).val);
+        assertEquals(PERMISSION_NONE, mUidPermissionMap.getValue(new S32(uid1)).val);
+
+        mBpfNetMaps.setNetPermForUids(PERMISSION_NONE, TEST_UIDS);
+        assertEquals(PERMISSION_NONE, mUidPermissionMap.getValue(new S32(uid0)).val);
+        assertEquals(PERMISSION_NONE, mUidPermissionMap.getValue(new S32(uid1)).val);
+
+        mBpfNetMaps.setNetPermForUids(PERMISSION_UNINSTALLED, TEST_UIDS);
+        assertNull(mUidPermissionMap.getValue(new S32(uid0)));
+        assertNull(mUidPermissionMap.getValue(new S32(uid1)));
+
+        mBpfNetMaps.setNetPermForUids(PERMISSION_UNINSTALLED, TEST_UIDS);
+        assertNull(mUidPermissionMap.getValue(new S32(uid0)));
+        assertNull(mUidPermissionMap.getValue(new S32(uid1)));
+    }
+
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.TIRAMISU)
+    @Test
+    public void testGetNetPermFoUid_uidMigrationDisabled() throws Exception {
+        mUidPermissionMap.deleteEntry(new S32(TEST_UID));
+        assertEquals(PERMISSION_INTERNET, mBpfNetMaps.getNetPermForUid(TEST_UID));
+
+        mUidPermissionMap.updateEntry(new S32(TEST_UID), new U8((short) PERMISSION_NONE));
+        assertEquals(PERMISSION_NONE, mBpfNetMaps.getNetPermForUid(TEST_UID));
+
+        mUidPermissionMap.updateEntry(new S32(TEST_UID),
+                new U8((short) (PERMISSION_INTERNET | PERMISSION_UPDATE_DEVICE_STATS)));
+        assertEquals(PERMISSION_INTERNET | PERMISSION_UPDATE_DEVICE_STATS,
+                mBpfNetMaps.getNetPermForUid(TEST_UID));
+    }
+
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.TIRAMISU)
+    @Test
+    public void testGetNetPermFoUid_uidMigrationEnabled() throws Exception {
+        mUidPermissionChunkMap.deleteEntry(new S32(getChunkId(TEST_UID)));
+        assertEquals(TRAFFIC_PERMISSION_INTERNET, mBpfNetMaps.getNetPermForUid(TEST_UID));
+
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID, PERMISSION_BIT_NO_INTERNET);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+        assertEquals(PERMISSION_NONE, mBpfNetMaps.getNetPermForUid(TEST_UID));
+
+        permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID,
+                PERMISSION_BIT_NO_INTERNET | PERMISSION_BIT_UPDATE_DEVICE_STATS);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+        assertEquals(TRAFFIC_PERMISSION_UPDATE_DEVICE_STATS,
+                mBpfNetMaps.getNetPermForUid(TEST_UID));
+
+        permissionsUids.put(TEST_UID, PERMISSION_BIT_UPDATE_DEVICE_STATS);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+        assertEquals(TRAFFIC_PERMISSION_INTERNET | TRAFFIC_PERMISSION_UPDATE_DEVICE_STATS,
+                mBpfNetMaps.getNetPermForUid(TEST_UID));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.TIRAMISU)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testGetChunkPermForUid_uidMigrationEnabled() throws Exception {
+        mUidPermissionChunkMap.deleteEntry(new S32(getChunkId(TEST_UID_2)));
+        assertEquals(PERMISSION_BIT_NONE, mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_2, PERMISSION_BIT_NO_INTERNET);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+        assertEquals(
+            PERMISSION_BIT_NO_INTERNET,
+            mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+        assertEquals(
+            PERMISSION_BIT_NONE,
+            mBpfNetMaps.getChunkPermForUid(TEST_UID_2 + UIDS_PER_INT64));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.TIRAMISU)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = false)
+    public void testGetChunkPermForUid_uidMigrationDisabled() throws Exception {
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSwapActiveStatsMap() throws Exception {
+        mConfigurationMap.updateEntry(
+                CURRENT_STATS_MAP_CONFIGURATION_KEY, new U32(STATS_SELECT_MAP_A));
+
+        mBpfNetMaps.swapActiveStatsMap();
+        assertEquals(STATS_SELECT_MAP_B,
+                mConfigurationMap.getValue(CURRENT_STATS_MAP_CONFIGURATION_KEY).val);
+
+        mBpfNetMaps.swapActiveStatsMap();
+        assertEquals(STATS_SELECT_MAP_A,
+                mConfigurationMap.getValue(CURRENT_STATS_MAP_CONFIGURATION_KEY).val);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSwapActiveStatsMapSynchronizeKernelRCUFail() throws Exception {
+        doReturn(EPERM).when(mDeps).synchronizeKernelRCU();
+        mConfigurationMap.updateEntry(
+                CURRENT_STATS_MAP_CONFIGURATION_KEY, new U32(STATS_SELECT_MAP_A));
+
+        assertThrows(ServiceSpecificException.class, () -> mBpfNetMaps.swapActiveStatsMap());
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testPullBpfMapInfo() throws Exception {
+        // mCookieTagMap has 1 entry
+        mCookieTagMap.updateEntry(new S64(0), new CookieTagMapValue(0, 0));
+
+        // mUidOwnerMap has 2 entries
+        mUidOwnerMap.updateEntry(new S32(0), new UidOwnerValue(0, 0));
+        mUidOwnerMap.updateEntry(new S32(1), new UidOwnerValue(0, 0));
+
+        // mUidPermissionMap has 3 entries
+        mUidPermissionMap.updateEntry(new S32(0), new U8((short) 0));
+        mUidPermissionMap.updateEntry(new S32(1), new U8((short) 0));
+        mUidPermissionMap.updateEntry(new S32(2), new U8((short) 0));
+
+        final int ret = mBpfNetMaps.pullBpfMapInfoAtom(NETWORK_BPF_MAP_INFO, new ArrayList<>());
+        assertEquals(StatsManager.PULL_SUCCESS, ret);
+        verify(mDeps).buildStatsEvent(
+                1 /* cookieTagMapSize */, 2 /* uidOwnerMapSize */, 3 /* uidPermissionMapSize */);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testPullBpfMapInfoGetMapSizeFailure() throws Exception {
+        doThrow(new ErrnoException("", EINVAL)).when(mCookieTagMap).forEach(any());
+        final int ret = mBpfNetMaps.pullBpfMapInfoAtom(NETWORK_BPF_MAP_INFO, new ArrayList<>());
+        assertEquals(StatsManager.PULL_SKIP, ret);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testPullBpfMapInfoUnexpectedAtomTag() {
+        final int ret = mBpfNetMaps.pullBpfMapInfoAtom(-1 /* atomTag */, new ArrayList<>());
+        assertEquals(StatsManager.PULL_SKIP, ret);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testPullBpfMapInfo_uidMigrationEnabled() throws Exception {
+        // mCookieTagMap has 1 entry
+        mCookieTagMap.updateEntry(new S64(0), new CookieTagMapValue(0, 0));
+
+        // mUidOwnerMap has 2 entries
+        mUidOwnerMap.updateEntry(new S32(0), new UidOwnerValue(0, 0));
+        mUidOwnerMap.updateEntry(new S32(1), new UidOwnerValue(0, 0));
+
+        // mUidPermissionMap has 3 entries
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(0, PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        permissionsUids.put(1, PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        permissionsUids.put(2, PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        permissionsUids.put(MOCK_USER2.getUid(0), PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        permissionsUids.put(MOCK_USER2.getUid(1), PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        permissionsUids.put(MOCK_USER2.getUid(2), PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        final int ret = mBpfNetMaps.pullBpfMapInfoAtom(NETWORK_BPF_MAP_INFO, new ArrayList<>());
+        assertEquals(StatsManager.PULL_SUCCESS, ret);
+        verify(mDeps).buildStatsEvent(
+                1 /* cookieTagMapSize */, 2 /* uidOwnerMapSize */, 3 /* uidPermissionMapSize */);
+    }
+
+    private void assertDumpContains(final String dump, final String message) {
+        assertTrue(String.format("dump(%s) does not contain '%s'", dump, message),
+                dump.contains(message));
+    }
+
+    private String getDump() throws Exception {
+        final StringWriter sw = new StringWriter();
+        mBpfNetMaps.dump(new IndentingPrintWriter(sw), new FileDescriptor(), true /* verbose */);
+        return sw.toString();
+    }
+
+    private void doTestDumpUidPermissionMap(final int permission, final String permissionString)
+            throws Exception {
+        mUidPermissionMap.updateEntry(new S32(TEST_UID), new U8((short) permission));
+        assertDumpContains(getDump(), TEST_UID + " " + permissionString);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpUidPermissionMap() throws Exception {
+        doTestDumpUidPermissionMap(PERMISSION_NONE, "PERMISSION_NONE");
+        doTestDumpUidPermissionMap(PERMISSION_INTERNET | PERMISSION_UPDATE_DEVICE_STATS,
+                "PERMISSION_INTERNET PERMISSION_UPDATE_DEVICE_STATS");
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpUidPermissionMapInvalidPermission() throws Exception {
+        doTestDumpUidPermissionMap(PERMISSION_UNINSTALLED, "PERMISSION_UNINSTALLED error!");
+        doTestDumpUidPermissionMap(PERMISSION_INTERNET | 1 << 6,
+                "PERMISSION_INTERNET PERMISSION_UNKNOWN(64)");
+    }
+
+    void doTestDumpUidOwnerMap(final int iif, final long match, final String matchString)
+            throws Exception {
+        mUidOwnerMap.updateEntry(new S32(TEST_UID), new UidOwnerValue(iif, match));
+        assertDumpContains(getDump(), TEST_UID + " " + matchString);
+    }
+
+    void doTestDumpUidOwnerMap(final long match, final String matchString) throws Exception {
+        doTestDumpUidOwnerMap(0 /* iif */, match, matchString);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpUidOwnerMap() throws Exception {
+        doTestDumpUidOwnerMap(HAPPY_BOX_MATCH, "HAPPY_BOX_MATCH");
+        doTestDumpUidOwnerMap(PENALTY_BOX_USER_MATCH, "PENALTY_BOX_USER_MATCH");
+        doTestDumpUidOwnerMap(DOZABLE_MATCH, "DOZABLE_MATCH");
+        doTestDumpUidOwnerMap(STANDBY_MATCH, "STANDBY_MATCH");
+        doTestDumpUidOwnerMap(POWERSAVE_MATCH, "POWERSAVE_MATCH");
+        doTestDumpUidOwnerMap(RESTRICTED_MATCH, "RESTRICTED_MATCH");
+        doTestDumpUidOwnerMap(LOW_POWER_STANDBY_MATCH, "LOW_POWER_STANDBY_MATCH");
+        doTestDumpUidOwnerMap(LOCKDOWN_VPN_MATCH, "LOCKDOWN_VPN_MATCH");
+        doTestDumpUidOwnerMap(OEM_DENY_1_MATCH, "OEM_DENY_1_MATCH");
+        doTestDumpUidOwnerMap(OEM_DENY_2_MATCH, "OEM_DENY_2_MATCH");
+        doTestDumpUidOwnerMap(OEM_DENY_3_MATCH, "OEM_DENY_3_MATCH");
+        doTestDumpUidOwnerMap(PENALTY_BOX_ADMIN_MATCH, "PENALTY_BOX_ADMIN_MATCH");
+
+        doTestDumpUidOwnerMap(HAPPY_BOX_MATCH | POWERSAVE_MATCH,
+                "HAPPY_BOX_MATCH POWERSAVE_MATCH");
+        doTestDumpUidOwnerMap(DOZABLE_MATCH | LOCKDOWN_VPN_MATCH | OEM_DENY_1_MATCH,
+                "DOZABLE_MATCH LOCKDOWN_VPN_MATCH OEM_DENY_1_MATCH");
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpUidOwnerMapWithIifMatch() throws Exception {
+        doTestDumpUidOwnerMap(TEST_IF_INDEX, IIF_MATCH, "IIF_MATCH " + TEST_IF_INDEX);
+        doTestDumpUidOwnerMap(TEST_IF_INDEX,
+                IIF_MATCH | DOZABLE_MATCH | LOCKDOWN_VPN_MATCH | OEM_DENY_1_MATCH,
+                "DOZABLE_MATCH IIF_MATCH LOCKDOWN_VPN_MATCH OEM_DENY_1_MATCH " + TEST_IF_INDEX);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpUidOwnerMapWithInvalidMatch() throws Exception {
+        final long invalid_match = 1L << 31;
+        doTestDumpUidOwnerMap(invalid_match, "UNKNOWN_MATCH(" + invalid_match + ")");
+        doTestDumpUidOwnerMap(DOZABLE_MATCH | invalid_match,
+                "DOZABLE_MATCH UNKNOWN_MATCH(" + invalid_match + ")");
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpCurrentStatsMapConfig() throws Exception {
+        mConfigurationMap.updateEntry(
+                CURRENT_STATS_MAP_CONFIGURATION_KEY, new U32(STATS_SELECT_MAP_A));
+        assertDumpContains(getDump(), "current statsMap configuration: 0 SELECT_MAP_A");
+
+        mConfigurationMap.updateEntry(
+                CURRENT_STATS_MAP_CONFIGURATION_KEY, new U32(STATS_SELECT_MAP_B));
+        assertDumpContains(getDump(), "current statsMap configuration: 1 SELECT_MAP_B");
+    }
+
+    private void doTestDumpOwnerMatchConfig(final long match, final String matchString)
+            throws Exception {
+        mConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(match));
+        assertDumpContains(getDump(),
+                "current ownerMatch configuration: " + match + " " + matchString);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpUidOwnerMapConfig() throws Exception {
+        doTestDumpOwnerMatchConfig(HAPPY_BOX_MATCH, "HAPPY_BOX_MATCH");
+        doTestDumpOwnerMatchConfig(DOZABLE_MATCH, "DOZABLE_MATCH");
+        doTestDumpOwnerMatchConfig(STANDBY_MATCH, "STANDBY_MATCH");
+        doTestDumpOwnerMatchConfig(POWERSAVE_MATCH, "POWERSAVE_MATCH");
+        doTestDumpOwnerMatchConfig(RESTRICTED_MATCH, "RESTRICTED_MATCH");
+        doTestDumpOwnerMatchConfig(LOW_POWER_STANDBY_MATCH, "LOW_POWER_STANDBY_MATCH");
+        doTestDumpOwnerMatchConfig(IIF_MATCH, "IIF_MATCH");
+        doTestDumpOwnerMatchConfig(LOCKDOWN_VPN_MATCH, "LOCKDOWN_VPN_MATCH");
+        doTestDumpOwnerMatchConfig(OEM_DENY_1_MATCH, "OEM_DENY_1_MATCH");
+        doTestDumpOwnerMatchConfig(OEM_DENY_2_MATCH, "OEM_DENY_2_MATCH");
+        doTestDumpOwnerMatchConfig(OEM_DENY_3_MATCH, "OEM_DENY_3_MATCH");
+
+        doTestDumpOwnerMatchConfig(HAPPY_BOX_MATCH | POWERSAVE_MATCH,
+                "HAPPY_BOX_MATCH POWERSAVE_MATCH");
+        doTestDumpOwnerMatchConfig(DOZABLE_MATCH | LOCKDOWN_VPN_MATCH | OEM_DENY_1_MATCH,
+                "DOZABLE_MATCH LOCKDOWN_VPN_MATCH OEM_DENY_1_MATCH");
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpUidOwnerMapConfigWithInvalidMatch() throws Exception {
+        final long invalid_match = 1L << 31;
+        doTestDumpOwnerMatchConfig(invalid_match, "UNKNOWN_MATCH(" + invalid_match + ")");
+        doTestDumpOwnerMatchConfig(DOZABLE_MATCH | invalid_match,
+                "DOZABLE_MATCH UNKNOWN_MATCH(" + invalid_match + ")");
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpCookieTagMap() throws Exception {
+        mCookieTagMap.updateEntry(new S64(123), new CookieTagMapValue(456, 0x789));
+        assertDumpContains(getDump(), "cookie=123 tag=0x789 uid=456");
+    }
+
+    private void doTestDumpDataSaverConfig(final short value, final boolean expected)
+            throws Exception {
+        mDataSaverEnabledMap.updateEntry(DATA_SAVER_ENABLED_KEY, new U8(value));
+        assertDumpContains(getDump(),
+                "sDataSaverEnabledMap: " + expected);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpDataSaverConfig() throws Exception {
+        doTestDumpDataSaverConfig(DATA_SAVER_DISABLED, false);
+        doTestDumpDataSaverConfig(DATA_SAVER_ENABLED, true);
+        doTestDumpDataSaverConfig((short) 2, true);
+    }
+
+    @Test
+    public void testGetUids() throws ErrnoException {
+        final int uid0 = TEST_UIDS[0];
+        final int uid1 = TEST_UIDS[1];
+        final long match0 = DOZABLE_MATCH | POWERSAVE_MATCH;
+        final long match1 = DOZABLE_MATCH | STANDBY_MATCH;
+        mUidOwnerMap.updateEntry(new S32(uid0), new UidOwnerValue(NULL_IIF, match0));
+        mUidOwnerMap.updateEntry(new S32(uid1), new UidOwnerValue(NULL_IIF, match1));
+
+        assertEquals(new ArraySet<>(List.of(uid0, uid1)),
+                mBpfNetMaps.getUidsWithAllowRuleOnAllowListChain(FIREWALL_CHAIN_DOZABLE));
+        assertEquals(new ArraySet<>(List.of(uid0)),
+                mBpfNetMaps.getUidsWithAllowRuleOnAllowListChain(FIREWALL_CHAIN_POWERSAVE));
+
+        assertEquals(new ArraySet<>(List.of(uid1)),
+                mBpfNetMaps.getUidsWithDenyRuleOnDenyListChain(FIREWALL_CHAIN_STANDBY));
+        assertEquals(new ArraySet<>(),
+                mBpfNetMaps.getUidsWithDenyRuleOnDenyListChain(FIREWALL_CHAIN_OEM_DENY_1));
+    }
+
+    @Test
+    public void testGetUidsIllegalArgument() {
+        final Class<IllegalArgumentException> expected = IllegalArgumentException.class;
+        assertThrows(expected,
+                () -> mBpfNetMaps.getUidsWithDenyRuleOnDenyListChain(FIREWALL_CHAIN_DOZABLE));
+        assertThrows(expected,
+                () -> mBpfNetMaps.getUidsWithAllowRuleOnAllowListChain(FIREWALL_CHAIN_OEM_DENY_1));
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    public void testSetDataSaverEnabledBeforeT() {
+        for (boolean enable : new boolean[]{true, false}) {
+            assertThrows(UnsupportedOperationException.class,
+                    () -> mBpfNetMaps.setDataSaverEnabled(enable));
+        }
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetDataSaverEnabled() throws Exception {
+        for (boolean enable : new boolean[]{true, false}) {
+            mBpfNetMaps.setDataSaverEnabled(enable);
+            assertEquals(enable ? DATA_SAVER_ENABLED : DATA_SAVER_DISABLED,
+                    mDataSaverEnabledMap.getValue(DATA_SAVER_ENABLED_KEY).val);
+        }
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetIngressDiscardRule_V4address() throws Exception {
+        mBpfNetMaps.setIngressDiscardRule(TEST_V4_ADDRESS, TEST_IF_NAME);
+        final IngressDiscardValue val = mIngressDiscardMap.getValue(new IngressDiscardKey(
+                TEST_V4_ADDRESS));
+        assertEquals(TEST_IF_INDEX, val.iif1);
+        assertEquals(TEST_IF_INDEX, val.iif2);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetIngressDiscardRule_V6address() throws Exception {
+        mBpfNetMaps.setIngressDiscardRule(TEST_V6_ADDRESS, TEST_IF_NAME);
+        final IngressDiscardValue val =
+                mIngressDiscardMap.getValue(new IngressDiscardKey(TEST_V6_ADDRESS));
+        assertEquals(TEST_IF_INDEX, val.iif1);
+        assertEquals(TEST_IF_INDEX, val.iif2);
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testRemoveIngressDiscardRule() throws Exception {
+        mBpfNetMaps.setIngressDiscardRule(TEST_V4_ADDRESS, TEST_IF_NAME);
+        mBpfNetMaps.setIngressDiscardRule(TEST_V6_ADDRESS, TEST_IF_NAME);
+        final IngressDiscardKey v4Key = new IngressDiscardKey(TEST_V4_ADDRESS);
+        final IngressDiscardKey v6Key = new IngressDiscardKey(TEST_V6_ADDRESS);
+        assertTrue(mIngressDiscardMap.containsKey(v4Key));
+        assertTrue(mIngressDiscardMap.containsKey(v6Key));
+
+        mBpfNetMaps.removeIngressDiscardRule(TEST_V4_ADDRESS);
+        assertFalse(mIngressDiscardMap.containsKey(v4Key));
+        assertTrue(mIngressDiscardMap.containsKey(v6Key));
+
+        mBpfNetMaps.removeIngressDiscardRule(TEST_V6_ADDRESS);
+        assertFalse(mIngressDiscardMap.containsKey(v4Key));
+        assertFalse(mIngressDiscardMap.containsKey(v6Key));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpIngressDiscardRule() throws Exception {
+        mBpfNetMaps.setIngressDiscardRule(TEST_V4_ADDRESS, TEST_IF_NAME);
+        mBpfNetMaps.setIngressDiscardRule(TEST_V6_ADDRESS, TEST_IF_NAME);
+        final String dump = getDump();
+        assertDumpContains(dump, TEST_V4_ADDRESS.getHostAddress());
+        assertDumpContains(dump, TEST_V6_ADDRESS.getHostAddress());
+        assertDumpContains(dump, TEST_IF_INDEX + "(" + TEST_IF_NAME + ")");
+    }
+
+    private void doTestGetUidNetworkingBlockedReasons(
+            final long configurationMatches,
+            final long uidRules,
+            final short dataSaverStatus,
+            final int expectedBlockedReasons
+    ) throws Exception {
+        mConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(configurationMatches));
+        mUidOwnerMap.updateEntry(new S32(TEST_UID), new UidOwnerValue(NULL_IIF, uidRules));
+        mDataSaverEnabledMap.updateEntry(DATA_SAVER_ENABLED_KEY, new U8(dataSaverStatus));
+
+        assertEquals(expectedBlockedReasons, mBpfNetMaps.getUidNetworkingBlockedReasons(TEST_UID));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testGetUidNetworkingBlockedReasons() throws Exception {
+        doTestGetUidNetworkingBlockedReasons(
+                NO_MATCH,
+                NO_MATCH,
+                DATA_SAVER_DISABLED,
+                BLOCKED_REASON_NONE
+        );
+        doTestGetUidNetworkingBlockedReasons(
+                DOZABLE_MATCH,
+                NO_MATCH,
+                DATA_SAVER_DISABLED,
+                BLOCKED_REASON_DOZE
+        );
+        doTestGetUidNetworkingBlockedReasons(
+                DOZABLE_MATCH | POWERSAVE_MATCH | STANDBY_MATCH,
+                DOZABLE_MATCH | STANDBY_MATCH,
+                DATA_SAVER_DISABLED,
+                BLOCKED_REASON_BATTERY_SAVER | BLOCKED_REASON_APP_STANDBY
+        );
+        doTestGetUidNetworkingBlockedReasons(
+                OEM_DENY_1_MATCH | OEM_DENY_2_MATCH | OEM_DENY_3_MATCH,
+                OEM_DENY_1_MATCH | OEM_DENY_3_MATCH,
+                DATA_SAVER_DISABLED,
+                BLOCKED_REASON_OEM_DENY
+        );
+        doTestGetUidNetworkingBlockedReasons(
+                DOZABLE_MATCH,
+                DOZABLE_MATCH | BACKGROUND_MATCH | STANDBY_MATCH,
+                DATA_SAVER_DISABLED,
+                BLOCKED_REASON_NONE
+        );
+
+        // Note that HAPPY_BOX and PENALTY_BOX are not disabled by configuration map
+        doTestGetUidNetworkingBlockedReasons(
+                NO_MATCH,
+                PENALTY_BOX_USER_MATCH,
+                DATA_SAVER_DISABLED,
+                BLOCKED_METERED_REASON_USER_RESTRICTED
+        );
+        doTestGetUidNetworkingBlockedReasons(
+                NO_MATCH,
+                PENALTY_BOX_ADMIN_MATCH,
+                DATA_SAVER_ENABLED,
+                BLOCKED_METERED_REASON_ADMIN_DISABLED | BLOCKED_METERED_REASON_DATA_SAVER
+        );
+        doTestGetUidNetworkingBlockedReasons(
+                NO_MATCH,
+                PENALTY_BOX_USER_MATCH | PENALTY_BOX_ADMIN_MATCH | HAPPY_BOX_MATCH,
+                DATA_SAVER_ENABLED,
+                BLOCKED_METERED_REASON_USER_RESTRICTED | BLOCKED_METERED_REASON_ADMIN_DISABLED
+        );
+        doTestGetUidNetworkingBlockedReasons(
+                STANDBY_MATCH,
+                STANDBY_MATCH | PENALTY_BOX_USER_MATCH | HAPPY_BOX_MATCH,
+                DATA_SAVER_ENABLED,
+                BLOCKED_REASON_APP_STANDBY | BLOCKED_METERED_REASON_USER_RESTRICTED
+        );
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testIsUidNetworkingBlockedForCoreUids() throws Exception {
+        final long allowlistMatch = BACKGROUND_MATCH;    // Enable any allowlist match.
+        mConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(allowlistMatch));
+
+        // Verify that a normal uid that is not on this chain is indeed blocked.
+        assertTrue(BpfNetMapsUtils.isUidNetworkingBlocked(TEST_UID, false, mConfigurationMap,
+                mUidOwnerMap, mDataSaverEnabledMap));
+
+        // Core appIds are not on the chain but should still be allowed on any user.
+        for (int userId = 0; userId < 20; userId++) {
+            for (final int aid : CORE_AIDS) {
+                final int uid = UserHandle.getUid(userId, aid);
+                assertFalse(BpfNetMapsUtils.isUidNetworkingBlocked(uid, false, mConfigurationMap,
+                        mUidOwnerMap, mDataSaverEnabledMap));
+            }
+        }
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testGetUidNetworkingBlockedReasonsForCoreUids() throws Exception {
+        // Enable BACKGROUND_MATCH that is an allowlist match.
+        mConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(BACKGROUND_MATCH));
+
+        // Non-core uid that is not on this chain is blocked by BLOCKED_REASON_APP_BACKGROUND.
+        assertEquals(BLOCKED_REASON_APP_BACKGROUND, BpfNetMapsUtils.getUidNetworkingBlockedReasons(
+                TEST_UID, mConfigurationMap, mUidOwnerMap, mDataSaverEnabledMap));
+
+        // Core appIds are not on the chain but should not be blocked on any users.
+        for (int userId = 0; userId < 20; userId++) {
+            for (final int aid : CORE_AIDS) {
+                final int uid = UserHandle.getUid(userId, aid);
+                assertEquals(BLOCKED_REASON_NONE, BpfNetMapsUtils.getUidNetworkingBlockedReasons(
+                        uid, mConfigurationMap, mUidOwnerMap, mDataSaverEnabledMap));
+            }
+        }
+    }
+
+    private void doTestIsUidRestrictedOnMeteredNetworks(
+            final long enabledMatches,
+            final long uidRules,
+            final short dataSaver,
+            final boolean expectedRestricted
+    ) throws Exception {
+        mConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(enabledMatches));
+        mUidOwnerMap.updateEntry(new S32(TEST_UID), new UidOwnerValue(NULL_IIF, uidRules));
+        mDataSaverEnabledMap.updateEntry(DATA_SAVER_ENABLED_KEY, new U8(dataSaver));
+
+        assertEquals(expectedRestricted, mBpfNetMaps.isUidRestrictedOnMeteredNetworks(TEST_UID));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testIsUidRestrictedOnMeteredNetworks() throws Exception {
+        doTestIsUidRestrictedOnMeteredNetworks(
+                NO_MATCH,
+                NO_MATCH,
+                DATA_SAVER_DISABLED,
+                false /* expectRestricted */
+        );
+        doTestIsUidRestrictedOnMeteredNetworks(
+                DOZABLE_MATCH | POWERSAVE_MATCH | STANDBY_MATCH,
+                DOZABLE_MATCH | STANDBY_MATCH ,
+                DATA_SAVER_DISABLED,
+                false /* expectRestricted */
+        );
+        doTestIsUidRestrictedOnMeteredNetworks(
+                NO_MATCH,
+                PENALTY_BOX_USER_MATCH,
+                DATA_SAVER_DISABLED,
+                true /* expectRestricted */
+        );
+        doTestIsUidRestrictedOnMeteredNetworks(
+                NO_MATCH,
+                PENALTY_BOX_ADMIN_MATCH,
+                DATA_SAVER_DISABLED,
+                true /* expectRestricted */
+        );
+        doTestIsUidRestrictedOnMeteredNetworks(
+                NO_MATCH,
+                PENALTY_BOX_USER_MATCH | PENALTY_BOX_ADMIN_MATCH | HAPPY_BOX_MATCH,
+                DATA_SAVER_DISABLED,
+                true /* expectRestricted */
+        );
+        doTestIsUidRestrictedOnMeteredNetworks(
+                NO_MATCH,
+                NO_MATCH,
+                DATA_SAVER_ENABLED,
+                true /* expectRestricted */
+        );
+        doTestIsUidRestrictedOnMeteredNetworks(
+                NO_MATCH,
+                HAPPY_BOX_MATCH,
+                DATA_SAVER_ENABLED,
+                false /* expectRestricted */
+        );
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_LOOPBACK_ACCESS_METRICS, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testLoopbackAccessMetricsDisabled() throws Exception {
+        assertFalse(mLoopbackAccessMetricsEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_LOOPBACK_ACCESS_METRICS, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testLoopbackAccessMetricsEnabled() throws Exception {
+        assertTrue(mLoopbackAccessMetricsEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_LOOPBACK_ACCESS_METRICS, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpLoopbackAccessMetricsDisabled() throws Exception {
+        assertDumpContains(getDump(), "sLoopbackAccessMetricsEnabledBpfBoolean: false");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_LOOPBACK_ACCESS_METRICS, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpLoopbackAccessMetricsEnabled() throws Exception {
+        assertDumpContains(getDump(), "sLoopbackAccessMetricsEnabledBpfBoolean: true");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_USE_LOOPBACK_INTERFACE_PERMISSION_ENABLED, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testLoopbackChecksDisabled() throws Exception {
+        assertFalse(mLoopbackChecksEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_USE_LOOPBACK_INTERFACE_PERMISSION_ENABLED, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testLoopbackChecksEnabled() throws Exception {
+        assertTrue(mLoopbackChecksEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_USE_LOOPBACK_INTERFACE_PERMISSION_ENABLED, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpLoopbackChecksDisabled() throws Exception {
+        assertDumpContains(getDump(), "sLoopbackChecksEnabledBpfBoolean: false");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_USE_LOOPBACK_INTERFACE_PERMISSION_ENABLED, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpLoopbackChecksEnabled() throws Exception {
+        assertDumpContains(getDump(), "sLoopbackChecksEnabledBpfBoolean: true");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetUidMigrationDisabled() throws Exception {
+        assertFalse(mUidMigrationEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testSetUidMigrationEnabled() throws Exception {
+        assertTrue(mUidMigrationEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpUidMigrationMapDisabled() throws Exception {
+        assertDumpContains(getDump(), "sUidMigrationEnabledBpfBoolean: false");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    public void testDumpUidMigrationMapEnsabled() throws Exception {
+        assertDumpContains(getDump(), "sUidMigrationEnabledBpfBoolean: true");
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetPermListForUids_BeforeT()
+            throws Exception {
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(MOCK_USER1.getUid(TEST_APP_ID_1),
+                TRAFFIC_PERMISSION_UPDATE_DEVICE_STATS);
+        permissionsUids.put(MOCK_USER2.getUid(TEST_APP_ID_1), TRAFFIC_PERMISSION_INTERNET);
+        mBpfNetMaps.setPermListForUids(permissionsUids);
+        verify(mNetd).trafficSetNetPermForUids(
+                TRAFFIC_PERMISSION_UPDATE_DEVICE_STATS | PERMISSION_INTERNET,
+                new int[]{TEST_APP_ID_1});
+        verify(mDeps).writeStats(
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_NETD_SET_PERMISSION_UPDATE_DEVICE_STATS,
+                1 /* count */
+        );
+        verify(mDeps).writeStats(
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_NETD_SET_PERMISSION_INTERNET,
+                1 /* count */
+        );
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetPermListForUids_partialTrafficUninstalledPermission_BeforeT()
+            throws Exception {
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(MOCK_USER1.getUid(TEST_APP_ID_1),
+                TRAFFIC_PERMISSION_INTERNET);
+        permissionsUids.put(MOCK_USER2.getUid(TEST_APP_ID_1), TRAFFIC_PERMISSION_UNINSTALLED);
+        mBpfNetMaps.setPermListForUids(permissionsUids);
+        verify(mNetd).trafficSetNetPermForUids(
+                TRAFFIC_PERMISSION_INTERNET, new int[]{TEST_APP_ID_1});
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetPermListForUids_invalidPermissionIgnored_BeforeT()
+            throws Exception {
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(MOCK_USER1.getUid(TEST_APP_ID_1),
+                TRAFFIC_PERMISSION_ACCESS_LOCAL_NETWORK);
+        permissionsUids.put(MOCK_USER2.getUid(TEST_APP_ID_1), TRAFFIC_PERMISSION_INTERNET);
+        mBpfNetMaps.setPermListForUids(permissionsUids);
+        verify(mNetd, never()).trafficSetNetPermForUids(anyInt(), any());
+        verify(mDeps).terribleError(
+                CORE_NETWORKING_TERRIBLE_ERROR_OCCURRED__ERROR_TYPE__TYPE_INVALID_NET_PERM_SENT_TO_NETD
+        );
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetPermListForUids_allTrafficUninstalledPermission_BeforeT()
+            throws Exception {
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(MOCK_USER1.getUid(TEST_APP_ID_1), TRAFFIC_PERMISSION_UNINSTALLED);
+        permissionsUids.put(MOCK_USER2.getUid(TEST_APP_ID_1), TRAFFIC_PERMISSION_UNINSTALLED);
+        mBpfNetMaps.setPermListForUids(permissionsUids);
+        verify(mNetd).trafficSetNetPermForUids(
+            TRAFFIC_PERMISSION_UNINSTALLED, new int[]{TEST_APP_ID_1});
+        verify(mDeps).writeStats(
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_NETD_SET_PERMISSION_UNINSTALLED,
+                1 /* count */
+        );
+    }
+
+    @Test
+    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetPermListForUids_multipleAppIds_BeforeT() throws Exception {
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(MOCK_USER1.getUid(TEST_APP_ID_1), PERMISSION_INTERNET);
+        permissionsUids.put(MOCK_USER1.getUid(TEST_APP_ID_2),
+                TRAFFIC_PERMISSION_UPDATE_DEVICE_STATS);
+        mBpfNetMaps.setPermListForUids(permissionsUids);
+        verify(mNetd).trafficSetNetPermForUids(
+                PERMISSION_INTERNET, new int[]{TEST_APP_ID_1});
+        verify(mNetd).trafficSetNetPermForUids(
+                TRAFFIC_PERMISSION_UPDATE_DEVICE_STATS, new int[]{TEST_APP_ID_2});
+        verify(mDeps).writeStats(
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_NETD_SET_PERMISSION_INTERNET,
+                1 /* count */
+        );
+        verify(mDeps).writeStats(
+                CORE_NETWORKING_CRITICAL_COUNTS_EVENT_OCCURRED__EVENT_TYPE__CRITICAL_COUNTS_EVENT_TYPE_NETD_SET_PERMISSION_UPDATE_DEVICE_STATS,
+                1 /* count */
+        );
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testSetPermissionPropagationDisabled() throws Exception {
+        assertFalse(mPermissionPropagationEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = true)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testSetPermissionPropagationEnabled_uidMigrationDisabled() throws Exception {
+        assertFalse(mPermissionPropagationEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = true)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testSetPermissionPropagationEnabled() throws Exception {
+        assertTrue(mPermissionPropagationEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = true)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpPermissionPropagationMapEnabled() throws Exception {
+        assertDumpContains(getDump(),
+                "sPermissionPropagationEnabledMap: true");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = true)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpPermissionPropagationMap_uiMigrationDisabled() throws Exception {
+        assertDumpContains(getDump(),
+                "sPermissionPropagationEnabledMap: false");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpPermissionPropagationMapDisabled() throws Exception {
+        assertDumpContains(getDump(),
+                "sPermissionPropagationEnabledMap: false");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = false)
+    @FeatureFlag(name = FLAG_COLLECT_BETA_METRICS, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testSetLocalNetNoteOpsDisabled() throws Exception {
+        assertFalse(mLocalNetNoteOpsEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = true)
+    @FeatureFlag(name = FLAG_COLLECT_BETA_METRICS, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testSetLocalNetNoteOpsEnabled_accessLocalNetEnabled() throws Exception {
+        assertTrue(mLocalNetNoteOpsEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = false)
+    @FeatureFlag(name = FLAG_COLLECT_BETA_METRICS, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testSetLocalNetNoteOpsEnabled_collectBetaMetricsEnabled() throws Exception {
+        assertTrue(mLocalNetNoteOpsEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = true)
+    @FeatureFlag(name = FLAG_COLLECT_BETA_METRICS, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testSetLocalNetNoteOpsEnabled() throws Exception {
+        assertTrue(mLocalNetNoteOpsEnabledBpfBoolean.get());
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = true)
+    @FeatureFlag(name = FLAG_COLLECT_BETA_METRICS, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpLocalNetOpsConfigEnabled() throws Exception {
+        assertDumpContains(getDump(),
+                "sLocalNetNoteOpsEnabledBpfBoolean: true");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = true)
+    @FeatureFlag(name = FLAG_COLLECT_BETA_METRICS, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpLocalNetOpsConfig_localNetPermissionEnabled() throws Exception {
+        assertDumpContains(getDump(),
+                "sLocalNetNoteOpsEnabledBpfBoolean: true");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = false)
+    @FeatureFlag(name = FLAG_COLLECT_BETA_METRICS, enabled = true)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpLocalNetOpsConfig_collectBetaMetricsEnabled() throws Exception {
+        assertDumpContains(getDump(),
+                "sLocalNetNoteOpsEnabledBpfBoolean: true");
+    }
+
+    @Test
+    @FeatureFlag(name = FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED, enabled = false)
+    @FeatureFlag(name = FLAG_COLLECT_BETA_METRICS, enabled = false)
+    @IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDumpLocalNetOpsConfigDisabled() throws Exception {
+        assertDumpContains(getDump(),
+                "sLocalNetNoteOpsEnabledBpfBoolean: false");
+    }
+
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetChunkPermListForUidsGrantPermission() throws Exception {
+
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_1, PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        permissionsUids.put(TEST_UID_2, PERMISSION_BIT_NO_INTERNET);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        assertEquals(
+            PERMISSION_BIT_ACCESS_LOCAL_NETWORK,
+            mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+        assertEquals(
+            PERMISSION_BIT_NO_INTERNET,
+            mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+        assertEquals(
+            PERMISSION_BIT_NONE, mBpfNetMaps.getChunkPermForUid(TEST_UID_NO_PERMISSION));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetChunkPermListForUidsGrantMultiplePermissions() throws Exception {
+        final int permission = PERMISSION_BIT_NO_INTERNET
+                | PERMISSION_BIT_ACCESS_LOCAL_NETWORK;
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_2, permission);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        assertEquals(
+            permission, mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetChunkPermListForUidsRevokeMultiplePermission() throws Exception {
+        final int permission = PERMISSION_BIT_NO_INTERNET
+                | PERMISSION_BIT_ACCESS_LOCAL_NETWORK;
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_1, permission);
+        permissionsUids.put(TEST_UID_2, permission);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        SparseIntArray revokePermissions = new SparseIntArray();
+        revokePermissions.put(TEST_UID_2, PERMISSION_BIT_NONE);
+        mBpfNetMaps.setChunkPermListForUids(revokePermissions);
+
+        assertEquals(
+            permission, mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+        assertEquals(
+            PERMISSION_BIT_NONE, mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetChunkPermListForUidsRevokeOnePermission() throws Exception {
+        final int permission = PERMISSION_BIT_NO_INTERNET
+                | PERMISSION_BIT_ACCESS_LOCAL_NETWORK;
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_1, permission);
+        permissionsUids.put(TEST_UID_2, permission);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        SparseIntArray noInternetPermissionOnly = new SparseIntArray();
+        noInternetPermissionOnly.put(TEST_UID_2, PERMISSION_BIT_NO_INTERNET);
+        mBpfNetMaps.setChunkPermListForUids(noInternetPermissionOnly);
+
+        assertEquals(
+            permission, mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+        assertEquals(
+            PERMISSION_BIT_NO_INTERNET, mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetChunkPermListForUidsDuplicatedGrantSilentlyIgnored() throws Exception {
+        final int permission = PERMISSION_BIT_NO_INTERNET
+                | PERMISSION_BIT_ACCESS_LOCAL_NETWORK;
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_1, permission);
+        permissionsUids.put(TEST_UID_2, permission);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        assertEquals(
+            permission, mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+        assertEquals(
+            permission, mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        assertEquals(
+            permission, mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+        assertEquals(
+            permission, mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetChunkPermListForUidsDuplicatedRevokeSilentlyIgnored() throws Exception {
+        final int permission = PERMISSION_BIT_NO_INTERNET
+                | PERMISSION_BIT_ACCESS_LOCAL_NETWORK;
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_1, permission);
+        permissionsUids.put(TEST_UID_2, permission);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+        assertEquals(
+            permission, mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+        assertEquals(
+            permission, mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+
+        SparseIntArray revokePermissions = new SparseIntArray();
+        revokePermissions.put(TEST_UID_1, PERMISSION_BIT_NONE);
+        revokePermissions.put(TEST_UID_2, PERMISSION_BIT_NONE);
+        mBpfNetMaps.setChunkPermListForUids(revokePermissions);
+        assertEquals(
+            PERMISSION_BIT_NONE, mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+        assertEquals(
+            PERMISSION_BIT_NONE, mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+
+        mBpfNetMaps.setChunkPermListForUids(revokePermissions);
+        assertEquals(
+            PERMISSION_BIT_NONE, mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+        assertEquals(
+            PERMISSION_BIT_NONE, mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetPermListForUidsConvertUnintalledPermission() throws Exception {
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_2, TRAFFIC_PERMISSION_UNINSTALLED);
+        mBpfNetMaps.setPermListForUids(permissionsUids);
+
+        assertEquals(
+            PERMISSION_BIT_NONE, mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetPermListForUidsConvertUpdateDeviceStatsPermission() throws Exception {
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_2, TRAFFIC_PERMISSION_UPDATE_DEVICE_STATS);
+        mBpfNetMaps.setPermListForUids(permissionsUids);
+
+        assertEquals(
+            PERMISSION_BIT_UPDATE_DEVICE_STATS | PERMISSION_BIT_NO_INTERNET,
+            mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = false)
+    public void testSetPermListForUids_uidMigrationDisabled() throws Exception {
+        final int permission = TRAFFIC_PERMISSION_INTERNET
+                | TRAFFIC_PERMISSION_ACCESS_LOCAL_NETWORK;
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_1, permission);
+        permissionsUids.put(TEST_UID_2, permission);
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBpfNetMaps.setPermListForUids(permissionsUids));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = false)
+    public void testSetChunkPermListForUids_uidMigrationDisabled() throws Exception {
+        final int permission = PERMISSION_BIT_NO_INTERNET
+                | PERMISSION_BIT_ACCESS_LOCAL_NETWORK;
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_1, permission);
+        permissionsUids.put(TEST_UID_2, permission);
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBpfNetMaps.setChunkPermListForUids(permissionsUids));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testDumpUidPermissionChunkMap() throws Exception {
+        int permission = PERMISSION_BIT_NO_INTERNET | PERMISSION_BIT_ACCESS_LOCAL_NETWORK;
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID, permission);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+        assertDumpContains(
+            getDump(),
+            TEST_UID + " PERMISSION_ACCESS_LOCAL_NETWORK");
+
+        permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID, PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+        assertDumpContains(
+            getDump(),
+            TEST_UID + " PERMISSION_ACCESS_LOCAL_NETWORK PERMISSION_INTERNET");
+
+        permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID, PERMISSION_BIT_NO_INTERNET);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+        assertDumpContains(
+            getDump(),
+            TEST_UID + " PERMISSION_NONE");
+
+        permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID, PERMISSION_BIT_NO_INTERNET
+                | PERMISSION_BIT_USE_LOOPBACK_INTERFACE
+                | PERMISSION_BIT_INTERACT_ACROSS_USERS_OR_PROFILES);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+        assertDumpContains(
+                getDump(),
+                TEST_UID + " PERMISSION_USE_LOOPBACK_INTERFACE"
+                        + " PERMISSION_INTERACT_ACROSS_USERS_OR_PROFILES");
+
+        permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID, PERMISSION_BIT_NO_INTERNET
+                | PERMISSION_BIT_FORCE_USE_LOOPBACK_INTERFACE
+                | PERMISSION_BIT_INTERACT_ACROSS_USERS_FULL);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+        assertDumpContains(
+                getDump(),
+                TEST_UID + " PERMISSION_FORCE_USE_LOOPBACK_INTERFACE"
+                        + " PERMISSION_INTERACT_ACROSS_USERS_FULL");
+    }
+
+    @Test
+    public void testSetL4SDisabled() {
+        assumeTrue(mBpfNetMaps.isL4sSupported());
+        mBpfNetMaps.setL4sEnabled(false);
+        assertFalse(mBpfNetMaps.isL4sEnabled());
+    }
+
+    @Test
+    public void testSetL4SEnabled() {
+        assumeTrue(mBpfNetMaps.isL4sSupported());
+        mBpfNetMaps.setL4sEnabled(true);
+        assertTrue(mBpfNetMaps.isL4sEnabled());
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testRemoveUserIdFromUidPermissionChunkMap_uidMigrationEnabled() throws Exception {
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_1, PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        permissionsUids.put(TEST_SECONDARY_USER_UID, PERMISSION_BIT_NO_INTERNET);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        mBpfNetMaps.removePermissionsForUserId(MOCK_USER_ID2);
+
+        assertEquals(
+            PERMISSION_BIT_ACCESS_LOCAL_NETWORK,
+            mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+        assertEquals(
+            PERMISSION_BIT_NONE, mBpfNetMaps.getChunkPermForUid(TEST_SECONDARY_USER_UID));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = false)
+    public void testRemoveUserIdFromUidPermissionChunkMap_uidMigrationDisabled() throws Exception {
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBpfNetMaps.removePermissionsForUserId(MOCK_USER_ID2));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testRemoveAppIdFromUidPermissionChunkMap_uidMigrationEnabled() throws Exception {
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID_1, PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        permissionsUids.put(TEST_UID_2, PERMISSION_BIT_ACCESS_LOCAL_NETWORK);
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        mBpfNetMaps.removePermissionsForAppId(TEST_APP_ID_1);
+
+        assertEquals(
+            PERMISSION_BIT_NONE, mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+        assertEquals(
+            PERMISSION_BIT_ACCESS_LOCAL_NETWORK,
+            mBpfNetMaps.getChunkPermForUid(TEST_UID_2));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = false)
+    public void testRemoveAppIdFromUidPermissionChunkMap_uidMigrationDisabled() throws Exception {
+        assertThrows(UnsupportedOperationException.class,
+                () -> mBpfNetMaps.removePermissionsForAppId(TEST_APP_ID_1));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.BAKLAVA)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetChunkPermListForUids_GrantsLoopbackPermission() throws Exception {
+
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID, PERMISSION_BIT_USE_LOOPBACK_INTERFACE);
+        permissionsUids.put(TEST_UID_1, PERMISSION_BIT_FORCE_USE_LOOPBACK_INTERFACE);
+
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        assertEquals(
+                PERMISSION_BIT_USE_LOOPBACK_INTERFACE,
+                mBpfNetMaps.getChunkPermForUid(TEST_UID));
+        assertEquals(
+                PERMISSION_BIT_FORCE_USE_LOOPBACK_INTERFACE,
+                mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+    }
+
+    @Test
+    @IgnoreUpTo(Build.VERSION_CODES.BAKLAVA)
+    @FeatureFlag(name = FLAG_PERMISSION_MAP_UID_MIGRATION, enabled = true)
+    public void testSetChunkPermListForUids_GrantsCrossUserProfilePermission() throws Exception {
+
+        SparseIntArray permissionsUids = new SparseIntArray();
+        permissionsUids.put(TEST_UID, PERMISSION_BIT_INTERACT_ACROSS_USERS_FULL);
+        permissionsUids.put(TEST_UID_1, PERMISSION_BIT_INTERACT_ACROSS_USERS_OR_PROFILES);
+
+        mBpfNetMaps.setChunkPermListForUids(permissionsUids);
+
+        assertEquals(
+                PERMISSION_BIT_INTERACT_ACROSS_USERS_FULL,
+                mBpfNetMaps.getChunkPermForUid(TEST_UID));
+        assertEquals(
+                PERMISSION_BIT_INTERACT_ACROSS_USERS_OR_PROFILES,
+                mBpfNetMaps.getChunkPermForUid(TEST_UID_1));
+    }
+}

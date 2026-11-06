@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.google.android.pixel.pixelstats"
+  name: "enable_hardware_component_info_reporting"
+  state: ENABLED
+  permission: READ_ONLY
+}

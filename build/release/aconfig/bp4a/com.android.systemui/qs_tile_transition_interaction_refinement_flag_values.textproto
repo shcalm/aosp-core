@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "qs_tile_transition_interaction_refinement"
+  state: ENABLED
+  permission: READ_ONLY
+}

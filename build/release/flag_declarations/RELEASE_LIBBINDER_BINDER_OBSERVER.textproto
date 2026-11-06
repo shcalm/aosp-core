@@ -1,0 +1,6 @@
+name: "RELEASE_LIBBINDER_BINDER_OBSERVER"
+namespace: "system_performance"
+description: "Enables binder observer in libbinder"
+workflow: LAUNCH
+containers: "system"
+

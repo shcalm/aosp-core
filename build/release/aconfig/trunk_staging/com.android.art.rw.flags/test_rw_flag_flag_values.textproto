@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "test_rw_flag"
+  state: ENABLED
+  permission: READ_WRITE
+}

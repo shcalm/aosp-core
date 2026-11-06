@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_fix_clear_cises_in_the_cig"
+  state: ENABLED
+  permission: READ_ONLY
+}

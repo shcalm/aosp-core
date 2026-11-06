@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hangup_callstate_simulated_ringing"
+  state: ENABLED
+  permission: READ_ONLY
+}

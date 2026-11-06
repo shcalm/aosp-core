@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "change_rtt_to_audio"
+  state: ENABLED
+  permission: READ_ONLY
+}

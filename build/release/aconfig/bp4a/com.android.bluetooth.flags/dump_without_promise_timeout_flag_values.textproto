@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "dump_without_promise_timeout"
+  state: ENABLED
+  permission: READ_ONLY
+}

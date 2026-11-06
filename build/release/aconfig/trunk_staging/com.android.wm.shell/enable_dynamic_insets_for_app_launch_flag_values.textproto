@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "enable_dynamic_insets_for_app_launch"
+  state: ENABLED
+  permission: READ_WRITE
+}

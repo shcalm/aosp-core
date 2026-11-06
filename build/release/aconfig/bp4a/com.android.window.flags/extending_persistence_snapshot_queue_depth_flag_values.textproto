@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "extending_persistence_snapshot_queue_depth"
+  state: ENABLED
+  permission: READ_ONLY
+}

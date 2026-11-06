@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_release_backup_schema_file_if_overlay_present"
+  state: ENABLED
+  permission: READ_WRITE
+}

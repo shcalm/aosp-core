@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.usb.flags"
+  name: "enable_usbdp_utils_library"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "allow_to_enter_dark_theme_settings_when_battery_saver"
+  state: ENABLED
+  permission: READ_ONLY
+}

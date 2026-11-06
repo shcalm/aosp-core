@@ -1,0 +1,8 @@
+name: "RELEASE_PACKAGE_NOTO_SERIF_GUJARATI_VERSION"
+namespace: "text"
+description: "Version of the Noto Serif Gujarati font."
+value: {
+  string_value: "2.002"
+}
+workflow: PREBUILT
+containers: "system"

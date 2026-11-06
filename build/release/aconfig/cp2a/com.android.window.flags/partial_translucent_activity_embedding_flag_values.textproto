@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "partial_translucent_activity_embedding"
+  state: ENABLED
+  permission: READ_ONLY
+}

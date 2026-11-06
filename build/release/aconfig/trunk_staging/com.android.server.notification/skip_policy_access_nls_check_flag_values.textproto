@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "skip_policy_access_nls_check"
+  state: ENABLED
+  permission: READ_WRITE
+}

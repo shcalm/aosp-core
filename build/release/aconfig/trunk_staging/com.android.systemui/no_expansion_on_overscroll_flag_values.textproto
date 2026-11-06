@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "no_expansion_on_overscroll"
+  state: ENABLED
+  permission: READ_WRITE
+}

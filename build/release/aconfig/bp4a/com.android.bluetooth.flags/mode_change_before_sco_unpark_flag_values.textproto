@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "mode_change_before_sco_unpark"
+  state: ENABLED
+  permission: READ_ONLY
+}

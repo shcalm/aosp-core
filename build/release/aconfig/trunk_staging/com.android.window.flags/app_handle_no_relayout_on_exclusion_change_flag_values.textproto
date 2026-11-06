@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "app_handle_no_relayout_on_exclusion_change"
+  state: ENABLED
+  permission: READ_WRITE
+}

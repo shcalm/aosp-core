@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "gatt_failure_callback_on_cancel"
+  state: ENABLED
+  permission: READ_WRITE
+}

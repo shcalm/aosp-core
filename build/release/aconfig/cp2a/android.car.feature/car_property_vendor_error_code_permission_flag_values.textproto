@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "car_property_vendor_error_code_permission"
+  state: ENABLED
+  permission: READ_ONLY
+}

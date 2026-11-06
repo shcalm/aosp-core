@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "prevent_ime_startup_bypassed_apps"
+  state: ENABLED
+  permission: READ_ONLY
+}

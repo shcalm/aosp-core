@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "native_looper_skip_epoll_wait_for_zero_timeout"
+  state: ENABLED
+  permission: READ_WRITE
+}

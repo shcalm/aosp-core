@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "enable_magnification_mode_chooser_fragment"
+  state: ENABLED
+  permission: READ_WRITE
+}

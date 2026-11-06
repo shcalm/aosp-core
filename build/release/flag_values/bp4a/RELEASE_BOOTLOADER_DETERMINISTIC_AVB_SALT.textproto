@@ -1,0 +1,4 @@
+name: "RELEASE_BOOTLOADER_DETERMINISTIC_AVB_SALT"
+value {
+  bool_value: true
+}

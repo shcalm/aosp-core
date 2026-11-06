@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "strict_zen_rule_component_validation"
+  state: ENABLED
+  permission: READ_ONLY
+}

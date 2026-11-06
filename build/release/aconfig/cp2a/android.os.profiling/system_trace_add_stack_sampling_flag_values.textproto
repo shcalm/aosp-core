@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.profiling"
+  name: "system_trace_add_stack_sampling"
+  state: ENABLED
+  permission: READ_ONLY
+}

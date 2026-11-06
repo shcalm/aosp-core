@@ -1,0 +1,4 @@
+name: "RELEASE_LIBBINDER_BPBINDER_DECSTRONG_LAST"
+value {
+  bool_value: true
+}

@@ -1,0 +1,11 @@
+name: "RELEASE_BALANCE_JAVAC_SRCJAR_SHARDS"
+namespace: "build"
+description: "Whether to balance javac srcjar shards"
+workflow: LAUNCH
+value: {
+  bool_value: false
+}
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

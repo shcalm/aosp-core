@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "enable_inset_focus_rings"
+  state: ENABLED
+  permission: READ_ONLY
+}

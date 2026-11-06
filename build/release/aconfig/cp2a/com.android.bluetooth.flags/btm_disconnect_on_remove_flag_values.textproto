@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "btm_disconnect_on_remove"
+  state: ENABLED
+  permission: READ_ONLY
+}

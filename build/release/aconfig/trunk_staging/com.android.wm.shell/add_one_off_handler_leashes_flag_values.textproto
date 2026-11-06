@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "add_one_off_handler_leashes"
+  state: ENABLED
+  permission: READ_WRITE
+}

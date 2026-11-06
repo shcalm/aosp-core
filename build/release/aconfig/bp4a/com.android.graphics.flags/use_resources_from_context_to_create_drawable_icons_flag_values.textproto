@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.flags"
+  name: "use_resources_from_context_to_create_drawable_icons"
+  state: ENABLED
+  permission: READ_ONLY
+}

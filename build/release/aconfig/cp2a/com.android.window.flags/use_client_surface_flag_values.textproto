@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "use_client_surface"
+  state: ENABLED
+  permission: READ_ONLY
+}

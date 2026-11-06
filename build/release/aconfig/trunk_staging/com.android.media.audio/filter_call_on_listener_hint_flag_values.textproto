@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audio"
+  name: "filter_call_on_listener_hint"
+  state: ENABLED
+  permission: READ_WRITE
+}

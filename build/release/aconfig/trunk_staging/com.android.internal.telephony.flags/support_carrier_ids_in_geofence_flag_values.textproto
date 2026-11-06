@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "support_carrier_ids_in_geofence"
+  state: ENABLED
+  permission: READ_WRITE
+}

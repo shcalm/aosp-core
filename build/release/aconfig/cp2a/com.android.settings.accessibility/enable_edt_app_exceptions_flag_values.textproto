@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "enable_edt_app_exceptions"
+  state: ENABLED
+  permission: READ_ONLY
+}

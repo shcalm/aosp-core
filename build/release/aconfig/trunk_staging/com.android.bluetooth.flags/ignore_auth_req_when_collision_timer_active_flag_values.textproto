@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "ignore_auth_req_when_collision_timer_active"
+  state: ENABLED
+  permission: READ_WRITE
+}

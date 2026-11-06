@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.tracing"
+  name: "imetracker_protolog"
+  state: ENABLED
+  permission: READ_ONLY
+}

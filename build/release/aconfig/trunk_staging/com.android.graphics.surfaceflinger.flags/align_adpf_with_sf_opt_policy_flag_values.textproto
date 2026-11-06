@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "align_adpf_with_sf_opt_policy"
+  state: ENABLED
+  permission: READ_WRITE
+}

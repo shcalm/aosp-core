@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "set_locale_for_text_view"
+  state: ENABLED
+  permission: READ_WRITE
+}

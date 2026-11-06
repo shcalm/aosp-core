@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "fix_input_anr_by_send_message_exception"
+  state: ENABLED
+  permission: READ_ONLY
+}

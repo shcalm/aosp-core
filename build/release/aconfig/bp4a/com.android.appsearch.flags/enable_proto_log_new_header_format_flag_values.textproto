@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_proto_log_new_header_format"
+  state: ENABLED
+  permission: READ_ONLY
+}

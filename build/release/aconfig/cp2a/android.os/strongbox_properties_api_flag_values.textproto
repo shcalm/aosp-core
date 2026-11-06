@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "strongbox_properties_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.aconfig_new_storage"
+  name: "optimize_boot_copy_creation"
+  state: ENABLED
+  permission: READ_ONLY
+}

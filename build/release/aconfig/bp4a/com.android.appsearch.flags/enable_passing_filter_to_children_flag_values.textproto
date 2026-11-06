@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_passing_filter_to_children"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "proximity_ranging_impl"
+  state: ENABLED
+  permission: READ_WRITE
+}

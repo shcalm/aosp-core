@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "ensure_ims_feature_order"
+  state: ENABLED
+  permission: READ_ONLY
+}

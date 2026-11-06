@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "launcher_proxy_service_short_reconnect"
+  state: ENABLED
+  permission: READ_WRITE
+}

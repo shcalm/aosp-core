@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.platform.flags"
+  name: "mdns_improvement_for_25q2"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "transition_to_bouncer_while_switching_users"
+  state: ENABLED
+  permission: READ_WRITE
+}

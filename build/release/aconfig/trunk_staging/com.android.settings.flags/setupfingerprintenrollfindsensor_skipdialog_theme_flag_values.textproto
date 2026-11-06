@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "setupfingerprintenrollfindsensor_skipdialog_theme"
+  state: ENABLED
+  permission: READ_WRITE
+}

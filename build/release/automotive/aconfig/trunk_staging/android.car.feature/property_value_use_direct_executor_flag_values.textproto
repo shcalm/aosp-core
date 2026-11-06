@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "property_value_use_direct_executor"
+  state: ENABLED
+  permission: READ_WRITE
+}

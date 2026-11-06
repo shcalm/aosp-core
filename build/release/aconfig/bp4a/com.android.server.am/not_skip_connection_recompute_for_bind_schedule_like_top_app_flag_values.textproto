@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "not_skip_connection_recompute_for_bind_schedule_like_top_app"
+  state: ENABLED
+  permission: READ_ONLY
+}

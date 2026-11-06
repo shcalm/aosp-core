@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "invalidate_hci_handle_on_acl_removal"
+  state: ENABLED
+  permission: READ_ONLY
+}

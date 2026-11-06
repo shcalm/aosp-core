@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "show_close_button_on_taskview_hover"
+  state: ENABLED
+  permission: READ_WRITE
+}

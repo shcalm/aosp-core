@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.net.flags"
+  name: "mdns_advertising_improvement"
+  state: ENABLED
+  permission: READ_ONLY
+}

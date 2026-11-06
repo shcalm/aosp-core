@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.job"
+  name: "fix_deadline_delay_job_stall"
+  state: ENABLED
+  permission: READ_WRITE
+}

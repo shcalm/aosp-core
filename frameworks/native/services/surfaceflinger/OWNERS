@@ -1,0 +1,10 @@
+# Bug component: 1075131
+
+include platform/frameworks/base:/graphics/java/android/graphics/CORE_GRAPHICS_OWNERS
+
+# Additional owners
+melodymhsu@google.com
+pdwilliams@google.com
+racarr@google.com
+sukoo@google.com
+vishnun@google.com

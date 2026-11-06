@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "aapm_feature_usb_data_protection_delay_retry"
+  state: ENABLED
+  permission: READ_ONLY
+}

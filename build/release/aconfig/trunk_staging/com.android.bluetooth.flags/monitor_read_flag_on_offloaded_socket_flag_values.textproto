@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "monitor_read_flag_on_offloaded_socket"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.networkstack.flags"
+  name: "network_monitor_redact_venue_info_url"
+  state: ENABLED
+  permission: READ_WRITE
+}

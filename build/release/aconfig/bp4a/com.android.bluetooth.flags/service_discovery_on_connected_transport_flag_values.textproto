@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "service_discovery_on_connected_transport"
+  state: ENABLED
+  permission: READ_ONLY
+}

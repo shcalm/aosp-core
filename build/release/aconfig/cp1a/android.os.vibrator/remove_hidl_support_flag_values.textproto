@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.vibrator"
+  name: "remove_hidl_support"
+  state: ENABLED
+  permission: READ_ONLY
+}

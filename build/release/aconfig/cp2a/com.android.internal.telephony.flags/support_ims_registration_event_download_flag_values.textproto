@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "support_ims_registration_event_download"
+  state: ENABLED
+  permission: READ_ONLY
+}

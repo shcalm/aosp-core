@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.profiling"
+  name: "old_files_cleanup"
+  state: ENABLED
+  permission: READ_ONLY
+}

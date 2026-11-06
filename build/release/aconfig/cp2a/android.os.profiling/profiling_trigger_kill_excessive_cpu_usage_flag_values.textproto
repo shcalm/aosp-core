@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.profiling"
+  name: "profiling_trigger_kill_excessive_cpu_usage"
+  state: ENABLED
+  permission: READ_ONLY
+}

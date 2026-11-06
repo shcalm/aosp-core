@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.notification"
+  name: "listener_hint_exempt_packages"
+  state: ENABLED
+  permission: READ_ONLY
+}

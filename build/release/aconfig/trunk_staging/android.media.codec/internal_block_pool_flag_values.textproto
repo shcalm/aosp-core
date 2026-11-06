@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.codec"
+  name: "internal_block_pool"
+  state: ENABLED
+  permission: READ_WRITE
+}

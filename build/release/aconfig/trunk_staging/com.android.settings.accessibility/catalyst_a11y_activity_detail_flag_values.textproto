@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "catalyst_a11y_activity_detail"
+  state: ENABLED
+  permission: READ_WRITE
+}

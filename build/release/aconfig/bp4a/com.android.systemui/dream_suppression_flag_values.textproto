@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "dream_suppression"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "move_set_screen_lock_dialog_to_settings_app"
+  state: ENABLED
+  permission: READ_WRITE
+}

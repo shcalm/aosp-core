@@ -1,0 +1,17 @@
+# Bug component: 99142
+# This file is included by several other projects as the list of people
+# approving build related projects.
+# LINT.IfChange
+
+# AMER
+ccross@android.com
+colefaust@google.com
+dwillemsen@google.com
+jihoonkang@google.com
+lamontjones@google.com
+mrziwang@google.com
+spandandas@google.com
+weiwli@google.com
+yudiliu@google.com
+
+# LINT.ThenChange(OWNERS_lastresort)

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.usage"
+  name: "add_report_event_metrics"
+  state: ENABLED
+  permission: READ_WRITE
+}

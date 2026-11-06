@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "desktop_av_controls_popup"
+  state: ENABLED
+  permission: READ_ONLY
+}

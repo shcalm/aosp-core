@@ -1,0 +1,90 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "os/thread.h"
+
+#include <bluetooth/log.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <sys/syscall.h>
+#include <unistd.h>
+
+#include <cerrno>
+#include <cstring>
+
+namespace bluetooth {
+namespace os {
+
+namespace {
+constexpr int kRealTimeFifoSchedulingPriority = 1;
+}
+
+Thread::Thread(const std::string& name, const Priority priority, std::promise<void> start_promise)
+    : name_(name),
+      reactor_(),
+      running_thread_(&Thread::run, this, std::move(start_promise)),
+      linux_tid_(-1),
+      priority_(priority) {}
+
+void Thread::run(std::promise<void> start_promise) {
+  pthread_setname_np(pthread_self(), name_.c_str());
+  linux_tid_ = static_cast<pid_t>(syscall(SYS_gettid));
+  if (priority_ == Priority::REAL_TIME) {
+    struct sched_param rt_params = {.sched_priority = kRealTimeFifoSchedulingPriority};
+    int rc;
+    RUN_NO_INTR(rc = sched_setscheduler(linux_tid_, SCHED_FIFO, &rt_params));
+    if (rc != 0) {
+      priority_ =
+              Priority::NORMAL;  // set to NORMAL if we are unable to set the priority to REAL_TIME
+      log::error("unable to set SCHED_FIFO priority: {}", strerror(errno));
+    }
+  }
+  start_promise.set_value();
+  log::info("Thread: {} started with tid: {}", name_, linux_tid_);
+
+  reactor_.Run();
+}
+
+Thread::~Thread() { Stop(); }
+
+bool Thread::Stop() {
+  std::lock_guard<std::mutex> lock(mutex_);
+  log::assert_that(std::this_thread::get_id() != running_thread_.get_id(),
+                   "assert failed: std::this_thread::get_id() != running_thread_.get_id()");
+
+  if (!running_thread_.joinable()) {
+    return false;
+  }
+  reactor_.Stop();
+  running_thread_.join();
+  return true;
+}
+
+void Thread::Abort() {
+  /* Send SIGABRT, this will cause thread to print it's stacktrace in logcat and crash */
+  pthread_kill(running_thread_.native_handle(), SIGABRT);
+}
+
+bool Thread::IsSameThread() const { return std::this_thread::get_id() == running_thread_.get_id(); }
+
+Reactor* Thread::GetReactor() const { return &reactor_; }
+
+std::string Thread::GetThreadName() const { return name_; }
+
+std::string Thread::ToString() const { return "Thread " + name_; }
+
+}  // namespace os
+}  // namespace bluetooth

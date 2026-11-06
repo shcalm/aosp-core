@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "communal_shade_touch_handling_fixes"
+  state: ENABLED
+  permission: READ_ONLY
+}

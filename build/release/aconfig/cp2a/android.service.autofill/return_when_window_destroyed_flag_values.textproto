@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "return_when_window_destroyed"
+  state: ENABLED
+  permission: READ_ONLY
+}

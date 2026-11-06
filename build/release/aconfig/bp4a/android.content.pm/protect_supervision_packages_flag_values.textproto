@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "protect_supervision_packages"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.policy"
+  name: "bug_toasts_on_top_of_bubble"
+  state: ENABLED
+  permission: READ_WRITE
+}

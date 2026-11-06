@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "hid_bluetooth_wakeup"
+  state: ENABLED
+  permission: READ_WRITE
+}

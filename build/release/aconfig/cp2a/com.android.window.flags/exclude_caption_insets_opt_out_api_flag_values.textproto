@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "exclude_caption_insets_opt_out_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

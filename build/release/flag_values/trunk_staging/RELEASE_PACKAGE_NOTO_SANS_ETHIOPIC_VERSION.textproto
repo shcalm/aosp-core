@@ -1,0 +1,4 @@
+name: "RELEASE_PACKAGE_NOTO_SANS_ETHIOPIC_VERSION"
+value {
+  string_value: "2.102"
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "reduce_unnecessary_measure"
+  state: ENABLED
+  permission: READ_ONLY
+}

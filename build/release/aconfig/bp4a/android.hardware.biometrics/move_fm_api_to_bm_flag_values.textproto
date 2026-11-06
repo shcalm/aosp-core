@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.biometrics"
+  name: "move_fm_api_to_bm"
+  state: ENABLED
+  permission: READ_ONLY
+}

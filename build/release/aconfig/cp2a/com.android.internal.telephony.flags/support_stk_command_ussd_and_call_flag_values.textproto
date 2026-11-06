@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "support_stk_command_ussd_and_call"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "skin_temp_oxygen_saturation_health_services_pregrant_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

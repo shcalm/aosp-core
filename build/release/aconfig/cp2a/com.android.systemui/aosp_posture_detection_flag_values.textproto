@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "aosp_posture_detection"
+  state: ENABLED
+  permission: READ_ONLY
+}

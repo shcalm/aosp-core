@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "enable_anr_warning_callback"
+  state: ENABLED
+  permission: READ_ONLY
+}

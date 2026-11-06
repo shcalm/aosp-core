@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "enable_device_address_as_identifier_in_media_router_2"
+  state: ENABLED
+  permission: READ_ONLY
+}

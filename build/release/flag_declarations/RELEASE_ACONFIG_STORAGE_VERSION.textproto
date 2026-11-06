@@ -1,0 +1,13 @@
+name: "RELEASE_ACONFIG_STORAGE_VERSION"
+namespace: "core_experiments_team_internal"
+description: "Control storage file version for aconfig flags."
+workflow: PREBUILT
+# Value 2 already launched via RELEASE_FINGERPRINT_ACONFIG_PACKAGES, so that is
+# the default. Moving forward, will launch versions via release config.
+value: {
+  string_value: "2"
+}
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

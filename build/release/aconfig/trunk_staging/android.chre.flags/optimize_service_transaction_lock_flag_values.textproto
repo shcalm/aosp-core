@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.chre.flags"
+  name: "optimize_service_transaction_lock"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "ignore_message_sms_disallowed"
+  state: ENABLED
+  permission: READ_ONLY
+}

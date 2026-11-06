@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "doze_time_tick_invalid_state_check"
+  state: ENABLED
+  permission: READ_WRITE
+}

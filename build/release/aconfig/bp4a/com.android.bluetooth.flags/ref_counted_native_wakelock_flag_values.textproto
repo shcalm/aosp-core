@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "ref_counted_native_wakelock"
+  state: ENABLED
+  permission: READ_ONLY
+}

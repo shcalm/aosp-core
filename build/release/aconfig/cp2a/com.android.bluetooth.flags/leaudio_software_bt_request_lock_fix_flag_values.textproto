@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_software_bt_request_lock_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

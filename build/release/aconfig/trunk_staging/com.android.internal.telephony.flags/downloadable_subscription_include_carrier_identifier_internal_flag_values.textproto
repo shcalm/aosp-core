@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "downloadable_subscription_include_carrier_identifier_internal"
+  state: ENABLED
+  permission: READ_WRITE
+}

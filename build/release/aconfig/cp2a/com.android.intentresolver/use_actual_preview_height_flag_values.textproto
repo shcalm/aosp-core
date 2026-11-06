@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.intentresolver"
+  name: "use_actual_preview_height"
+  state: ENABLED
+  permission: READ_ONLY
+}

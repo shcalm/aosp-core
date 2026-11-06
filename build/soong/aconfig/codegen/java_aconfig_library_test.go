@@ -1,0 +1,385 @@
+// Copyright 2023 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package codegen
+
+import (
+	"fmt"
+	"strconv"
+	"testing"
+
+	"android/soong/android"
+	"android/soong/java"
+)
+
+// Note: These tests cover the code in the java package. It'd be ideal of that code could
+// be in the aconfig package.
+
+// With the bp parameter that defines a my_module, make sure it has the LOCAL_ACONFIG_FILES entries
+func runJavaAndroidMkTest(t *testing.T, bp string) {
+	result := android.GroupFixturePreparers(
+		PrepareForTestWithAconfigBuildComponents,
+		java.PrepareForTestWithJavaDefaultModules,
+		android.PrepareForTestWithAndroidMk).
+		ExtendWithErrorHandler(android.FixtureExpectsNoErrors).
+		RunTestWithBp(t, bp+`
+			aconfig_declarations {
+				name: "my_aconfig_declarations_foo",
+				package: "com.example.package.foo",
+				container: "system",
+				srcs: ["foo.aconfig"],
+			}
+
+			java_aconfig_library {
+				name: "my_java_aconfig_library_foo",
+				aconfig_declarations: "my_aconfig_declarations_foo",
+			}
+
+			aconfig_declarations {
+				name: "my_aconfig_declarations_bar",
+				package: "com.example.package.bar",
+				container: "system",
+				srcs: ["bar.aconfig"],
+			}
+
+			java_aconfig_library {
+				name: "my_java_aconfig_library_bar",
+				aconfig_declarations: "my_aconfig_declarations_bar",
+			}
+		`)
+
+	module := result.ModuleForTests(t, "my_module", "android_common").Module()
+
+	info := android.AndroidMkInfoForTest(t, result.TestContext, module)
+
+	makeVar := info.PrimaryInfo.EntryMap["LOCAL_ACONFIG_FILES"]
+	android.EnsureListContainsSuffix(t, makeVar, "android_common/merged_aconfig_files/system/aconfig_merged.pb")
+}
+
+func TestAndroidMkJavaLibrary(t *testing.T) {
+	bp := `
+		java_library {
+			name: "my_module",
+			srcs: [
+				"src/foo.java",
+			],
+			static_libs: [
+				"my_java_aconfig_library_foo",
+				"my_java_aconfig_library_bar",
+			],
+			platform_apis: true,
+		}
+	`
+
+	runJavaAndroidMkTest(t, bp)
+}
+
+func TestAndroidMkAndroidApp(t *testing.T) {
+	bp := `
+		android_app {
+			name: "my_module",
+			srcs: [
+				"src/foo.java",
+			],
+			static_libs: [
+				"my_java_aconfig_library_foo",
+				"my_java_aconfig_library_bar",
+			],
+			platform_apis: true,
+		}
+	`
+
+	runJavaAndroidMkTest(t, bp)
+}
+
+func TestAndroidMkBinary(t *testing.T) {
+	bp := `
+		java_binary {
+			name: "my_module",
+			srcs: [
+				"src/foo.java",
+			],
+			static_libs: [
+				"my_java_aconfig_library_foo",
+				"my_java_aconfig_library_bar",
+			],
+			platform_apis: true,
+			main_class: "foo",
+		}
+	`
+
+	runJavaAndroidMkTest(t, bp)
+}
+
+func TestAndroidMkAndroidLibrary(t *testing.T) {
+	bp := `
+		android_library {
+			name: "my_module",
+			srcs: [
+				"src/foo.java",
+			],
+			static_libs: [
+				"my_java_aconfig_library_foo",
+				"my_java_aconfig_library_bar",
+			],
+			platform_apis: true,
+		}
+	`
+
+	runJavaAndroidMkTest(t, bp)
+}
+
+func TestAndroidMkBinaryThatLinksAgainstAar(t *testing.T) {
+	// Tests AndroidLibrary's propagation of flags through JavaInfo
+	bp := `
+		android_library {
+			name: "some_library",
+			srcs: [
+				"src/foo.java",
+			],
+			static_libs: [
+				"my_java_aconfig_library_foo",
+				"my_java_aconfig_library_bar",
+			],
+			platform_apis: true,
+		}
+		java_binary {
+			name: "my_module",
+			srcs: [
+				"src/bar.java",
+			],
+			static_libs: [
+				"some_library",
+			],
+			platform_apis: true,
+			main_class: "foo",
+		}
+	`
+
+	runJavaAndroidMkTest(t, bp)
+}
+
+func testCodegenMode(t *testing.T, bpMode string, ruleMode string) {
+	result := android.GroupFixturePreparers(
+		PrepareForTestWithAconfigBuildComponents,
+		java.PrepareForTestWithJavaDefaultModules).
+		ExtendWithErrorHandler(android.FixtureExpectsNoErrors).
+		RunTestWithBp(t, fmt.Sprintf(`
+			aconfig_declarations {
+				name: "my_aconfig_declarations",
+				package: "com.example.package",
+				container: "com.android.foo",
+				srcs: ["foo.aconfig"],
+				exportable: true,
+			}
+
+			java_aconfig_library {
+				name: "my_java_aconfig_library",
+				aconfig_declarations: "my_aconfig_declarations",
+				%s
+			}
+		`, bpMode))
+
+	module := result.ModuleForTests(t, "my_java_aconfig_library", "android_common")
+	rule := module.Rule("java_aconfig_library")
+	android.AssertStringEquals(t, "rule must contain test mode", rule.Args["mode"], ruleMode)
+}
+
+func testCodegenModeWithError(t *testing.T, bpMode string, err string) {
+	android.GroupFixturePreparers(
+		PrepareForTestWithAconfigBuildComponents,
+		java.PrepareForTestWithJavaDefaultModules).
+		ExtendWithErrorHandler(android.FixtureExpectsOneErrorPattern(err)).
+		RunTestWithBp(t, fmt.Sprintf(`
+			aconfig_declarations {
+				name: "my_aconfig_declarations",
+				package: "com.example.package",
+				container: "com.android.foo",
+				srcs: ["foo.aconfig"],
+			}
+
+			java_aconfig_library {
+				name: "my_java_aconfig_library",
+				aconfig_declarations: "my_aconfig_declarations",
+				%s
+			}
+		`, bpMode))
+}
+
+func TestDefaultProdMode(t *testing.T) {
+	testCodegenMode(t, "", "production")
+}
+
+func TestProdMode(t *testing.T) {
+	testCodegenMode(t, "mode: `production`,", "production")
+}
+
+func TestTestMode(t *testing.T) {
+	testCodegenMode(t, "mode: `test`,", "test")
+}
+
+func TestExportedMode(t *testing.T) {
+	testCodegenMode(t, "mode: `exported`,", "exported")
+}
+
+func TestForceReadOnlyMode(t *testing.T) {
+	testCodegenMode(t, "mode: `force-read-only`,", "force-read-only")
+}
+
+func TestUnsupportedMode(t *testing.T) {
+	testCodegenModeWithError(t, "mode: `unsupported`,", "mode: \"unsupported\" is not a supported mode")
+}
+
+func TestLegacyImplInterfaceRemoval(t *testing.T) {
+	testCases := []struct {
+		name                string
+		defaultAllowRemoval bool
+	}{
+		{
+			name:                "DefaultRemoveLegacyImpl",
+			defaultAllowRemoval: true,
+		},
+		{
+			name:                "DefaultPreserveLegacyImpl",
+			defaultAllowRemoval: false,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := android.GroupFixturePreparers(
+				PrepareForTestWithAconfigBuildComponents,
+				android.PrepareForTestWithBuildFlag(
+					"RELEASE_ACONFIG_DEFAULT_ALLOW_JAVA_IMPL_INTERFACE_REMOVAL",
+					strconv.FormatBool(tc.defaultAllowRemoval)),
+				java.PrepareForTestWithJavaDefaultModules).
+				ExtendWithErrorHandler(android.FixtureExpectsNoErrors).
+				RunTestWithBp(t, `
+					aconfig_declarations {
+						name: "my_aconfig_declarations",
+						package: "com.example.package",
+						container: "com.android.foo",
+						srcs: ["foo.aconfig"],
+					}
+
+					java_aconfig_library {
+						name: "my_library_default",
+						aconfig_declarations: "my_aconfig_declarations",
+					}
+					java_aconfig_library {
+						name: "my_library_no_legacy",
+						aconfig_declarations: "my_aconfig_declarations",
+						preserve_legacy_impl_interface: false,
+					}
+					java_aconfig_library {
+						name: "my_library_legacy",
+						aconfig_declarations: "my_aconfig_declarations",
+						preserve_legacy_impl_interface: true,
+					}
+				`)
+
+			rule := result.ModuleForTests(t, "my_library_default", "android_common").Rule("java_aconfig_library")
+			android.AssertStringEquals(t, "Legacy removal should reflect the release default",
+				rule.Args["allow_impl_interface_removal"], strconv.FormatBool(tc.defaultAllowRemoval))
+
+			rule_no_legacy := result.ModuleForTests(t, "my_library_no_legacy", "android_common").Rule("java_aconfig_library")
+			android.AssertStringEquals(t, "Legacy removal should reflect the release default even if explicit preservation disabled",
+				rule_no_legacy.Args["allow_impl_interface_removal"], strconv.FormatBool(tc.defaultAllowRemoval))
+
+			rule_legacy := result.ModuleForTests(t, "my_library_legacy", "android_common").Rule("java_aconfig_library")
+			android.AssertStringEquals(t, "Legacy impl preservation should always respected explicit target preservation",
+				rule_legacy.Args["allow_impl_interface_removal"], "false")
+		})
+	}
+}
+
+func TestMkEntriesMatchedContainer(t *testing.T) {
+	result := android.GroupFixturePreparers(
+		PrepareForTestWithAconfigBuildComponents,
+		java.PrepareForTestWithJavaDefaultModules,
+		android.PrepareForTestWithAndroidMk).
+		ExtendWithErrorHandler(android.FixtureExpectsNoErrors).
+		RunTestWithBp(t, `
+			aconfig_declarations {
+				name: "my_aconfig_declarations_foo",
+				package: "com.example.package.foo",
+				container: "system",
+				srcs: ["foo.aconfig"],
+			}
+
+			java_aconfig_library {
+				name: "my_java_aconfig_library_foo",
+				aconfig_declarations: "my_aconfig_declarations_foo",
+			}
+
+			aconfig_declarations {
+				name: "my_aconfig_declarations_bar",
+				package: "com.example.package.bar",
+				container: "system_ext",
+				srcs: ["bar.aconfig"],
+			}
+
+			java_aconfig_library {
+				name: "my_java_aconfig_library_bar",
+				aconfig_declarations: "my_aconfig_declarations_bar",
+			}
+
+			java_library {
+				name: "my_module",
+				srcs: [
+					"src/foo.java",
+				],
+				static_libs: [
+					"my_java_aconfig_library_foo",
+					"my_java_aconfig_library_bar",
+				],
+				platform_apis: true,
+			}
+		`)
+
+	module := result.ModuleForTests(t, "my_module", "android_common").Module()
+	info := android.AndroidMkInfoForTest(t, result.TestContext, module)
+	makeVar := info.PrimaryInfo.EntryMap["LOCAL_ACONFIG_FILES"]
+	android.EnsureListContainsSuffix(t, makeVar, "my_aconfig_declarations_foo/aconfig-cache.pb")
+}
+
+func TestCollectJavaAconfigLibraryPropertiesAddAconfigSrcs(t *testing.T) {
+	result := android.GroupFixturePreparers(
+		PrepareForTestWithAconfigBuildComponents,
+		java.PrepareForTestWithJavaDefaultModules).
+		ExtendWithErrorHandler(android.FixtureExpectsNoErrors).
+		RunTestWithBp(t, `
+			aconfig_declarations {
+				name: "my_aconfig_declarations",
+				package: "com.example.package",
+				container: "system",
+				srcs: ["foo.aconfig", "bar.aconfig"],
+			}
+
+			java_aconfig_library {
+				name: "my_java_aconfig_library",
+				aconfig_declarations: "my_aconfig_declarations",
+				mode: "force-read-only",
+			}
+		`)
+
+	module := result.ModuleForTests(t, "my_java_aconfig_library", "android_common").Module().(*java.GeneratedJavaLibraryModule)
+	info, _ := android.OtherModuleProvider(result.TestContext.OtherModuleProviderAdaptor(), module, android.CommonModuleInfoProvider)
+	ideInfo := *info.IdeInfo
+
+	expectedSrcs := []string{"foo.aconfig", "bar.aconfig"}
+	android.AssertStringEquals(t, "Aconfig.Package", "com.example.package", ideInfo.Aconfig.Package)
+	android.AssertStringEquals(t, "Aconfig.Container", "system", ideInfo.Aconfig.Container)
+	android.AssertDeepEquals(t, "Aconfig.Srcs", expectedSrcs, ideInfo.Aconfig.Srcs)
+	android.AssertStringEquals(t, "Aconfig.Mode", "force-read-only", ideInfo.Aconfig.Mode)
+}

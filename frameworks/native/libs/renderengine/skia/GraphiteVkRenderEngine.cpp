@@ -1,0 +1,312 @@
+/*
+ * Copyright 2024 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "GraphiteVkRenderEngine.h"
+
+#include "ShaderCache.h"
+
+#include <include/gpu/GpuTypes.h>
+#include <include/gpu/graphite/BackendSemaphore.h>
+#include <include/gpu/graphite/Context.h>
+#include <include/gpu/graphite/PrecompileContext.h>
+#include <include/gpu/graphite/Recording.h>
+#include <include/gpu/graphite/vk/VulkanGraphiteTypes.h>
+
+#include <android-base/properties.h>
+#include <android-base/stringprintf.h>
+#include <log/log_main.h>
+#include <sync/sync.h>
+
+#include <memory>
+#include <vector>
+
+#include <common/FlagManager.h>
+#include <common/Panopticon.h>
+#include <common/ThreadStateCrashLogger.h>
+#include "compat/GraphitePipelineManager.h"
+
+namespace android::renderengine::skia {
+
+using base::StringAppendF;
+using uirenderer::skiapipeline::ShaderCache;
+
+std::unique_ptr<GraphiteVkRenderEngine> GraphiteVkRenderEngine::create(
+        const RenderEngineCreationArgs& args) {
+    std::unique_ptr<GraphiteVkRenderEngine> engine(new GraphiteVkRenderEngine(args));
+    engine->ensureContextsCreated();
+
+    if (getVulkanInterface(false).isInitialized()) {
+        ALOGD("GraphiteVkRenderEngine::%s: successfully initialized GraphiteVkRenderEngine",
+              __func__);
+        return engine;
+    } else {
+        ALOGE("GraphiteVkRenderEngine::%s: could not create GraphiteVkRenderEngine. "
+              "Likely insufficient Vulkan support",
+              __func__);
+        return {};
+    }
+}
+
+GraphiteVkRenderEngine::~GraphiteVkRenderEngine() {
+    // Ensure precompilation has finished accessing resources (e.g. context, RuntimeEffectManager).
+    // TODO(b/380159947): interrupt precompilation loop on destruction, instead of waiting for it to
+    // finish?
+    if (mPrecompilePipelinesTask.joinable()) {
+        mPrecompilePipelinesTask.join();
+    }
+}
+
+std::future<void> GraphiteVkRenderEngine::primeCache(PrimeCacheConfig config) {
+    std::future<void> ret = {};
+
+    // Note: this sysprop is for local debugging only! Legacy draw-based prewarming remains enabled
+    // for Graphite TEMPORARILY, and this switch may be removed in the future without warning.
+    // TODO(b/380159947): remove this option, and force just precompilation to always be enabled.
+    if (base::GetBoolProperty("debug.renderengine.graphite.prewarm", true)) {
+        mUnprotectedPipelineCallbackHandler->beginWarmup();
+        mProtectedPipelineCallbackHandler->beginWarmup();
+
+        // Despite this returning a future, it is actually synchronous. This allows us to surround
+        // it with begin/end-Warmup calls in order to mark the warmed up Pipelines.
+        ret = SkiaVkRenderEngine::primeCache(config);
+
+        mUnprotectedPipelineCallbackHandler->endWarmup();
+        mProtectedPipelineCallbackHandler->endWarmup();
+    }
+
+    // Note: this sysprop is for local debugging only! Graphite's precompilation should stay
+    // ENABLED, and this switch may be removed in the future without warning.
+    if (base::GetBoolProperty("debug.renderengine.graphite.precompile", true)) {
+        std::unique_ptr<graphite::PrecompileContext> precompileContext =
+                mContext->graphiteContext()->makePrecompileContext();
+        mPrecompilePipelinesTask =
+                std::thread(GraphitePipelineManager::PrecompilePipelines,
+                            std::move(precompileContext), std::ref(mRuntimeEffectManager));
+    } else {
+        ALOGW("Graphite's background shader / pipeline precompilation was disabled!");
+    }
+
+    return ret;
+}
+
+// Graphite-specific function signature for fFinishedProc callback.
+static void unref_semaphore(void* semaphore, skgpu::CallbackResult result) {
+    if (result != skgpu::CallbackResult::kSuccess) {
+        ALOGE("Graphite submission of work to GPU failed, check for Skia errors");
+    }
+    SkiaVkRenderEngine::DestroySemaphoreInfo* info =
+            reinterpret_cast<SkiaVkRenderEngine::DestroySemaphoreInfo*>(semaphore);
+    info->unref();
+}
+
+std::unique_ptr<SkiaGpuContext> GraphiteVkRenderEngine::createContext(
+        VulkanInterface& vulkanInterface) {
+    auto driverVersion = vulkanInterface.driverVersion();
+    graphite::PersistentPipelineStorage* persistentStorage =
+            graphitePersistentPipelineStorage(&driverVersion, sizeof(driverVersion),
+                                              vulkanInterface.isProtected());
+    PipelineCallbackHandler* pipelineCallbackHandler =
+            graphiteSerializedPipelineKeyCache(&driverVersion, sizeof(driverVersion),
+                                               vulkanInterface.isProtected());
+
+    return SkiaGpuContext::MakeVulkan_Graphite(vulkanInterface.createSkiaVulkanBackendContext(
+                                                       /*threadSafeVMA=*/true),
+                                               persistentStorage,
+                                               SkSpan(mRuntimeEffectManager.mKnownEffects.data(),
+                                                      mRuntimeEffectManager.mKnownEffects.size()),
+                                               pipelineCallbackHandler);
+}
+
+void GraphiteVkRenderEngine::waitFenceImpl(SkiaGpuContext*, base::borrowed_fd fenceFd) {
+    if (fenceFd.get() < 0) return;
+
+    int dupedFd = dup(fenceFd.get());
+    if (dupedFd < 0) {
+        ALOGE("failed to create duplicate fence fd: %d", dupedFd);
+        sync_wait(fenceFd.get(), -1);
+        return;
+    }
+
+    base::unique_fd fenceDup(dupedFd);
+    VkSemaphore waitSemaphore =
+            getVulkanInterface(isProtected()).importSemaphoreFromSyncFd(fenceDup.release());
+    auto beSemaphore = graphite::BackendSemaphores::MakeVulkan(waitSemaphore);
+    mStagedWaitSemaphores.push_back(beSemaphore);
+}
+
+base::unique_fd GraphiteVkRenderEngine::flushAndSubmit(SkiaGpuContext* context, sk_sp<SkSurface>) {
+    // Minimal Recording setup. Required even if there are no incoming semaphores to wait on, and if
+    // creating the outgoing signaling semaphore fails.
+    std::unique_ptr<graphite::Recording> recording = context->graphiteRecorder()->snap();
+    graphite::InsertRecordingInfo insertInfo;
+    insertInfo.fRecording = recording.get();
+
+    VulkanInterface& vulkanInterface = getVulkanInterface(isProtected());
+    // This "signal" semaphore is called after rendering, but it is cleaned up in the same mechanism
+    // as "wait" semaphores from waitFenceImpl.
+    VkSemaphore vkSignalSemaphore = vulkanInterface.createExportableSemaphore();
+    auto backendSignalSemaphore = graphite::BackendSemaphores::MakeVulkan(vkSignalSemaphore);
+
+    // Collect all Vk semaphores that DestroySemaphoreInfo needs to own and delete after GPU work.
+    std::vector<VkSemaphore> vkSemaphoresToCleanUp;
+    if (vkSignalSemaphore != VK_NULL_HANDLE) {
+        vkSemaphoresToCleanUp.push_back(vkSignalSemaphore);
+    }
+    for (auto backendWaitSemaphore : mStagedWaitSemaphores) {
+        vkSemaphoresToCleanUp.push_back(
+            graphite::BackendSemaphores::GetVkSemaphore(backendWaitSemaphore));
+    }
+
+    DestroySemaphoreInfo* destroySemaphoreInfo = nullptr;
+    if (vkSemaphoresToCleanUp.size() > 0) {
+        destroySemaphoreInfo =
+                new DestroySemaphoreInfo(vulkanInterface, std::move(vkSemaphoresToCleanUp));
+
+        insertInfo.fNumWaitSemaphores = mStagedWaitSemaphores.size();
+        insertInfo.fWaitSemaphores = mStagedWaitSemaphores.data();
+        insertInfo.fNumSignalSemaphores = 1;
+        insertInfo.fSignalSemaphores = &backendSignalSemaphore;
+        insertInfo.fFinishedProc = unref_semaphore;
+        insertInfo.fFinishedContext = destroySemaphoreInfo;
+    }
+
+    const bool inserted = context->graphiteContext()->insertRecording(insertInfo);
+    LOG_THREAD_STATE_AND_CRASH_IF(!inserted,
+                                  "graphite::Context::insertRecording(...) failed, check for Skia "
+                                  "errors");
+    auto slice = panopticon::slice(panopticon::SliceType::CG_Skia_submit);
+    const bool submitted = context->graphiteContext()->submit(graphite::SyncToCpu::kNo);
+    LOG_THREAD_STATE_AND_CRASH_IF(!submitted,
+                                  "graphite::Context::submit(...) failed, check for Skia errors");
+
+    // Skia's "backend" semaphores can be deleted immediately after inserting the recording; only
+    // the underlying VK semaphores need to be kept until GPU work is complete.
+    mStagedWaitSemaphores.clear();
+
+    base::unique_fd drawFenceFd(-1);
+    if (vkSignalSemaphore != VK_NULL_HANDLE) {
+        drawFenceFd.reset(vulkanInterface.exportSemaphoreSyncFd(vkSignalSemaphore));
+    }
+    // Now that drawFenceFd has been created, we can delete RE's reference to this semaphore, as
+    // another reference is still held until fFinishedProc is called after completion of GPU work.
+    if (destroySemaphoreInfo) {
+        destroySemaphoreInfo->unref();
+    }
+    ShaderCache::get(SkiaBackend::Graphite).onGraphiteVkFrameFlushed(context->graphiteContext());
+    return drawFenceFd;
+}
+
+class GraphitePipelineDiskStorage : public skgpu::graphite::PersistentPipelineStorage {
+public:
+    GraphitePipelineDiskStorage(bool isProtected) : mIsProtected(isProtected) {}
+
+    // This is only called when the Graphite Context is being created
+    sk_sp<SkData> load() override {
+        ++mNumLoads;
+
+        uint32_t key = mIsProtected ? kGraphiteKeyProtected : kGraphiteKeyUnprotected;
+        sk_sp<SkData> keyData = SkData::MakeWithoutCopy(&key, sizeof(uint32_t));
+
+        sk_sp<SkData> result = ShaderCache::get(RenderEngine::SkiaBackend::Graphite).load(*keyData);
+        if (result) {
+            mLastLoadSize = result->size();
+        }
+        return result;
+    }
+    void store(const SkData& data) override {
+        ++mNumStores;
+        mLastStoreSize = data.size();
+
+        uint32_t key = mIsProtected ? kGraphiteKeyProtected : kGraphiteKeyUnprotected;
+        sk_sp<SkData> keyData = SkData::MakeWithoutCopy(&key, sizeof(uint32_t));
+
+        ShaderCache::get(RenderEngine::SkiaBackend::Graphite)
+                .graphiteStore(*keyData, data, mIsProtected);
+    }
+    void report(std::string& result) const {
+        base::StringAppendF(&result,
+                            "GraphitePipelineDiskStorage: %s numLoads %d lastLoad %zu numStores %d "
+                            "lastStore %zu\n",
+                            mIsProtected ? "Protected" : "Unprotected", mNumLoads, mLastLoadSize,
+                            mNumStores, mLastStoreSize);
+    }
+
+private:
+    static constexpr uint32_t kGraphiteKeyUnprotected = 987654321;
+    static constexpr uint32_t kGraphiteKeyProtected = 123456789;
+
+    const bool mIsProtected;
+
+    int mNumLoads = 0;
+    size_t mLastLoadSize = 0;
+    int mNumStores = 0;
+    size_t mLastStoreSize = 0;
+};
+
+skgpu::graphite::PersistentPipelineStorage*
+GraphiteVkRenderEngine::graphitePersistentPipelineStorage(const void* identity, ssize_t size,
+                                                          bool isProtected) {
+    if (FlagManager::getInstance().shader_disk_cache()) {
+        if (!mInitializedGraphiteDiskCache) {
+            ShaderCache::get(RenderEngine::SkiaBackend::Graphite)
+                    .initShaderDiskCache(identity, size);
+            mUnprotectedPersistentPipelineStorage =
+                    std::make_unique<GraphitePipelineDiskStorage>(/* isProtected= */ false);
+            mProtectedPersistentPipelineStorage =
+                    std::make_unique<GraphitePipelineDiskStorage>(/* isProtected= */ true);
+            mInitializedGraphiteDiskCache = true;
+        }
+    }
+
+    return isProtected ? mProtectedPersistentPipelineStorage.get()
+                       : mUnprotectedPersistentPipelineStorage.get();
+}
+
+PipelineCallbackHandler* GraphiteVkRenderEngine::graphiteSerializedPipelineKeyCache(
+        const void* identity, ssize_t size, bool isProtected) {
+    if (!mInitializedGraphiteSerializedPipelineKeyCache) {
+        const bool kStoreSerializedKeys = false;
+
+        mUnprotectedPipelineCallbackHandler =
+                std::make_unique<PipelineCallbackHandler>(/* isProtected= */ false,
+                                                          kStoreSerializedKeys);
+        mProtectedPipelineCallbackHandler =
+                std::make_unique<PipelineCallbackHandler>(/* isProtected= */ true,
+                                                          kStoreSerializedKeys);
+        mInitializedGraphiteSerializedPipelineKeyCache = true;
+    }
+
+    return isProtected ? mProtectedPipelineCallbackHandler.get()
+                       : mUnprotectedPipelineCallbackHandler.get();
+}
+
+void GraphiteVkRenderEngine::appendBackendSpecificInfoToDump(std::string& result) {
+    StringAppendF(&result, "\n ------------RE Vulkan (Graphite)----------\n");
+    SkiaVkRenderEngine::appendBackendSpecificInfoToDump(result);
+    mUnprotectedPipelineCallbackHandler->report("Unprotected", result);
+    mProtectedPipelineCallbackHandler->report("Protected", result);
+
+    if (mUnprotectedPersistentPipelineStorage) {
+        static_cast<GraphitePipelineDiskStorage*>(mUnprotectedPersistentPipelineStorage.get())
+                ->report(result);
+    }
+    if (mProtectedPersistentPipelineStorage) {
+        static_cast<GraphitePipelineDiskStorage*>(mProtectedPersistentPipelineStorage.get())
+                ->report(result);
+    }
+}
+
+} // namespace android::renderengine::skia

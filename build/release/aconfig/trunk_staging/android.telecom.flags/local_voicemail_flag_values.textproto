@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "local_voicemail"
+  state: ENABLED
+  permission: READ_WRITE
+}

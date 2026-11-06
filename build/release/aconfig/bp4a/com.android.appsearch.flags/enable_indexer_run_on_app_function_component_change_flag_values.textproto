@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_indexer_run_on_app_function_component_change"
+  state: ENABLED
+  permission: READ_ONLY
+}

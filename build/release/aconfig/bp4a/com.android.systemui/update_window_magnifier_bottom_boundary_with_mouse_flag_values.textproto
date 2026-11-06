@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "update_window_magnifier_bottom_boundary_with_mouse"
+  state: ENABLED
+  permission: READ_ONLY
+}

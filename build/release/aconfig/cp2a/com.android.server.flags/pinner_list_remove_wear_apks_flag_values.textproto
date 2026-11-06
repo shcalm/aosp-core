@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.flags"
+  name: "pinner_list_remove_wear_apks"
+  state: ENABLED
+  permission: READ_ONLY
+}

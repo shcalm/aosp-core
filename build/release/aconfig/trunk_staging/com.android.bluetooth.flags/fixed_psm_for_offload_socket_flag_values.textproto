@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "fixed_psm_for_offload_socket"
+  state: ENABLED
+  permission: READ_WRITE
+}

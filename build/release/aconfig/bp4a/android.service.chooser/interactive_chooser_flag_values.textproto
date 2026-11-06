@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.chooser"
+  name: "interactive_chooser"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.graphics.pdf.flags"
+  name: "enable_render_params_form_options"
+  state: ENABLED
+  permission: READ_ONLY
+}

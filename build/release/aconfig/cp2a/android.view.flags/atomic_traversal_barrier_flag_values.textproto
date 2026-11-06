@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.flags"
+  name: "atomic_traversal_barrier"
+  state: ENABLED
+  permission: READ_ONLY
+}

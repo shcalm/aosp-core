@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "move_output_switcher_calls_to_background_thread"
+  state: ENABLED
+  permission: READ_WRITE
+}

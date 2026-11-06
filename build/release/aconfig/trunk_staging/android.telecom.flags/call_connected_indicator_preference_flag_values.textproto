@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "call_connected_indicator_preference"
+  state: ENABLED
+  permission: READ_WRITE
+}

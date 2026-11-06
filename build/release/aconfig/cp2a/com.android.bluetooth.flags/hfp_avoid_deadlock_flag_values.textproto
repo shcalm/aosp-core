@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hfp_avoid_deadlock"
+  state: ENABLED
+  permission: READ_ONLY
+}

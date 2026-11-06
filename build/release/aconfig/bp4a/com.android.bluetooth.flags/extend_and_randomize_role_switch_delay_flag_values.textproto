@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "extend_and_randomize_role_switch_delay"
+  state: ENABLED
+  permission: READ_ONLY
+}

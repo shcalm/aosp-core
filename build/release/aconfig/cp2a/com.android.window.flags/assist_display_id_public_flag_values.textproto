@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "assist_display_id_public"
+  state: ENABLED
+  permission: READ_ONLY
+}

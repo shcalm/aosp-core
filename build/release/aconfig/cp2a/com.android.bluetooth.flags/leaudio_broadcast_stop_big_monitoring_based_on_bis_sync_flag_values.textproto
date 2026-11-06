@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_broadcast_stop_big_monitoring_based_on_bis_sync"
+  state: ENABLED
+  permission: READ_ONLY
+}

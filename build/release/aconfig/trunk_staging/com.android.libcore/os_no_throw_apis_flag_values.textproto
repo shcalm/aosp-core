@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.libcore"
+  name: "os_no_throw_apis"
+  state: ENABLED
+  permission: READ_ONLY
+}

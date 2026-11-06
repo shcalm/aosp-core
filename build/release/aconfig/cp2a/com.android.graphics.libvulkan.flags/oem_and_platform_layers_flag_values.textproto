@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libvulkan.flags"
+  name: "oem_and_platform_layers"
+  state: ENABLED
+  permission: READ_ONLY
+}

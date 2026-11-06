@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.biometrics"
+  name: "identity_check_all_surfaces"
+  state: ENABLED
+  permission: READ_ONLY
+}

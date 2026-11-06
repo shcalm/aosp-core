@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.camera.flags"
+  name: "multi_resolution_concurrent_readers"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "qc_aptx_codec_negotiation"
+  state: ENABLED
+  permission: READ_WRITE
+}

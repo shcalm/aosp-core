@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.profiling"
+  name: "add_rate_limiter_disabled_to_result"
+  state: ENABLED
+  permission: READ_ONLY
+}

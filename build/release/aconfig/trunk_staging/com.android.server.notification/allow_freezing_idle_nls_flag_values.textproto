@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "allow_freezing_idle_nls"
+  state: ENABLED
+  permission: READ_WRITE
+}

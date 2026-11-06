@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "separate_vt_activation_for_wifi_and_cellular"
+  state: ENABLED
+  permission: READ_ONLY
+}

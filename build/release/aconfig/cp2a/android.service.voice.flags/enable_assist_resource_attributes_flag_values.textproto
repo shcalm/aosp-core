@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.voice.flags"
+  name: "enable_assist_resource_attributes"
+  state: ENABLED
+  permission: READ_ONLY
+}

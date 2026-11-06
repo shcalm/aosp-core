@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "persistent_supervision_settings"
+  state: ENABLED
+  permission: READ_ONLY
+}

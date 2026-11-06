@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "wait_hid_disconnect_before_marking_unused"
+  state: ENABLED
+  permission: READ_ONLY
+}

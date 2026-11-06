@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.libcore"
+  name: "niceness_apis"
+  state: ENABLED
+  permission: READ_ONLY
+}

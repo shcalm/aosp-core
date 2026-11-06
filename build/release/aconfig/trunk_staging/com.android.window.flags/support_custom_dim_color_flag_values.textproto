@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "support_custom_dim_color"
+  state: ENABLED
+  permission: READ_WRITE
+}

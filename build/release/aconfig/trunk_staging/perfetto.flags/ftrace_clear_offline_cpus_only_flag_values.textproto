@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "ftrace_clear_offline_cpus_only"
+  state: ENABLED
+  permission: READ_ONLY
+}

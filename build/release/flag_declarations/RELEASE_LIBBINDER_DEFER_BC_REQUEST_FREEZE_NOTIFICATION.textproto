@@ -1,0 +1,5 @@
+name: "RELEASE_LIBBINDER_DEFER_BC_REQUEST_FREEZE_NOTIFICATION"
+namespace: "system_performance"
+description: "Defer BC_REQUEST_FREEZE_NOTIFICATION if there's a pending clear"
+workflow: LAUNCH
+containers: "system"

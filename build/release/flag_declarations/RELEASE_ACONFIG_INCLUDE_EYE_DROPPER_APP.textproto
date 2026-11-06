@@ -1,0 +1,8 @@
+name: "RELEASE_ACONFIG_INCLUDE_EYE_DROPPER_APP"
+namespace: "web_apps_on_chromeos_and_android"
+description: "Enables preinstallation of the system EyeDropper app."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

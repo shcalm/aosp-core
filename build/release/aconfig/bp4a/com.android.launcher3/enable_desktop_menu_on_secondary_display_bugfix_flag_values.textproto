@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_desktop_menu_on_secondary_display_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

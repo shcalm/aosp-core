@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "skip_ref_content_provider"
+  state: ENABLED
+  permission: READ_ONLY
+}

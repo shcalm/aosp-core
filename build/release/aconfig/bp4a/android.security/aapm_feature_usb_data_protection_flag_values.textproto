@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "aapm_feature_usb_data_protection"
+  state: ENABLED
+  permission: READ_ONLY
+}

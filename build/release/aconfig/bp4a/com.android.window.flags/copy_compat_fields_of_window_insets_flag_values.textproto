@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "copy_compat_fields_of_window_insets"
+  state: ENABLED
+  permission: READ_ONLY
+}

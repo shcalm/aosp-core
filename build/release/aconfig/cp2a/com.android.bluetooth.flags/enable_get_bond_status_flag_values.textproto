@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "enable_get_bond_status"
+  state: ENABLED
+  permission: READ_ONLY
+}

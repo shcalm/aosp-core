@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "implement_get_image_from_descriptor_for_cover_art"
+  state: ENABLED
+  permission: READ_ONLY
+}

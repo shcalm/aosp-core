@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "disable_bubble_scrim_large_screens"
+  state: ENABLED
+  permission: READ_WRITE
+}

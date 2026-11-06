@@ -1,0 +1,6 @@
+flag_value {
+  package: "hardware.google.pixel.pixelstats.flags"
+  name: "enable_dvdt_data_collection"
+  state: ENABLED
+  permission: READ_WRITE
+}

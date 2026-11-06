@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "support_explicit_data_disconnect"
+  state: ENABLED
+  permission: READ_ONLY
+}

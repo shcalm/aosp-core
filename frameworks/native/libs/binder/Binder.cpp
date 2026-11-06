@@ -1,0 +1,1227 @@
+/*
+ * Copyright (C) 2005 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#define LOG_TAG "libbinder.Binder"
+
+#include <binder/Binder.h>
+#include <binder/Stability.h>
+
+#include <atomic>
+#include <set>
+
+#include <binder/BpBinder.h>
+#include <binder/IInterface.h>
+#include <binder/IPCThreadState.h>
+#include <binder/IResultReceiver.h>
+#include <binder/IShellCallback.h>
+
+#if !defined(TRUSTY_USERSPACE)
+#include <binder/internal/JavaBBinderBase.h>
+#endif // !defined(TRUSTY_USERSPACE)
+
+#include <binder/Parcel.h>
+#include <binder/RecordedTransaction.h>
+#include <binder/RpcServer.h>
+#include <binder/Trace.h>
+#include <binder/unique_fd.h>
+
+#include <inttypes.h>
+#include <stdio.h>
+
+#ifdef __linux__
+#include <linux/sched.h>
+#endif
+
+#include "BuildFlags.h"
+#include "Constants.h"
+#include "OS.h"
+#include "RpcState.h"
+#include "Utils.h"
+
+namespace android {
+
+using android::binder::unique_fd;
+using android::binder::impl::make_scope_guard;
+using android::binder::impl::scope_guard;
+using ::android::binder::os::get_trace_enabled_tags;
+using ::android::binder::os::trace_begin;
+using ::android::binder::os::trace_end;
+
+constexpr uid_t kUidRoot = 0;
+
+static const char* UNKNOWN_CODE = "#";
+static const char* CPP_BACKEND = "cpp";
+#if !defined(TRUSTY_USERSPACE)
+static const char* JAVA_BACKEND = "java";
+#endif //! defined(TRUSTY_USERSPACE)
+static const size_t TRACE_BUFFER_SIZE = 512;
+
+// Internal 2-bit codes that we will store in the flags
+static constexpr uintptr_t INTERNAL_STABILITY_UNDECLARED = 0;
+static constexpr uintptr_t INTERNAL_STABILITY_VENDOR = 1;
+static constexpr uintptr_t INTERNAL_STABILITY_SYSTEM = 2;
+static constexpr uintptr_t INTERNAL_STABILITY_VINTF = 3;
+
+// Service implementations inherit from BBinder and IBinder, and this is frozen
+// in prebuilts.
+#ifdef __LP64__
+static_assert(sizeof(IBinder) == 24);
+static_assert(sizeof(BBinder) == 40);
+#else
+static_assert(sizeof(IBinder) == 12);
+static_assert(sizeof(BBinder) == 20);
+#endif
+
+// global b/c b/230079120 - consistent symbol table
+#ifdef BINDER_RPC_DEV_SERVERS
+constexpr bool kEnableRpcDevServers = true;
+#else
+constexpr bool kEnableRpcDevServers = false;
+#endif
+
+#ifdef BINDER_ENABLE_RECORDING
+constexpr bool kEnableRecording = true;
+#else
+constexpr bool kEnableRecording = false;
+#endif
+
+// ---------------------------------------------------------------------------
+
+IBinder::IBinder()
+    : RefBase()
+{
+}
+
+IBinder::~IBinder()
+{
+}
+
+// ---------------------------------------------------------------------------
+
+sp<IInterface>  IBinder::queryLocalInterface(const String16& /*descriptor*/)
+{
+    return nullptr;
+}
+
+BBinder* IBinder::localBinder()
+{
+    return nullptr;
+}
+
+BpBinder* IBinder::remoteBinder()
+{
+    return nullptr;
+}
+
+bool IBinder::checkSubclass(const void* /*subclassID*/) const
+{
+    return false;
+}
+
+
+status_t IBinder::shellCommand(const sp<IBinder>& target, int in, int out, int err,
+    Vector<String16>& args, const sp<IShellCallback>& callback,
+    const sp<IResultReceiver>& resultReceiver)
+{
+    Parcel send;
+    Parcel reply;
+    send.writeFileDescriptor(in);
+    send.writeFileDescriptor(out);
+    send.writeFileDescriptor(err);
+    const size_t numArgs = args.size();
+    send.writeInt32(numArgs);
+    for (size_t i = 0; i < numArgs; i++) {
+        send.writeString16(args[i]);
+    }
+    send.writeStrongBinder(callback != nullptr ? IInterface::asBinder(callback) : nullptr);
+    send.writeStrongBinder(resultReceiver != nullptr ? IInterface::asBinder(resultReceiver) : nullptr);
+    return target->transact(SHELL_COMMAND_TRANSACTION, send, &reply);
+}
+
+status_t IBinder::getExtension(sp<IBinder>* out) {
+    BBinder* local = this->localBinder();
+    if (local != nullptr) {
+        *out = local->getExtension();
+        return OK;
+    }
+
+    BpBinder* proxy = this->remoteBinder();
+    LOG_ALWAYS_FATAL_IF(proxy == nullptr);
+
+    Parcel data;
+    data.markForBinder(sp<IBinder>::fromExisting(this));
+    Parcel reply;
+    status_t status = transact(EXTENSION_TRANSACTION, data, &reply);
+    if (status != OK) return status;
+
+    return reply.readNullableStrongBinder(out);
+}
+
+status_t IBinder::addFrozenStateChangeCallback(const wp<FrozenStateChangeCallback>& callback) {
+    BpBinder* proxy = this->remoteBinder();
+    if (proxy != nullptr) {
+        return proxy->addFrozenStateChangeCallback(callback);
+    }
+    return INVALID_OPERATION;
+}
+
+status_t IBinder::removeFrozenStateChangeCallback(const wp<FrozenStateChangeCallback>& callback) {
+    BpBinder* proxy = this->remoteBinder();
+    if (proxy != nullptr) {
+        return proxy->removeFrozenStateChangeCallback(callback);
+    }
+    return INVALID_OPERATION;
+}
+
+status_t IBinder::getDebugPid(pid_t* out) {
+    BBinder* local = this->localBinder();
+    if (local != nullptr) {
+      *out = local->getDebugPid();
+      return OK;
+    }
+
+    BpBinder* proxy = this->remoteBinder();
+    LOG_ALWAYS_FATAL_IF(proxy == nullptr);
+
+    Parcel data;
+    Parcel reply;
+    status_t status = transact(DEBUG_PID_TRANSACTION, data, &reply);
+    if (status != OK) return status;
+
+    int32_t pid;
+    status = reply.readInt32(&pid);
+    if (status != OK) return status;
+
+    if (pid < 0 || pid > std::numeric_limits<pid_t>::max()) {
+        return BAD_VALUE;
+    }
+    *out = pid;
+    return OK;
+}
+
+status_t IBinder::setRpcClientDebug(unique_fd socketFd, const sp<IBinder>& keepAliveBinder) {
+    if (!kEnableRpcDevServers) {
+        ALOGW("setRpcClientDebug disallowed because RPC is not enabled");
+        return INVALID_OPERATION;
+    }
+    if (!kEnableKernelIpc) {
+        ALOGW("setRpcClientDebug disallowed because kernel binder is not enabled");
+        return INVALID_OPERATION;
+    }
+
+    BBinder* local = this->localBinder();
+    if (local != nullptr) {
+        return local->BBinder::setRpcClientDebug(std::move(socketFd), keepAliveBinder);
+    }
+
+    BpBinder* proxy = this->remoteBinder();
+    LOG_ALWAYS_FATAL_IF(proxy == nullptr, "binder object must be either local or remote");
+
+    Parcel data;
+    Parcel reply;
+    status_t status;
+    if (status = data.writeBool(socketFd.ok()); status != OK) return status;
+    if (socketFd.ok()) {
+        // writeUniqueFileDescriptor currently makes an unnecessary dup().
+        status = data.writeFileDescriptor(socketFd.release(), true /* own */);
+        if (status != OK) return status;
+    }
+    if (status = data.writeStrongBinder(keepAliveBinder); status != OK) return status;
+    return transact(SET_RPC_CLIENT_TRANSACTION, data, &reply);
+}
+
+void IBinder::withLock(const std::function<void()>& doWithLock) {
+    BBinder* local = localBinder();
+    if (local) {
+        local->withLock(doWithLock);
+        return;
+    }
+    BpBinder* proxy = this->remoteBinder();
+    LOG_ALWAYS_FATAL_IF(proxy == nullptr, "binder object must be either local or remote");
+    proxy->withLock(doWithLock);
+}
+
+sp<IBinder> IBinder::lookupOrCreateWeak(const void* objectID, object_make_func make,
+                                        const void* makeArgs) {
+    BBinder* local = localBinder();
+    if (local) {
+        return local->lookupOrCreateWeak(objectID, make, makeArgs);
+    }
+    BpBinder* proxy = this->remoteBinder();
+    LOG_ALWAYS_FATAL_IF(proxy == nullptr, "binder object must be either local or remote");
+    return proxy->lookupOrCreateWeak(objectID, make, makeArgs);
+}
+
+void IBinder::setMinRpcThreads(uint16_t min) {
+    if (BBinder* local = this->localBinder(); local != nullptr) {
+        local->setMinRpcThreads(min);
+    } else {
+        LOG_ALWAYS_FATAL("setMinRpcThreads only works for local BBinders.");
+    }
+}
+
+uint16_t IBinder::getMinRpcThreads() {
+    if (BBinder* local = this->localBinder(); local != nullptr) {
+        return local->getMinRpcThreads();
+    } else {
+        LOG_ALWAYS_FATAL("getMinRpcThreads only works for local BBinders.");
+    }
+}
+
+// ---------------------------------------------------------------------------
+
+class BBinder::RpcServerLink : public IBinder::DeathRecipient {
+public:
+    // On binder died, calls RpcServer::shutdown on @a rpcServer, and removes itself from @a binder.
+    RpcServerLink(const sp<RpcServer>& rpcServer, const sp<IBinder>& keepAliveBinder,
+                  const wp<BBinder>& binder)
+          : mRpcServer(rpcServer), mKeepAliveBinder(keepAliveBinder), mBinder(binder) {}
+    virtual ~RpcServerLink();
+    void binderDied(const wp<IBinder>&) override {
+        auto promoted = mBinder.promote();
+        ALOGI("RpcBinder: binder died, shutting down RpcServer for %s",
+              promoted ? String8(promoted->getInterfaceDescriptor()).c_str() : "<NULL>");
+
+        if (mRpcServer == nullptr) {
+            ALOGW("RpcServerLink: Unable to shut down RpcServer because it does not exist.");
+        } else {
+            ALOGW_IF(!mRpcServer->shutdown(),
+                     "RpcServerLink: RpcServer did not shut down properly. Not started?");
+        }
+        mRpcServer.clear();
+
+        if (promoted) {
+            promoted->removeRpcServerLink(sp<RpcServerLink>::fromExisting(this));
+        }
+        mBinder.clear();
+    }
+
+private:
+    sp<RpcServer> mRpcServer;
+    sp<IBinder> mKeepAliveBinder; // hold to avoid automatically unlinking
+    wp<BBinder> mBinder;
+};
+BBinder::RpcServerLink::~RpcServerLink() {}
+
+static constexpr uint16_t kDefaultMinThreads = 1;
+
+class BBinder::Extras
+{
+public:
+    // unlocked objects
+    sp<IBinder> mExtension;
+#ifdef __linux__
+    int mPolicy = SCHED_NORMAL;
+    int mPriority = 0;
+#endif
+    bool mRequestingSid = false;
+    bool mInheritRt = false;
+    bool mRecordingOn = false;
+
+    // for below objects
+    RpcMutex mLock;
+    std::set<sp<RpcServerLink>> mRpcServerLinks;
+    BpBinder::ObjectManager mObjectMgr;
+    uint16_t mMinThreads = kDefaultMinThreads;
+
+    unique_fd mRecordingFd;
+};
+
+void BBinder::PackedData::setTransactionCodeMap(const TransactionCodeData* data) {
+    LOG_ALWAYS_FATAL_IF(data == nullptr, "TransactionCodeData pointer is null!");
+    LOG_ALWAYS_FATAL_IF((reinterpret_cast<uintptr_t>(data) & ~POINTER_MASK) != 0,
+                        "Pointer is not 16 byte aligned, other bits will be modified!");
+
+    uintptr_t oldPackedData = mPackedData.load();
+    LOG_ALWAYS_FATAL_IF((reinterpret_cast<uintptr_t>(oldPackedData) & POINTER_MASK) != 0,
+                        "TransactionCodeData already set!");
+
+    uintptr_t newPackedData;
+    do {
+        newPackedData = oldPackedData & ~POINTER_MASK;
+        newPackedData |= (reinterpret_cast<uintptr_t>(data) & POINTER_MASK);
+    } while (!mPackedData.compare_exchange_weak(oldPackedData, newPackedData));
+}
+
+const TransactionCodeData* BBinder::PackedData::getTransactionCodeMap() const {
+    return reinterpret_cast<const TransactionCodeData*>(mPackedData.load() & POINTER_MASK);
+}
+
+void BBinder::PackedData::setStability(uintptr_t stability) {
+    LOG_ALWAYS_FATAL_IF(((stability << STABILITY_SHIFT) & ~STABILITY_MASK) != 0,
+                        "Stability is out of range from available 2 bits!");
+    uintptr_t oldPackedData = mPackedData.load();
+    uintptr_t newPackedData;
+    do {
+        newPackedData = oldPackedData & ~STABILITY_MASK;
+        newPackedData |= (stability << STABILITY_SHIFT);
+    } while (!mPackedData.compare_exchange_weak(oldPackedData, newPackedData));
+}
+
+uintptr_t BBinder::PackedData::getStability() const {
+    return (mPackedData.load() & STABILITY_MASK) >> STABILITY_SHIFT;
+}
+
+void BBinder::PackedData::setParceled() {
+    mPackedData.fetch_or(PARCELED_BIT);
+}
+
+bool BBinder::PackedData::isParceled() const {
+    return (mPackedData.load() & PARCELED_BIT) != 0;
+}
+
+// ---------------------------------------------------------------------------
+
+BBinder::BBinder() : mExtras(nullptr) {}
+
+bool BBinder::isBinderAlive() const
+{
+    return true;
+}
+
+status_t BBinder::pingBinder()
+{
+    return NO_ERROR;
+}
+
+status_t BBinder::startRecordingTransactions(const Parcel& data) {
+    if (!kEnableRecording) {
+        ALOGW("Binder recording disallowed because recording is not enabled");
+        return INVALID_OPERATION;
+    }
+    if (!kEnableKernelIpc) {
+        ALOGW("Binder recording disallowed because kernel binder is not enabled");
+        return INVALID_OPERATION;
+    }
+    uid_t uid = IPCThreadState::self()->getCallingUid();
+    if (uid != kUidRoot) {
+        ALOGE("Binder recording not allowed because client %" PRIu32 " is not root", uid);
+        return PERMISSION_DENIED;
+    }
+    Extras* e = getOrCreateExtras();
+    RpcMutexUniqueLock lock(e->mLock);
+    if (e->mRecordingOn) {
+        ALOGI("Could not start Binder recording. Another is already in progress.");
+        return INVALID_OPERATION;
+    } else {
+        status_t readStatus = data.readUniqueFileDescriptor(&(e->mRecordingFd));
+        if (readStatus != OK) {
+            return readStatus;
+        }
+        e->mRecordingOn = true;
+        ALOGI("Started Binder recording.");
+        return NO_ERROR;
+    }
+}
+
+status_t BBinder::stopRecordingTransactions() {
+    if (!kEnableRecording) {
+        ALOGW("Binder recording disallowed because recording is not enabled");
+        return INVALID_OPERATION;
+    }
+    if (!kEnableKernelIpc) {
+        ALOGW("Binder recording disallowed because kernel binder is not enabled");
+        return INVALID_OPERATION;
+    }
+    uid_t uid = IPCThreadState::self()->getCallingUid();
+    if (uid != kUidRoot) {
+        ALOGE("Binder recording not allowed because client %" PRIu32 " is not root", uid);
+        return PERMISSION_DENIED;
+    }
+    Extras* e = getOrCreateExtras();
+    RpcMutexUniqueLock lock(e->mLock);
+    if (e->mRecordingOn) {
+        e->mRecordingFd.reset();
+        e->mRecordingOn = false;
+        ALOGI("Stopped Binder recording.");
+        return NO_ERROR;
+    } else {
+        ALOGI("Could not stop Binder recording. One is not in progress.");
+        return INVALID_OPERATION;
+    }
+}
+
+const String16& BBinder::getInterfaceDescriptor() const
+{
+    // Throttle logging because getInterfaceDescriptor can be invoked a lot.
+    static std::atomic<std::chrono::steady_clock::time_point> sLastLogTime = {
+            std::chrono::steady_clock::time_point::min()};
+
+    auto lastLogTime = sLastLogTime.load(std::memory_order_acquire);
+    auto currentTime = std::chrono::steady_clock::now();
+    // Don't log more than once per second. The check is not strict, since it may happen that
+    // multiple theads read lastLogTime at the same time  but we don't want it to be strict
+    // for performance reasons.
+    // Note: Do not subtract time_point::min(), that would cause an arithmetic overflow.
+    if (lastLogTime == std::chrono::steady_clock::time_point::min() ||
+        to_ms(currentTime - lastLogTime) >= 1000) {
+        ALOGW("BBinder::getInterfaceDescriptor (this=%p). Override?", this);
+
+        sLastLogTime.store(currentTime, std::memory_order_release);
+    }
+
+    [[clang::no_destroy]] static StaticString16 sBBinder(u"BBinder");
+    return sBBinder;
+}
+
+__attribute__((noinline)) bool BBinder::startTrace(uint32_t code) {
+    char traceSectionName[TRACE_BUFFER_SIZE];
+    status_t result = getTraceName(code, traceSectionName, TRACE_BUFFER_SIZE);
+    // failures are already tracked via ALOGE in getTraceName
+    if (result != OK) return false;
+
+    trace_begin(ATRACE_TAG_AIDL, traceSectionName);
+    return true;
+}
+
+// NOLINTNEXTLINE(google-default-arguments)
+status_t BBinder::transact(
+    uint32_t code, const Parcel& data, Parcel* reply, uint32_t flags)
+{
+    bool tracingEnabled = get_trace_enabled_tags() & ATRACE_TAG_AIDL;
+    if (tracingEnabled) {
+        tracingEnabled = startTrace(code);
+    }
+
+    scope_guard guard = make_scope_guard([&]() {
+        if (tracingEnabled) trace_end(ATRACE_TAG_AIDL);
+    });
+
+    const auto startTime = std::chrono::steady_clock::now();
+
+    data.setDataPosition(0);
+
+    if (reply != nullptr && (flags & FLAG_CLEAR_BUF)) {
+        reply->markSensitive();
+    }
+
+    if (data.dataSize() > binder::kLogTransactionsOverBytes) {
+        ALOGW("Large data transaction of %zu bytes, interface descriptor %s, function: %s, flags: "
+              "%d",
+              data.dataSize(), String8(getInterfaceDescriptor()).c_str(),
+              getFunctionNameAndCode(code).c_str(), flags);
+    }
+
+    status_t err = NO_ERROR;
+    switch (code) {
+        case PING_TRANSACTION:
+            err = pingBinder();
+            break;
+        case START_RECORDING_TRANSACTION:
+            err = startRecordingTransactions(data);
+            break;
+        case STOP_RECORDING_TRANSACTION:
+            err = stopRecordingTransactions();
+            break;
+        case EXTENSION_TRANSACTION:
+            LOG_ALWAYS_FATAL_IF(reply == nullptr, "reply == nullptr");
+            err = reply->writeStrongBinder(getExtension());
+            break;
+        case DEBUG_PID_TRANSACTION:
+            LOG_ALWAYS_FATAL_IF(reply == nullptr, "reply == nullptr");
+            err = reply->writeInt32(getDebugPid());
+            break;
+        case SET_RPC_CLIENT_TRANSACTION: {
+            err = setRpcClientDebug(data);
+            break;
+        }
+        default:
+            err = onTransact(code, data, reply, flags);
+            break;
+    }
+
+    // In case this is being transacted on in the same process.
+    if (reply != nullptr) {
+        reply->setDataPosition(0);
+        if (reply->dataSize() > binder::kLogTransactionsOverBytes) {
+            ALOGW("Large reply transaction of %zu bytes, interface descriptor %s, function: %s, "
+                  "flags: %d",
+                  reply->dataSize(), String8(getInterfaceDescriptor()).c_str(),
+                  getFunctionNameAndCode(code).c_str(), flags);
+        }
+    }
+
+    if (kEnableKernelIpc && kEnableRecording && code != START_RECORDING_TRANSACTION) [[unlikely]] {
+        Extras* e = mExtras.load(std::memory_order_acquire);
+        if (e && e->mRecordingOn) {
+            RpcMutexUniqueLock lock(e->mLock);
+            if (e->mRecordingOn) {
+                Parcel emptyReply;
+                timespec ts;
+                timespec_get(&ts, TIME_UTC);
+                auto transaction = android::binder::debug::RecordedTransaction::
+                        fromDetails(getInterfaceDescriptor(), code, flags, ts, data,
+                                    reply ? *reply : emptyReply, err);
+                if (transaction) {
+                    if (err = transaction->dumpToFile(e->mRecordingFd); err != NO_ERROR) {
+                        ALOGI("Failed to dump RecordedTransaction to file with error %d", err);
+                    }
+                } else {
+                    ALOGI("Failed to create RecordedTransaction object.");
+                }
+            }
+        }
+    }
+
+    const uint64_t transactionMs = to_ms(std::chrono::steady_clock::now() - startTime);
+    if (transactionMs > 1000lu) {
+        ALOGW("Binder transaction to %s, function: %s, took %" PRIu64
+              "ms. Data bytes: %zu Reply bytes: %zu Flags: %d",
+              String8(getInterfaceDescriptor()).c_str(), getFunctionNameAndCode(code).c_str(),
+              transactionMs, data.dataSize(), reply ? reply->dataSize() : 0u, flags);
+    }
+
+    return err;
+}
+
+// NOLINTNEXTLINE(google-default-arguments)
+status_t BBinder::linkToDeath(
+    const sp<DeathRecipient>& /*recipient*/, void* /*cookie*/,
+    uint32_t /*flags*/)
+{
+    // BBinder::linkToDeath is invalid because this process owns this binder.
+    // The DeathRecipient is called on BpBinders when the process owning the
+    // binder node dies.
+    return INVALID_OPERATION;
+}
+
+// NOLINTNEXTLINE(google-default-arguments)
+status_t BBinder::unlinkToDeath(
+    const wp<DeathRecipient>& /*recipient*/, void* /*cookie*/,
+    uint32_t /*flags*/, wp<DeathRecipient>* /*outRecipient*/)
+{
+    return INVALID_OPERATION;
+}
+
+status_t BBinder::dump(int /*fd*/, const Vector<String16>& /*args*/)
+{
+    return NO_ERROR;
+}
+
+void* BBinder::attachObject(const void* objectID, void* object, void* cleanupCookie,
+                            object_cleanup_func func) {
+    Extras* e = getOrCreateExtras();
+    LOG_ALWAYS_FATAL_IF(!e, "no memory");
+
+    RpcMutexUniqueLock _l(e->mLock);
+    return e->mObjectMgr.attach(objectID, object, cleanupCookie, func);
+}
+
+void* BBinder::findObject(const void* objectID) const
+{
+    Extras* e = mExtras.load(std::memory_order_acquire);
+    if (!e) return nullptr;
+
+    RpcMutexUniqueLock _l(e->mLock);
+    return e->mObjectMgr.find(objectID);
+}
+
+void* BBinder::detachObject(const void* objectID) {
+    Extras* e = mExtras.load(std::memory_order_acquire);
+    if (!e) return nullptr;
+
+    RpcMutexUniqueLock _l(e->mLock);
+    return e->mObjectMgr.detach(objectID);
+}
+
+void BBinder::withLock(const std::function<void()>& doWithLock) {
+    Extras* e = getOrCreateExtras();
+    LOG_ALWAYS_FATAL_IF(!e, "no memory");
+
+    RpcMutexUniqueLock _l(e->mLock);
+    doWithLock();
+}
+
+sp<IBinder> BBinder::lookupOrCreateWeak(const void* objectID, object_make_func make,
+                                        const void* makeArgs) {
+    Extras* e = getOrCreateExtras();
+    LOG_ALWAYS_FATAL_IF(!e, "no memory");
+    RpcMutexUniqueLock _l(e->mLock);
+    return e->mObjectMgr.lookupOrCreateWeak(objectID, make, makeArgs);
+}
+
+BBinder* BBinder::localBinder()
+{
+    return this;
+}
+
+bool BBinder::isRequestingSid()
+{
+    Extras* e = mExtras.load(std::memory_order_acquire);
+
+    return e && e->mRequestingSid;
+}
+
+void BBinder::setRequestingSid(bool requestingSid)
+{
+    LOG_ALWAYS_FATAL_IF(wasParceled(),
+                        "setRequestingSid() should not be called after a binder object "
+                        "is parceled/sent to another process");
+
+    Extras* e = mExtras.load(std::memory_order_acquire);
+
+    if (!e) {
+        // default is false. Most things don't need sids, so avoiding allocations when possible.
+        if (!requestingSid) {
+            return;
+        }
+
+        e = getOrCreateExtras();
+        if (!e) return; // out of memory
+    }
+
+    e->mRequestingSid = requestingSid;
+}
+
+sp<IBinder> BBinder::getExtension() {
+    Extras* e = mExtras.load(std::memory_order_acquire);
+    if (e == nullptr) return nullptr;
+    return e->mExtension;
+}
+
+void BBinder::setTransactionCodeMap(const TransactionCodeData* data) {
+    mPackedData.setTransactionCodeMap(data);
+}
+
+std::optional<std::string> BBinder::tryGetFunctionName(size_t code) {
+    const TransactionCodeData* transactionData = mPackedData.getTransactionCodeMap();
+    if (transactionData == nullptr) {
+        return std::nullopt;
+    }
+
+    const uint32_t count = transactionData->count;
+    const char* const* functionNames = transactionData->names;
+    if (count == 0 || functionNames == nullptr) {
+        return std::nullopt;
+    }
+
+    if (code < FIRST_CALL_TRANSACTION || (code - FIRST_CALL_TRANSACTION) >= count) {
+        return std::nullopt;
+    }
+
+    const size_t index = code - FIRST_CALL_TRANSACTION;
+    const char* functionName = functionNames[index];
+    if (functionName == nullptr) {
+        return std::nullopt;
+    }
+
+    return functionName;
+}
+
+std::string BBinder::getFunctionName(size_t code) {
+    auto name = tryGetFunctionName(code);
+    if (name == std::nullopt) {
+        return UNKNOWN_CODE + std::to_string(code);
+    }
+    return std::move(*name);
+}
+
+std::string BBinder::getFunctionNameAndCode(size_t code) {
+    auto name = tryGetFunctionName(code);
+    if (name == std::nullopt) {
+        return "UNKNOWN_FUNCTION_NAME, code: " + std::to_string(code);
+    }
+    return *name + ", code: " + std::to_string(code);
+}
+
+status_t BBinder::getTraceName(uint32_t code, char* buffer, size_t bufferSize) {
+    const TransactionCodeData* transactionData = mPackedData.getTransactionCodeMap();
+    const char* backendType =
+            transactionData != nullptr ? transactionData->backendType : CPP_BACKEND;
+
+#if !defined(TRUSTY_USERSPACE)
+    bool isJavaBackend =
+            this->checkSubclass(android::internal::JavaBBinderBase::getExtSubclassID());
+    if (isJavaBackend) {
+        backendType = JAVA_BACKEND;
+    }
+#endif // !defined(TRUSTY_USERSPACE)
+
+    int prefixLen = snprintf(buffer, bufferSize, "AIDL::%s::", backendType);
+    if (prefixLen < 0 || static_cast<size_t>(prefixLen) >= bufferSize) {
+        ALOGE("snprintf failed for trace name prefix, error %d", prefixLen);
+        return UNKNOWN_ERROR;
+    }
+
+    size_t offset = static_cast<size_t>(prefixLen);
+
+    const String16& descriptor = getInterfaceDescriptor();
+    const char16_t* descUtf16 = descriptor.c_str();
+    size_t descUtf16Len = descriptor.size();
+
+    // Check if the required size fits in our buffer
+    if (descUtf16Len > 0) {
+        ssize_t utf8Len = utf16_to_utf8_length(descUtf16, descUtf16Len);
+        if (utf8Len < 0) {
+            ALOGE("utf16_to_utf8_length failed");
+            return BAD_VALUE;
+        }
+        size_t descUtf8RequiredSize = static_cast<size_t>(utf8Len) + 1;
+
+        if (offset + descUtf8RequiredSize > bufferSize) {
+            ALOGE("Trace name descriptor too long (required %zu, have %zu)", descUtf8RequiredSize,
+                  bufferSize - offset);
+            return NO_MEMORY;
+        }
+
+        utf16_to_utf8(descUtf16, descUtf16Len, buffer + offset, descUtf8RequiredSize);
+        offset += descUtf8RequiredSize - 1; // -1 to overwrite the null terminator
+    }
+
+    status_t status = OK;
+    auto appendSuffix = [&](const char* name) {
+        char codeStr[16];
+        if (name == nullptr) {
+            snprintf(codeStr, sizeof(codeStr), "%s%u", UNKNOWN_CODE, code);
+            name = codeStr;
+        }
+        int suffixLen = snprintf(buffer + offset, bufferSize - offset, "::%s::server", name);
+        if (suffixLen < 0 || static_cast<size_t>(suffixLen) >= bufferSize - offset) {
+            ALOGE("snprintf failed for trace name suffix, error %d", suffixLen);
+            status = UNKNOWN_ERROR;
+        }
+    };
+
+#if !defined(TRUSTY_USERSPACE)
+    if (isJavaBackend) {
+        static_cast<internal::JavaBBinderBase*>(this)
+                ->getFunctionName(code, [&appendSuffix](const char* name) { appendSuffix(name); });
+        return status;
+    }
+#endif // !defined(TRUSTY_USERSPACE)
+
+    const char* functionNameStr = nullptr;
+    if (transactionData != nullptr) {
+        const uint32_t count = transactionData->count;
+        const char* const* functionNames = transactionData->names;
+        if (count > 0 && functionNames != nullptr && code >= FIRST_CALL_TRANSACTION &&
+            (code - FIRST_CALL_TRANSACTION) < count) {
+            functionNameStr = functionNames[code - FIRST_CALL_TRANSACTION];
+        }
+    }
+
+    appendSuffix(functionNameStr);
+    return status;
+}
+
+void BBinder::setStability(int16_t level) {
+    // Map the public input value to our internal 2-bit code.
+    uintptr_t internalCode = INTERNAL_STABILITY_UNDECLARED;
+    switch (level) {
+        case android::internal::Stability::VENDOR:
+            internalCode = INTERNAL_STABILITY_VENDOR;
+            break;
+        case android::internal::Stability::SYSTEM:
+            internalCode = INTERNAL_STABILITY_SYSTEM;
+            break;
+        case android::internal::Stability::VINTF:
+            internalCode = INTERNAL_STABILITY_VINTF;
+            break;
+    }
+    mPackedData.setStability(internalCode);
+}
+
+/**
+ * Retrieves the stability level by mapping the internal 2-bit code back to the public value.
+ */
+int16_t BBinder::getStability() const {
+    // Get the internal 2-bit code.
+    uintptr_t internalCode = mPackedData.getStability();
+
+    // Map the internal code back to the public return value.
+    switch (internalCode) {
+        case INTERNAL_STABILITY_VENDOR:
+            return android::internal::Stability::VENDOR;
+        case INTERNAL_STABILITY_SYSTEM:
+            return android::internal::Stability::SYSTEM;
+        case INTERNAL_STABILITY_VINTF:
+            return android::internal::Stability::VINTF;
+        default:
+            return android::internal::Stability::UNDECLARED;
+    }
+}
+
+#ifdef __linux__
+void BBinder::setMinSchedulerPolicy(int policy, int priority) {
+    LOG_ALWAYS_FATAL_IF(wasParceled(),
+                        "setMinSchedulerPolicy() should not be called after a binder object "
+                        "is parceled/sent to another process");
+
+    switch (policy) {
+    case SCHED_NORMAL:
+      LOG_ALWAYS_FATAL_IF(priority < -20 || priority > 19, "Invalid priority for SCHED_NORMAL: %d", priority);
+      break;
+    case SCHED_RR:
+    case SCHED_FIFO:
+      LOG_ALWAYS_FATAL_IF(priority < 1 || priority > 99, "Invalid priority for sched %d: %d", policy, priority);
+      break;
+    default:
+      LOG_ALWAYS_FATAL("Unrecognized scheduling policy: %d", policy);
+    }
+
+    Extras* e = mExtras.load(std::memory_order_acquire);
+
+    if (e == nullptr) {
+        // Avoid allocations if called with default.
+        if (policy == SCHED_NORMAL && priority == 0) {
+            return;
+        }
+
+        e = getOrCreateExtras();
+        if (!e) return; // out of memory
+    }
+
+    e->mPolicy = policy;
+    e->mPriority = priority;
+}
+
+int BBinder::getMinSchedulerPolicy() {
+    Extras* e = mExtras.load(std::memory_order_acquire);
+    if (e == nullptr) return SCHED_NORMAL;
+    return e->mPolicy;
+}
+
+int BBinder::getMinSchedulerPriority() {
+    Extras* e = mExtras.load(std::memory_order_acquire);
+    if (e == nullptr) return 0;
+    return e->mPriority;
+}
+#endif // __linux__
+
+bool BBinder::isInheritRt() {
+    Extras* e = mExtras.load(std::memory_order_acquire);
+    // Return configured default value if it has not been overridden
+    if (e == nullptr) return sGlobalInheritRt.load(std::memory_order_acquire);
+    return e->mInheritRt;
+}
+
+void BBinder::setInheritRt(bool inheritRt) {
+    LOG_ALWAYS_FATAL_IF(wasParceled(),
+                        "setInheritRt() should not be called after a binder object "
+                        "is parceled/sent to another process");
+
+    Extras* e = mExtras.load(std::memory_order_acquire);
+
+    if (!e) {
+        if (!inheritRt) {
+            return;
+        }
+
+        e = getOrCreateExtras();
+        if (!e) return; // out of memory
+    }
+
+    e->mInheritRt = inheritRt;
+}
+
+void BBinder::setMinRpcThreads(uint16_t min) {
+    LOG_ALWAYS_FATAL_IF(wasParceled(),
+                        "setMinRpcThreads() should not be called after a binder object "
+                        "is parceled/sent to another process");
+    Extras* e = mExtras.load(std::memory_order_acquire);
+    if (!e) {
+        e = getOrCreateExtras();
+        if (!e) return; // out of memory
+    }
+    e->mMinThreads = min;
+}
+
+uint16_t BBinder::getMinRpcThreads() const {
+    Extras* e = mExtras.load(std::memory_order_acquire);
+    if (!e) {
+        return kDefaultMinThreads;
+    }
+    return e->mMinThreads;
+}
+
+std::atomic<bool> BBinder::sGlobalInheritRt(false);
+
+void BBinder::setGlobalInheritRt(bool enabled) {
+    sGlobalInheritRt.store(enabled, std::memory_order_release);
+}
+
+pid_t BBinder::getDebugPid() {
+#ifdef __linux__
+    return getpid();
+#else
+    // TODO: handle other OSes
+    return 0;
+#endif // __linux__
+}
+
+void BBinder::setExtension(const sp<IBinder>& extension) {
+    LOG_ALWAYS_FATAL_IF(wasParceled(),
+                        "setExtension() should not be called after a binder object "
+                        "is parceled/sent to another process");
+
+    Extras* e = getOrCreateExtras();
+    e->mExtension = extension;
+}
+
+bool BBinder::wasParceled() {
+    return mPackedData.isParceled();
+}
+
+void BBinder::setParceled() {
+    mPackedData.setParceled();
+}
+
+status_t BBinder::setRpcClientDebug(const Parcel& data) {
+    if (!kEnableRpcDevServers) {
+        ALOGW("%s: disallowed because RPC is not enabled", __PRETTY_FUNCTION__);
+        return INVALID_OPERATION;
+    }
+    if (!kEnableKernelIpc) {
+        ALOGW("setRpcClientDebug disallowed because kernel binder is not enabled");
+        return INVALID_OPERATION;
+    }
+    uid_t uid = IPCThreadState::self()->getCallingUid();
+    if (uid != kUidRoot) {
+        ALOGE("%s: not allowed because client %" PRIu32 " is not root", __PRETTY_FUNCTION__, uid);
+        return PERMISSION_DENIED;
+    }
+    status_t status;
+    bool hasSocketFd;
+    unique_fd clientFd;
+
+    if (status = data.readBool(&hasSocketFd); status != OK) return status;
+    if (hasSocketFd) {
+        if (status = data.readUniqueFileDescriptor(&clientFd); status != OK) return status;
+    }
+    sp<IBinder> keepAliveBinder;
+    if (status = data.readNullableStrongBinder(&keepAliveBinder); status != OK) return status;
+
+    return setRpcClientDebug(std::move(clientFd), keepAliveBinder);
+}
+
+status_t BBinder::setRpcClientDebug(unique_fd socketFd, const sp<IBinder>& keepAliveBinder) {
+    if (!kEnableRpcDevServers) {
+        ALOGW("%s: disallowed because RPC is not enabled", __PRETTY_FUNCTION__);
+        return INVALID_OPERATION;
+    }
+    if (!kEnableKernelIpc) {
+        ALOGW("setRpcClientDebug disallowed because kernel binder is not enabled");
+        return INVALID_OPERATION;
+    }
+
+    const int socketFdForPrint = socketFd.get();
+    LOG_RPC_DETAIL("%s(fd=%d)", __PRETTY_FUNCTION__, socketFdForPrint);
+
+    if (!socketFd.ok()) {
+        ALOGE("%s: No socket FD provided.", __PRETTY_FUNCTION__);
+        return BAD_VALUE;
+    }
+
+    if (keepAliveBinder == nullptr) {
+        ALOGE("%s: No keepAliveBinder provided.", __PRETTY_FUNCTION__);
+        return UNEXPECTED_NULL;
+    }
+
+    size_t binderThreadPoolMaxCount = ProcessState::self()->getThreadPoolMaxTotalThreadCount();
+    if (binderThreadPoolMaxCount <= 1) {
+        ALOGE("%s: ProcessState thread pool max count is %zu. RPC is disabled for this service "
+              "because RPC requires the service to support multithreading.",
+              __PRETTY_FUNCTION__, binderThreadPoolMaxCount);
+        return INVALID_OPERATION;
+    }
+
+    // Weak ref to avoid circular dependency:
+    // BBinder -> RpcServerLink ----> RpcServer -X-> BBinder
+    //                          `-X-> BBinder
+    auto weakThis = wp<BBinder>::fromExisting(this);
+
+    Extras* e = getOrCreateExtras();
+    RpcMutexUniqueLock _l(e->mLock);
+    auto rpcServer = RpcServer::make();
+    LOG_ALWAYS_FATAL_IF(rpcServer == nullptr, "RpcServer::make returns null");
+    auto link = sp<RpcServerLink>::make(rpcServer, keepAliveBinder, weakThis);
+    if (auto status = keepAliveBinder->linkToDeath(link, nullptr, 0); status != OK) {
+        ALOGE("%s: keepAliveBinder->linkToDeath returns %s", __PRETTY_FUNCTION__,
+              statusToString(status).c_str());
+        return status;
+    }
+    rpcServer->setRootObjectWeak(weakThis);
+    if (auto status = rpcServer->setupExternalServer(std::move(socketFd)); status != OK) {
+        return status;
+    }
+    rpcServer->setMaxThreads(binderThreadPoolMaxCount);
+    ALOGI("RpcBinder: Started Binder debug on %s", String8(getInterfaceDescriptor()).c_str());
+    rpcServer->start();
+    e->mRpcServerLinks.emplace(link);
+    LOG_RPC_DETAIL("%s(fd=%d) successful", __PRETTY_FUNCTION__, socketFdForPrint);
+    return OK;
+}
+
+void BBinder::removeRpcServerLink(const sp<RpcServerLink>& link) {
+    Extras* e = mExtras.load(std::memory_order_acquire);
+    if (!e) return;
+    RpcMutexUniqueLock _l(e->mLock);
+    (void)e->mRpcServerLinks.erase(link);
+}
+
+BBinder::~BBinder()
+{
+    if (!wasParceled()) {
+        if (getExtension()) {
+            ALOGW("Binder %p destroyed with extension attached before being parceled.", this);
+        }
+        if (isRequestingSid()) {
+            ALOGW("Binder %p destroyed when requesting SID before being parceled.", this);
+        }
+        if (sGlobalInheritRt.load(std::memory_order_acquire) != isInheritRt()) {
+            ALOGW("Binder %p destroyed after setInheritRt before being parceled.", this);
+        }
+#ifdef __linux__
+        if (getMinSchedulerPolicy() != SCHED_NORMAL) {
+            ALOGW("Binder %p destroyed after setMinSchedulerPolicy before being parceled.", this);
+        }
+        if (getMinSchedulerPriority() != 0) {
+            ALOGW("Binder %p destroyed after setMinSchedulerPolicy before being parceled.", this);
+        }
+#endif // __linux__
+    }
+
+    Extras* e = mExtras.load(std::memory_order_relaxed);
+    if (e) delete e;
+}
+
+
+// NOLINTNEXTLINE(google-default-arguments)
+status_t BBinder::onTransact(
+    uint32_t code, const Parcel& data, Parcel* reply, uint32_t /*flags*/)
+{
+    switch (code) {
+        case INTERFACE_TRANSACTION:
+            LOG_ALWAYS_FATAL_IF(reply == nullptr, "reply == nullptr");
+            reply->writeString16(getInterfaceDescriptor());
+            return NO_ERROR;
+
+        case DUMP_TRANSACTION: {
+            int fd = data.readFileDescriptor();
+            int argc = data.readInt32();
+            Vector<String16> args;
+            for (int i = 0; i < argc && data.dataAvail() > 0; i++) {
+               args.add(data.readString16());
+            }
+            return dump(fd, args);
+        }
+
+        case SHELL_COMMAND_TRANSACTION: {
+            int in = data.readFileDescriptor();
+            int out = data.readFileDescriptor();
+            int err = data.readFileDescriptor();
+            int argc = data.readInt32();
+            Vector<String16> args;
+            for (int i = 0; i < argc && data.dataAvail() > 0; i++) {
+               args.add(data.readString16());
+            }
+            sp<IBinder> shellCallbackBinder = data.readStrongBinder();
+            sp<IResultReceiver> resultReceiver = IResultReceiver::asInterface(
+                    data.readStrongBinder());
+
+            // XXX can't add virtuals until binaries are updated.
+            // sp<IShellCallback> shellCallback = IShellCallback::asInterface(
+            //        shellCallbackBinder);
+            // return shellCommand(in, out, err, args, resultReceiver);
+            (void)in;
+            (void)out;
+            (void)err;
+
+            if (resultReceiver != nullptr) {
+                resultReceiver->send(INVALID_OPERATION);
+            }
+
+            return NO_ERROR;
+        }
+
+        case SYSPROPS_TRANSACTION: {
+            if (!binder::os::report_sysprop_change()) return INVALID_OPERATION;
+            return NO_ERROR;
+        }
+
+        default:
+            return UNKNOWN_TRANSACTION;
+    }
+}
+
+BBinder::Extras* BBinder::getOrCreateExtras()
+{
+    Extras* e = mExtras.load(std::memory_order_acquire);
+
+    if (!e) {
+        e = new Extras;
+        Extras* expected = nullptr;
+        if (!mExtras.compare_exchange_strong(expected, e,
+                                             std::memory_order_release,
+                                             std::memory_order_acquire)) {
+            delete e;
+            e = expected;  // Filled in by CAS
+        }
+        if (e == nullptr) return nullptr; // out of memory
+    }
+
+    return e;
+}
+
+// ---------------------------------------------------------------------------
+
+enum {
+    // This is used to transfer ownership of the remote binder from
+    // the BpRefBase object holding it (when it is constructed), to the
+    // owner of the BpRefBase object when it first acquires that BpRefBase.
+    kRemoteAcquired = 0x00000001
+};
+
+BpRefBase::BpRefBase(const sp<IBinder>& o)
+    : mRemote(o.get()), mRefs(nullptr), mState(0)
+{
+    extendObjectLifetime(OBJECT_LIFETIME_WEAK);
+
+    if (mRemote) {
+        mRemote->incStrong(this);           // Removed on first IncStrong().
+        mRefs = mRemote->createWeak(this);  // Held for our entire lifetime.
+    }
+}
+
+BpRefBase::~BpRefBase()
+{
+    if (mRemote) {
+        if (!(mState.load(std::memory_order_relaxed)&kRemoteAcquired)) {
+            mRemote->decStrong(this);
+        }
+        mRefs->decWeak(this);
+    }
+}
+
+void BpRefBase::onFirstRef()
+{
+    mState.fetch_or(kRemoteAcquired, std::memory_order_relaxed);
+}
+
+void BpRefBase::onLastStrongRef(const void* /*id*/)
+{
+    if (mRemote) {
+        mRemote->decStrong(this);
+    }
+}
+
+bool BpRefBase::onIncStrongAttempted(uint32_t /*flags*/, const void* /*id*/)
+{
+    return mRemote ? mRefs->attemptIncStrong(this) : false;
+}
+
+// ---------------------------------------------------------------------------
+
+} // namespace android

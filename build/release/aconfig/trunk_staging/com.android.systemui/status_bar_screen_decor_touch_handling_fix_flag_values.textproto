@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_screen_decor_touch_handling_fix"
+  state: ENABLED
+  permission: READ_WRITE
+}

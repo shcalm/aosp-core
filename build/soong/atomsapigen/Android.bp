@@ -1,0 +1,26 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+bootstrap_go_package {
+    name: "soong-atomsapigen",
+    pkgPath: "android/soong/atomsapigen",
+    deps: [
+        "blueprint-proptools",
+        "soong",
+        "soong-android",
+        "soong-cc",
+        "soong-java",
+    ],
+    srcs: [
+        "cc_atomslog_library.go",
+        "init.go",
+        "java_atomslog_library.go",
+    ],
+    testSrcs: [
+        "cc_atomslog_library_test.go",
+        "java_atomslog_library_test.go",
+        "testing.go",
+    ],
+    pluginFor: ["soong_build"],
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "hsu_disable_notifications"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "bluetooth_bugreport_mode"
+  state: ENABLED
+  permission: READ_ONLY
+}

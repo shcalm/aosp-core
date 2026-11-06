@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mediasession.flags"
+  name: "fetch_media_controllers_for_app"
+  state: ENABLED
+  permission: READ_WRITE
+}

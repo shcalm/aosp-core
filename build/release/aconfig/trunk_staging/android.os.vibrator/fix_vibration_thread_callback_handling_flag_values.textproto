@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.vibrator"
+  name: "fix_vibration_thread_callback_handling"
+  state: ENABLED
+  permission: READ_WRITE
+}

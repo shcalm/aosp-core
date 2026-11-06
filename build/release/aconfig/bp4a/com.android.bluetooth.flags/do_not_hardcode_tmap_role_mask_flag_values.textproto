@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "do_not_hardcode_tmap_role_mask"
+  state: ENABLED
+  permission: READ_ONLY
+}

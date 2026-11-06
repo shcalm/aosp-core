@@ -1,0 +1,92 @@
+package: "com.android.bluetooth.flags"
+container: "com.android.bt"
+
+flag {
+  name: "btsec_cycle_irks"
+  namespace: "bluetooth"
+  description: "Change the IRK per BT spec when all devices are unbonded"
+  bug: "372714979"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "opp_check_content_uri_permissions"
+  namespace: "bluetooth"
+  description: "Check that the launching application for OPP has read access to the given content URI, on Android V+"
+  bug: "375466974"
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+    name: "btsec_disable_legacy_auto_pair"
+    namespace: "bluetooth"
+    description: "Remove support for auto-pairing with code 0000 against some legacy devices"
+    bug: "432805312"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "fix_sec_dev_rec_access"
+    namespace: "bluetooth"
+    description: "Fix the issue where the security device record is accessed after cleanup"
+    bug: "440217039"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "use_array_instead_list_in_sec_dev_rec"
+    namespace: "bluetooth"
+    description: "Use array instead of list in security device record"
+    bug: "444620685"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "btsec_sdp_database_thread_sync"
+    namespace: "bluetooth"
+    description: "Use new thread synchronization for SDP database access"
+    bug: "458487080"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "prevent_jw_auto_accept"
+    namespace: "bluetooth"
+    description: "LE Just Works pairing must not be auto-approved even if the local IO capabilities are limited"
+    bug: "459944706"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "local_pin_key_type"
+    namespace: "bluetooth"
+    description: "Android Bluetooth must not set local pin key type to fixed for BR/EDR legacy pairing"
+    bug: "460620223"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "btsec_check_implicit_encryption_downgrade"
+    namespace: "bluetooth"
+    description: "Prevent implicit downgrade avoiding BLUFFS mitigation after forcing legacy pairing"
+    bug: "494009564"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}

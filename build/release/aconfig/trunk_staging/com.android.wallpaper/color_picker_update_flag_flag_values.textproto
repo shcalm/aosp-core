@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wallpaper"
+  name: "color_picker_update_flag"
+  state: ENABLED
+  permission: READ_WRITE
+}

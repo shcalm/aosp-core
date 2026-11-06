@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.intentresolver"
+  name: "use_recycler_view_decorations"
+  state: ENABLED
+  permission: READ_ONLY
+}

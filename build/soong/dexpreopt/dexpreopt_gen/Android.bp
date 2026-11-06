@@ -1,0 +1,17 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+blueprint_go_binary {
+    name: "dexpreopt_gen",
+    srcs: [
+        "dexpreopt_gen.go",
+    ],
+    deps: [
+        "blueprint",
+        "blueprint-pathtools",
+        "blueprint-proptools",
+        "soong-android",
+        "soong-dexpreopt",
+    ],
+}

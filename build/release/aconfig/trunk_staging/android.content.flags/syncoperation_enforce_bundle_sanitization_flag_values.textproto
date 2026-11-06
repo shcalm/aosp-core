@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.flags"
+  name: "syncoperation_enforce_bundle_sanitization"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "fix_battery_level_in_connection_summary"
+  state: ENABLED
+  permission: READ_ONLY
+}

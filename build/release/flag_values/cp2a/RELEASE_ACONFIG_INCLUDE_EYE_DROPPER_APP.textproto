@@ -1,0 +1,4 @@
+name: "RELEASE_ACONFIG_INCLUDE_EYE_DROPPER_APP"
+value {
+  bool_value: true
+}

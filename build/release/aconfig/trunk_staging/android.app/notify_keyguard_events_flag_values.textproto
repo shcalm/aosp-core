@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "notify_keyguard_events"
+  state: ENABLED
+  permission: READ_WRITE
+}

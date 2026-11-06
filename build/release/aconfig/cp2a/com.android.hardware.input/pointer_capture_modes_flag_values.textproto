@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "pointer_capture_modes"
+  state: ENABLED
+  permission: READ_ONLY
+}

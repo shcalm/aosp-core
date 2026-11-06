@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "cell_identity_for_barring_info"
+  state: ENABLED
+  permission: READ_ONLY
+}

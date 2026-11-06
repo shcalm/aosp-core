@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "uri_grant_attribute_size_check_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

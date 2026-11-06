@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.stats"
+  name: "add_adaptive_suspend_stats_puller"
+  state: ENABLED
+  permission: READ_ONLY
+}

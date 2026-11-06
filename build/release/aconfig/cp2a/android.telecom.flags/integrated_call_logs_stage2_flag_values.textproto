@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "integrated_call_logs_stage2"
+  state: ENABLED
+  permission: READ_ONLY
+}

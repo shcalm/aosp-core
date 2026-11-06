@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_flickers_during_switch_from_dismiss"
+  state: ENABLED
+  permission: READ_ONLY
+}

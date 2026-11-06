@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "multi_user_wifi_enhancement"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "mouse_swap_primary_button"
+  state: ENABLED
+  permission: READ_ONLY
+}

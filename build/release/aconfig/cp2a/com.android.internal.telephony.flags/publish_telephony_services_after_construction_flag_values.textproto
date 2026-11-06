@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "publish_telephony_services_after_construction"
+  state: ENABLED
+  permission: READ_ONLY
+}

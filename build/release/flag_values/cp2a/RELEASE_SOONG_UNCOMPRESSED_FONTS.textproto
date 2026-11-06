@@ -1,0 +1,4 @@
+name: "RELEASE_SOONG_UNCOMPRESSED_FONTS"
+value {
+  bool_value: true
+}

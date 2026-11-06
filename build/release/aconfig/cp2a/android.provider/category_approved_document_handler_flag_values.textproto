@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.provider"
+  name: "category_approved_document_handler"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "update_bubble_bounds_during_rotation"
+  state: ENABLED
+  permission: READ_WRITE
+}

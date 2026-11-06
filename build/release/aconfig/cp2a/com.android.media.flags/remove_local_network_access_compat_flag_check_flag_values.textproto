@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "remove_local_network_access_compat_flag_check"
+  state: ENABLED
+  permission: READ_ONLY
+}

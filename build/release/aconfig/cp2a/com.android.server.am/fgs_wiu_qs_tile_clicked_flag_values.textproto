@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "fgs_wiu_qs_tile_clicked"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubble_ime_clipping"
+  state: ENABLED
+  permission: READ_ONLY
+}

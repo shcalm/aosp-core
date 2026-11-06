@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "commit_keyguard_occlusion_before_waking_up"
+  state: ENABLED
+  permission: READ_WRITE
+}

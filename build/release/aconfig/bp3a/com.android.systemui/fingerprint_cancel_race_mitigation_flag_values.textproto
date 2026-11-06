@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fingerprint_cancel_race_mitigation"
+  state: ENABLED
+  permission: READ_ONLY
+}

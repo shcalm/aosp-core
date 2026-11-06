@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "engagement_control_api"
+  state: ENABLED
+  permission: READ_WRITE
+}

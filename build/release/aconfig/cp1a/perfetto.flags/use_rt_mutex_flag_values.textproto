@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "use_rt_mutex"
+  state: ENABLED
+  permission: READ_ONLY
+}

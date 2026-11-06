@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.flags"
+  name: "enable_system_contacts_picker"
+  state: ENABLED
+  permission: READ_WRITE
+}

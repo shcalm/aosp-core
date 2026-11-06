@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "enable_use_of_session_release_type_for_stop_button"
+  state: ENABLED
+  permission: READ_ONLY
+}

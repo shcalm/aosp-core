@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "bluetooth_quality_report_v8"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "animation_library_delay_leash_cleanup"
+  state: ENABLED
+  permission: READ_ONLY
+}

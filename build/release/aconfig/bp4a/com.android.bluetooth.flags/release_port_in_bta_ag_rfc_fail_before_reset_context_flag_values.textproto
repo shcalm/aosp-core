@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "release_port_in_bta_ag_rfc_fail_before_reset_context"
+  state: ENABLED
+  permission: READ_ONLY
+}

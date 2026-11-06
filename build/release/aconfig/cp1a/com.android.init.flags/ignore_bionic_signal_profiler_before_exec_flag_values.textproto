@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.init.flags"
+  name: "ignore_bionic_signal_profiler_before_exec"
+  state: ENABLED
+  permission: READ_ONLY
+}

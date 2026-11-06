@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.feature.flags"
+  name: "remove_cached_uids_from_wakelock"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "notify_unconditional_disconnect_le"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_NEXUS_LAUNCHER_USE_SPEED_PROFILE"
+value {
+  bool_value: true
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_fallback_group_selection"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "floating_menu_transparency_slider_announces_disabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "settings_search_result_deep_link_in_same_task"
+  state: ENABLED
+  permission: READ_ONLY
+}

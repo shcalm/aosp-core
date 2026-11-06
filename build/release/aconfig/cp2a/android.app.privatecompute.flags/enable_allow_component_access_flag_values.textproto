@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.privatecompute.flags"
+  name: "enable_allow_component_access"
+  state: ENABLED
+  permission: READ_ONLY
+}

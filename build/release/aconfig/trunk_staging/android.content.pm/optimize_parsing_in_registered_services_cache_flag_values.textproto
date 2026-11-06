@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "optimize_parsing_in_registered_services_cache"
+  state: ENABLED
+  permission: READ_ONLY
+}

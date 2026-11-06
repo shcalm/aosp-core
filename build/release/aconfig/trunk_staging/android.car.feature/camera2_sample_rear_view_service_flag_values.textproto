@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "camera2_sample_rear_view_service"
+  state: ENABLED
+  permission: READ_ONLY
+}

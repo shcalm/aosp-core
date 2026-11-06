@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.graphics.pdf.flags"
+  name: "enable_get_top_pdf_page_object_at_position"
+  state: ENABLED
+  permission: READ_ONLY
+}

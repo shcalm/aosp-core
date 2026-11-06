@@ -1,0 +1,5 @@
+name: "RELEASE_CAR_SYS_EXP_DEPRECATE_CW"
+namespace: "car_sys_exp"
+description: "b/460887586, deprecate car targets for car variants"
+workflow: LAUNCH
+containers: "system"

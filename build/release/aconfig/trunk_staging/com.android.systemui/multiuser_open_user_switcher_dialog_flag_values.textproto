@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "multiuser_open_user_switcher_dialog"
+  state: ENABLED
+  permission: READ_WRITE
+}

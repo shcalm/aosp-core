@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "limit_logcat_collection"
+  state: ENABLED
+  permission: READ_ONLY
+}

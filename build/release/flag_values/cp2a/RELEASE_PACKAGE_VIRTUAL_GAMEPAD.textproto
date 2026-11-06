@@ -1,0 +1,4 @@
+name: "RELEASE_PACKAGE_VIRTUAL_GAMEPAD"
+value {
+  bool_value: true
+}

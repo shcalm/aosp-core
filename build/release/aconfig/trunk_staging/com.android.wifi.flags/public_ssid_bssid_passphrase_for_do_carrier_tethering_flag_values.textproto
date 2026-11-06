@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "public_ssid_bssid_passphrase_for_do_carrier_tethering"
+  state: ENABLED
+  permission: READ_ONLY
+}

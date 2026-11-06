@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "migrate_basic_legacy_ready"
+  state: ENABLED
+  permission: READ_WRITE
+}

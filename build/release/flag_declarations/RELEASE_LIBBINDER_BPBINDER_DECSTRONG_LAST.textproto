@@ -1,0 +1,5 @@
+name: "RELEASE_LIBBINDER_BPBINDER_DECSTRONG_LAST"
+namespace: "system_performance"
+description: "Call decStrongHandle() in BpBinder::onLastStrongRef() last"
+workflow: LAUNCH
+containers: "system"

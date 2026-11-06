@@ -1,0 +1,4 @@
+name: "RELEASE_BALANCE_JAVAC_SRCJAR_SHARDS"
+value {
+  bool_value: true
+}

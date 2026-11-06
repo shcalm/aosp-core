@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.contextualsearch.flags"
+  name: "contextual_search_media_projection"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_alt_tab_kqs_on_connected_displays"
+  state: ENABLED
+  permission: READ_WRITE
+}

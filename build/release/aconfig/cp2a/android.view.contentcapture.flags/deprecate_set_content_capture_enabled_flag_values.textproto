@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.contentcapture.flags"
+  name: "deprecate_set_content_capture_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

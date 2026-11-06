@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "require_pin_before_user_deletion"
+  state: ENABLED
+  permission: READ_ONLY
+}

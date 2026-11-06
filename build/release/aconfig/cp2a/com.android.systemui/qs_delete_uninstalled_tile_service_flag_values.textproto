@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "qs_delete_uninstalled_tile_service"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,8 @@
+name: "RELEASE_AVF_ENABLE_DYNAMIC_ZERO_COPY_SHARE_WITH_GUEST"
+namespace: "virtualization"
+description: "Userspace part to support zero copy share between host and guest"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

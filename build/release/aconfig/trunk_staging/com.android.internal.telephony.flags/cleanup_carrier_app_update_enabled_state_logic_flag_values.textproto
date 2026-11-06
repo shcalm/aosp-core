@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "cleanup_carrier_app_update_enabled_state_logic"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "save_all_traces_in_bugreport"
+  state: ENABLED
+  permission: READ_WRITE
+}

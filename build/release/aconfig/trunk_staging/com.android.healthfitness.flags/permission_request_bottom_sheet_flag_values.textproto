@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "permission_request_bottom_sheet"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,8 @@
+name: "RELEASE_AVF_ENABLE_VM_TO_HOST_SERVICES"
+namespace: "treble"
+description: "Support for allowing some vms to access host services (b/358427181)"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

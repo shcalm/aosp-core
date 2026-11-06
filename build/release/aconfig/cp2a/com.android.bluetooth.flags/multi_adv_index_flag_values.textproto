@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "multi_adv_index"
+  state: ENABLED
+  permission: READ_ONLY
+}

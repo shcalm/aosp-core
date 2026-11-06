@@ -1,0 +1,4 @@
+name: "RELEASE_REMOVE_BETA_FLAGS_FROM_ACONFIG_FLAGS_PB"
+value {
+  bool_value: true
+}

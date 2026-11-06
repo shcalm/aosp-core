@@ -1,0 +1,74 @@
+# Copyright 2025 The Android Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#! dns-proxy cargo build.
+
+[package]
+edition = "2021"
+rust-version = "1.84"
+name = "resolvrs"
+version = "0.0.1"
+
+[dependencies]
+android_logger = "0.15.1"
+anyhow = "1.0.99"
+base64 = "0.22.1"
+bytes = "1.10.1"
+cxx = { version = "1.0.160", optional = true }
+command-fds = "0.3.0"
+futures = "0.3.31"
+libc = "0.2.177"
+log = "^0.4.28"
+mockall = "0.13.1"
+nix = { version = "0.29.0", features = ["fs", "net", "uio", "user"] }
+num_enum = "0.7.4"
+rand = { version = "0.9.2", features = ["std", "std_rng"] }
+ring = { version = "0.17.2", features = ["std"] }
+quiche = "0.17.1"
+resolvrs_utils = { path = "lib/resolvrs_utils" }
+socket2 = { version = "0.6.0", features = ["all"] }
+static_assertions = "1.1.0"
+thiserror = "2.0.16"
+tokio = { version = "1.47.2", features = ["macros", "net", "rt", "rt-multi-thread", "sync", "time"] }
+url = "2.5.2"
+
+[features]
+default = []
+android-ffi = ["dep:cxx"]
+statslog = []
+
+[lib]
+name = "android_dns_proxy"
+path = "src/lib.rs"
+
+# It follows the default Rust lints on Android. (Ref: build/soong/rust/config/lints.go)
+[lints.rust]
+deprecated = "allow"
+unknown_lints = "allow"
+missing_docs = "deny"
+# warnings = "deny"
+unsafe_op_in_unsafe_fn = "deny"
+# Note that lints.go temporarily includes mismatched_lifetime_syntaxes = "allow" which is omitted
+# here.
+
+[lints.clippy]
+disallowed_names = "allow"
+empty_line_after_doc_comments = "allow"
+type-complexity = "allow"
+unnecessary_fallible_conversions = "allow"
+unnecessary-wraps = "allow"
+unusual-byte-groupings = "allow"
+upper-case-acronyms = "allow"
+uninlined_format_args = "allow"
+undocumented_unsafe_blocks = "deny"

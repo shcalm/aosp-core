@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "use_topology_aware_flag"
+  state: ENABLED
+  permission: READ_WRITE
+}

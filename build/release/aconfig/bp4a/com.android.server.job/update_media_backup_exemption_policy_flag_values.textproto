@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.job"
+  name: "update_media_backup_exemption_policy"
+  state: ENABLED
+  permission: READ_ONLY
+}

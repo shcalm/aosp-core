@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "use_snapshot_fixed_rotation"
+  state: ENABLED
+  permission: READ_WRITE
+}

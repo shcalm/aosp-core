@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "inactive_data_network_is_not_stalled"
+  state: ENABLED
+  permission: READ_WRITE
+}

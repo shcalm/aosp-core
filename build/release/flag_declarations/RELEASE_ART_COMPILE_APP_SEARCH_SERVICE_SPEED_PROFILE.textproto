@@ -1,0 +1,8 @@
+name: "RELEASE_ART_COMPILE_APP_SEARCH_SERVICE_SPEED_PROFILE"
+namespace: "art_performance"
+description: "b/241823638: Flag to enable ART Speed Profile compilation for AppSearch module service."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

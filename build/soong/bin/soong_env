@@ -1,0 +1,22 @@
+#!/bin/bash
+# Some of these may be updated by soong_ui, so have it print them.
+DUMPVARS_VARS=(
+  SISO_CONFIG_DIR
+  SOONG_INCREMENTAL_ANALYSIS
+  SOONG_NINJA
+  SOONG_ONLY
+  SOONG_PARTIAL_COMPILE
+  SOONG_USE_PARTIAL_COMPILE
+  TARGET_PRODUCT
+  TARGET_BUILD_APPS
+  TARGET_BUILD_TYPE
+  TARGET_BUILD_VARIANT
+)
+# These are only available from the environment.
+ENV_VARS=(
+  TARGET_RELEASE
+)
+get_build_vars ${DUMPVARS_VARS[@]} 2>&1
+for var in ${ENV_VARS}; do
+  echo ${var}=\'$(eval echo "$""${var}")\'
+done

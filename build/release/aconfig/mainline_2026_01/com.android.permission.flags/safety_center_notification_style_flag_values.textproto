@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.permission.flags"
+  name: "safety_center_notification_style"
+  state: ENABLED
+  permission: READ_ONLY
+}

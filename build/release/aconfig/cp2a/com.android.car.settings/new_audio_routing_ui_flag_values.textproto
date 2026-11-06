@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.car.settings"
+  name: "new_audio_routing_ui"
+  state: ENABLED
+  permission: READ_ONLY
+}

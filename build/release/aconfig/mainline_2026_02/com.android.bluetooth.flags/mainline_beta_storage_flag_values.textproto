@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "mainline_beta_storage"
+  state: ENABLED
+  permission: READ_ONLY
+}

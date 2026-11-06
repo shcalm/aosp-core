@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_directly_write_commit_remove_blob_response"
+  state: ENABLED
+  permission: READ_WRITE
+}

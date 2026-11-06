@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "sync_app_launch_with_taskbar_stash"
+  state: ENABLED
+  permission: READ_WRITE
+}

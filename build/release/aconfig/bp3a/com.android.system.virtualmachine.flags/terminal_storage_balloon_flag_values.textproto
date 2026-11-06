@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.system.virtualmachine.flags"
+  name: "terminal_storage_balloon"
+  state: ENABLED
+  permission: READ_ONLY
+}

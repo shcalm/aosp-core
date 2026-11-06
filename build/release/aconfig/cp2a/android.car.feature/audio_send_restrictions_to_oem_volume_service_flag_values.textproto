@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "audio_send_restrictions_to_oem_volume_service"
+  state: ENABLED
+  permission: READ_ONLY
+}

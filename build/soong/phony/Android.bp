@@ -1,0 +1,18 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+bootstrap_go_package {
+    name: "soong-phony",
+    pkgPath: "android/soong/phony",
+    deps: [
+        "blueprint",
+        "blueprint-proptools",
+        "soong-android",
+    ],
+    srcs: [
+        "phony.go",
+    ],
+    pluginFor: ["soong_build"],
+    visibility: ["//visibility:public"],
+}

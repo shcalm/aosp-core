@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "avoid_logging_more_than_once"
+  state: ENABLED
+  permission: READ_WRITE
+}

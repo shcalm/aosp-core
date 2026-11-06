@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_app_open_events_indexer_check_prior_attempt"
+  state: ENABLED
+  permission: READ_WRITE
+}

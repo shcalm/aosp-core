@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.hwui.flags"
+  name: "image_decoder_default_listener"
+  state: ENABLED
+  permission: READ_ONLY
+}

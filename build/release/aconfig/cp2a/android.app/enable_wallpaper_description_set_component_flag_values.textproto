@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "enable_wallpaper_description_set_component"
+  state: ENABLED
+  permission: READ_ONLY
+}

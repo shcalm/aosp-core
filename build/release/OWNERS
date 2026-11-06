@@ -1,0 +1,42 @@
+# Copyright 2023 Google LLC
+
+# For now, as we figure out exactly how flagging will work, please send all
+# reviews to this directory to joeo, with the others as backups for emergencies.
+
+# As we build out the tooling and guardrails:
+#   - More OWNERS, including around the world coverage.
+#   - More clear policies will be made for adding new build flags, and
+#     the expectation that most flags will be aconfig flags and settable
+#     at runtime will become more firm.
+#   - The build_config and aconfig directories will be managed
+#     directly by gantry.
+
+tkeren@google.com
+opg@google.com
+zhidou@google.com
+lamontjones@google.com # Temporary primary
+morrislin@google.com # Temporary primary
+amhk@google.com # Temporary primary
+
+per-file release_configs/?p??.textproto=jainne@google.com # New platform release configs
+per-file aconfig/?p??/*,aconfig/?p??/*/*=bkhalife@google.com # For Nextfood promotion requests
+per-file aconfig/?p??/*,aconfig/?p??/*/*=chapin@google.com # For Nextfood promotion requests
+per-file aconfig/?p??/*,aconfig/?p??/*/*=jainne@google.com # For Nextfood promotion requests
+per-file aconfig/?p??/*,aconfig/?p??/*/*=lokeshgoel@google.com # For Nextfood promotion requests
+per-file aconfig/?p??/*,aconfig/?p??/*/*=lubomir@google.com # For Nextfood promotion requests
+per-file aconfig/?p??/*,aconfig/?p??/*/*=pscovanner@google.com # For Nextfood promotion requests
+per-file aconfig/?p??/*,aconfig/?p??/*/*=rajukulkarni@google.com # For Nextfood promotion requests
+per-file aconfig/?p??/*,aconfig/?p??/*/*=ramprasathd@google.com # For Nextfood promotion requests
+per-file aconfig/?p??/*,aconfig/?p??/*/*=zoeyhsieh@google.com # For Nextfood promotion requests
+
+per-file aconfig/*/*,aconfig/*/*/*=opg@google.com
+per-file aconfig/*/*,aconfig/*/*/*=tejaswiy@google.com
+
+per-file flag_values/*/RELEASE_BUILD_AFDO_PROFILE_VERSION.textproto=file:platform/prebuilts/clang/host/linux-x86:/OWNERS # Android LLVM Toolchain
+per-file flag_values/trunk*/RELEASE_BUILD_CLANG_SHORT_VERSION.textproto=file:platform/prebuilts/clang/host/linux-x86:/OWNERS # Android LLVM Toolchain
+per-file flag_values/trunk*/RELEASE_BUILD_CLANG_VERSION.textproto=file:platform/prebuilts/clang/host/linux-x86:/OWNERS # Android LLVM Toolchain
+
+include platform/build/release:main:/SDK_OWNERS
+
+jham@google.com # emergency backup #{LAST_RESORT_SUGGESTION}
+amithds@google.com # emergency backup #{LAST_RESORT_SUGGESTION}

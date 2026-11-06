@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "catalyst_autoclick_screen"
+  state: ENABLED
+  permission: READ_WRITE
+}

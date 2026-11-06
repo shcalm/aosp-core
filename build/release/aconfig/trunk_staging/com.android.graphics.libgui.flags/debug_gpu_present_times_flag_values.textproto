@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libgui.flags"
+  name: "debug_gpu_present_times"
+  state: ENABLED
+  permission: READ_WRITE
+}

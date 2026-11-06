@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.google.pixel.health"
+  name: "enable_overheat_rm_feature"
+  state: ENABLED
+  permission: READ_ONLY
+}

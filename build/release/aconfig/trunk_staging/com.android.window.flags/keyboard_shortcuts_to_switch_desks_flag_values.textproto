@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "keyboard_shortcuts_to_switch_desks"
+  state: ENABLED
+  permission: READ_WRITE
+}

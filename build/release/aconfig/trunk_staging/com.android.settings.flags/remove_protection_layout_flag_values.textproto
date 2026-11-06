@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "remove_protection_layout"
+  state: ENABLED
+  permission: READ_WRITE
+}

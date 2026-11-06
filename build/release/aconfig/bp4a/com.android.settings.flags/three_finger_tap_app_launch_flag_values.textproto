@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "three_finger_tap_app_launch"
+  state: ENABLED
+  permission: READ_ONLY
+}

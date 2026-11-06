@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.chooser"
+  name: "resolver_respect_auto_launch_single_choice"
+  state: ENABLED
+  permission: READ_ONLY
+}

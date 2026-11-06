@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "unsampled_compact_atom_logging"
+  state: ENABLED
+  permission: READ_WRITE
+}

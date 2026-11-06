@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "fix_data_setup_retry_race_condition"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.icu"
+  name: "enable_multi_country_override_parsing"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.flags"
+  name: "executable_method_file_offsets_v2"
+  state: ENABLED
+  permission: READ_ONLY
+}

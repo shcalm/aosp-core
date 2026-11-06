@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_do_not_set_autoconnecting_on_connected_device"
+  state: ENABLED
+  permission: READ_ONLY
+}

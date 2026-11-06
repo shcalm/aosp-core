@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "change_display_focus_on_wallpaper_touch"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "gatt_not_send_service_change_indication_iop"
+  state: ENABLED
+  permission: READ_ONLY
+}

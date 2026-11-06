@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.ipsec.flags"
+  name: "use_cached_addresses"
+  state: ENABLED
+  permission: READ_ONLY
+}

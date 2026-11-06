@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "allow_listeners_while_idle"
+  state: ENABLED
+  permission: READ_ONLY
+}

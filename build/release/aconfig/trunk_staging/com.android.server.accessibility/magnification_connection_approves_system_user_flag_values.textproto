@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "magnification_connection_approves_system_user"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "notifications_remember_channel_list_state"
+  state: ENABLED
+  permission: READ_ONLY
+}

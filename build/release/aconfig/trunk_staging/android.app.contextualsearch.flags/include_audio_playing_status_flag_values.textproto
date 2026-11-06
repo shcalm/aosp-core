@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.contextualsearch.flags"
+  name: "include_audio_playing_status"
+  state: ENABLED
+  permission: READ_WRITE
+}

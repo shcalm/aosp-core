@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.notification"
+  name: "notification_bitmap_offloading"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_long_press_remove_shortcut"
+  state: ENABLED
+  permission: READ_WRITE
+}

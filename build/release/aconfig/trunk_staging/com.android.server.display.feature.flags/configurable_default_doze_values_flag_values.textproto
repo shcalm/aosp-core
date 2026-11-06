@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "configurable_default_doze_values"
+  state: ENABLED
+  permission: READ_WRITE
+}

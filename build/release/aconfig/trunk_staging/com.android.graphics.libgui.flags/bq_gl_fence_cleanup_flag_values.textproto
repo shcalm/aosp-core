@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libgui.flags"
+  name: "bq_gl_fence_cleanup"
+  state: ENABLED
+  permission: READ_ONLY
+}

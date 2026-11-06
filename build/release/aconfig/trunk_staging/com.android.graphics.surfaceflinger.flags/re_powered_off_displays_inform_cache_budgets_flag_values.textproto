@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "re_powered_off_displays_inform_cache_budgets"
+  state: ENABLED
+  permission: READ_WRITE
+}

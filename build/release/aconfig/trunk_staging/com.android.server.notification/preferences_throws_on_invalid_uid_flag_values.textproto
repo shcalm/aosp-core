@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "preferences_throws_on_invalid_uid"
+  state: ENABLED
+  permission: READ_WRITE
+}

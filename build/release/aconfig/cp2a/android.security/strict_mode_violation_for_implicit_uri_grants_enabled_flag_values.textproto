@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "strict_mode_violation_for_implicit_uri_grants_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

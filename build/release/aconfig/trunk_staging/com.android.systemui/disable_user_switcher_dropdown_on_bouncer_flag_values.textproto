@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "disable_user_switcher_dropdown_on_bouncer"
+  state: ENABLED
+  permission: READ_WRITE
+}

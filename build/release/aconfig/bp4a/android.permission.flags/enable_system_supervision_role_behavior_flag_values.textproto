@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "enable_system_supervision_role_behavior"
+  state: ENABLED
+  permission: READ_ONLY
+}

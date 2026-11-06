@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "show_taskbar_pinning_popup_from_anywhere"
+  state: ENABLED
+  permission: READ_WRITE
+}

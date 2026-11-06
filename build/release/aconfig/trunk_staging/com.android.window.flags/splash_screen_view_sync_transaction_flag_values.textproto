@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "splash_screen_view_sync_transaction"
+  state: ENABLED
+  permission: READ_ONLY
+}

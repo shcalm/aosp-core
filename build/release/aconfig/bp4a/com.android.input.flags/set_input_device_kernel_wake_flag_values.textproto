@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "set_input_device_kernel_wake"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.server"
+  name: "allow_system_server_inherit_rt"
+  state: ENABLED
+  permission: READ_ONLY
+}

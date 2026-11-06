@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "adaptive_low_freq_mode_on_aod"
+  state: ENABLED
+  permission: READ_ONLY
+}

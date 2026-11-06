@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "upgrade_user_summary_behaviour"
+  state: ENABLED
+  permission: READ_ONLY
+}

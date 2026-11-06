@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "fix_lecoc_socket_available"
+  state: ENABLED
+  permission: READ_ONLY
+}

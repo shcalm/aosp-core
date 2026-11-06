@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.contacts.flags"
+  name: "insert_account_logging"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "computer_control_config_change_override"
+  state: ENABLED
+  permission: READ_ONLY
+}

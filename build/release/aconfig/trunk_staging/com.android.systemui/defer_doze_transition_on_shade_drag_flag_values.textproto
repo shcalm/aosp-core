@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "defer_doze_transition_on_shade_drag"
+  state: ENABLED
+  permission: READ_WRITE
+}

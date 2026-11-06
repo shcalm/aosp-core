@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "ble_peripheral_devices"
+  state: ENABLED
+  permission: READ_ONLY
+}

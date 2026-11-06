@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "adopt_primary_group_management_api"
+  state: ENABLED
+  permission: READ_WRITE
+}

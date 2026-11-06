@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.flags"
+  name: "certpininstaller_removal"
+  state: ENABLED
+  permission: READ_WRITE
+}

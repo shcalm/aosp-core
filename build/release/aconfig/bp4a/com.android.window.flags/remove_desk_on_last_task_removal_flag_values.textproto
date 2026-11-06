@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "remove_desk_on_last_task_removal"
+  state: ENABLED
+  permission: READ_ONLY
+}

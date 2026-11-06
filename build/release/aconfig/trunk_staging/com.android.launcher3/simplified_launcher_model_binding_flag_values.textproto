@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "simplified_launcher_model_binding"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "allow_multi_window_non_resizable_activities"
+  state: ENABLED
+  permission: READ_ONLY
+}

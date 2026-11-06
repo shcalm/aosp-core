@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fix_dialog_anim_collapse_flicker"
+  state: ENABLED
+  permission: READ_ONLY
+}

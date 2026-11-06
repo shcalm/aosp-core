@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "psc_batch_service_updates"
+  state: ENABLED
+  permission: READ_WRITE
+}

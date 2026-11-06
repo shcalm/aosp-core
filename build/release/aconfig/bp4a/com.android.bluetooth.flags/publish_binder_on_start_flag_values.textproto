@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "publish_binder_on_start"
+  state: ENABLED
+  permission: READ_ONLY
+}

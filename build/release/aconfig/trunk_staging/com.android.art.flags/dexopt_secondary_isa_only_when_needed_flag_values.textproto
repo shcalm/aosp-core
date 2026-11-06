@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.flags"
+  name: "dexopt_secondary_isa_only_when_needed"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "reset_motion_event_sources_on_denied_permission"
+  state: ENABLED
+  permission: READ_WRITE
+}

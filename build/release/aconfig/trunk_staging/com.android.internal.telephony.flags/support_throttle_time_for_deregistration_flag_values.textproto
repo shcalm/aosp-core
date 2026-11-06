@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "support_throttle_time_for_deregistration"
+  state: ENABLED
+  permission: READ_WRITE
+}

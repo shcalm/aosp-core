@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "prevent_volume_shortcut_ringtone_exhaustion"
+  state: ENABLED
+  permission: READ_WRITE
+}

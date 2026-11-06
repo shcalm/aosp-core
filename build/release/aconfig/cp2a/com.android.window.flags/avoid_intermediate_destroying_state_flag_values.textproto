@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "avoid_intermediate_destroying_state"
+  state: ENABLED
+  permission: READ_ONLY
+}

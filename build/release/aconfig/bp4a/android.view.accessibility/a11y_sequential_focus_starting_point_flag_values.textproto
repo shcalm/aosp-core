@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "a11y_sequential_focus_starting_point"
+  state: ENABLED
+  permission: READ_ONLY
+}

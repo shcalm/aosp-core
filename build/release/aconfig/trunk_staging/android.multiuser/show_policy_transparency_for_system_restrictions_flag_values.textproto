@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "show_policy_transparency_for_system_restrictions"
+  state: ENABLED
+  permission: READ_WRITE
+}

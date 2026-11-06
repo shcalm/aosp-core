@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "dont_notify_missed_calls_when_no_dialer"
+  state: ENABLED
+  permission: READ_WRITE
+}

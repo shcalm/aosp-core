@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.crossdevicesync.flags"
+  name: "start_sync_service_on_boot"
+  state: ENABLED
+  permission: READ_WRITE
+}

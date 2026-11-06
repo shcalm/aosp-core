@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.apex.flags"
+  name: "mount_before_data"
+  state: ENABLED
+  permission: READ_ONLY
+}

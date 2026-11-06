@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.chooser"
+  name: "notify_single_item_change_on_icon_load"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_PACKAGE_COMPUTER_CONTROL"
+value {
+  bool_value: true
+}

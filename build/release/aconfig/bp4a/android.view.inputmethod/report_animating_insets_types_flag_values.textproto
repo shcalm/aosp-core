@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "report_animating_insets_types"
+  state: ENABLED
+  permission: READ_ONLY
+}

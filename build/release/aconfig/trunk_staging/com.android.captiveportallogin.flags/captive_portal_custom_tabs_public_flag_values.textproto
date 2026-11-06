@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.captiveportallogin.flags"
+  name: "captive_portal_custom_tabs_public"
+  state: ENABLED
+  permission: READ_WRITE
+}

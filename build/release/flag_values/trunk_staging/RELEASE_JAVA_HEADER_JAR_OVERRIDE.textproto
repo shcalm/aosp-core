@@ -1,0 +1,4 @@
+name: "RELEASE_JAVA_HEADER_JAR_OVERRIDE"
+value: {
+  bool_value: true
+}

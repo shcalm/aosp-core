@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "pause_clients_before_resolving_list_modification"
+  state: ENABLED
+  permission: READ_WRITE
+}

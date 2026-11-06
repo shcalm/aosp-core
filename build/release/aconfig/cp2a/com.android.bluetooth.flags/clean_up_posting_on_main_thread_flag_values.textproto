@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "clean_up_posting_on_main_thread"
+  state: ENABLED
+  permission: READ_ONLY
+}

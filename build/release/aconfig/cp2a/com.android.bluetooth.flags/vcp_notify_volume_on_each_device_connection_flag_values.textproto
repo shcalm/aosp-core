@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "vcp_notify_volume_on_each_device_connection"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,11 @@
+name: "RELEASE_SOONG_FNO_COMMON_FOR_3P_CODE"
+namespace: "build"
+description: "Sets -fno-common in third-party C/C++ code to disables legacy global variable merging behavior."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

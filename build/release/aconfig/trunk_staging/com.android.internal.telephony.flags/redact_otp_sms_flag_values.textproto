@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "redact_otp_sms"
+  state: ENABLED
+  permission: READ_WRITE
+}

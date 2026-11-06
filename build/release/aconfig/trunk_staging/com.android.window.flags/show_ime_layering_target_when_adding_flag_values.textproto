@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "show_ime_layering_target_when_adding"
+  state: ENABLED
+  permission: READ_WRITE
+}

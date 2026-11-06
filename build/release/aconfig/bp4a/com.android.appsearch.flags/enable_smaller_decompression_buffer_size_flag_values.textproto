@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_smaller_decompression_buffer_size"
+  state: ENABLED
+  permission: READ_ONLY
+}

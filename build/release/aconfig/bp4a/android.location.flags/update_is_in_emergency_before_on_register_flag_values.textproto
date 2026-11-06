@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "update_is_in_emergency_before_on_register"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hid_always_unbond_on_virtual_unplug"
+  state: ENABLED
+  permission: READ_ONLY
+}

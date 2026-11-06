@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.module.flags"
+  name: "screen_state_attribute_toggle"
+  state: ENABLED
+  permission: READ_WRITE
+}

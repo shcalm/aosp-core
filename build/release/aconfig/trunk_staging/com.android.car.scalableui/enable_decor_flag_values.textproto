@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.car.scalableui"
+  name: "enable_decor"
+  state: ENABLED
+  permission: READ_WRITE
+}

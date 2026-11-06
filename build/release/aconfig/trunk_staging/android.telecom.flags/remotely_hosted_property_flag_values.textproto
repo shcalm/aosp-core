@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "remotely_hosted_property"
+  state: ENABLED
+  permission: READ_WRITE
+}

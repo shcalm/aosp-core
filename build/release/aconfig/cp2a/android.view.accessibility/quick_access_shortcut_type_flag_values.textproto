@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "quick_access_shortcut_type"
+  state: ENABLED
+  permission: READ_ONLY
+}

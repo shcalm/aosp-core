@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "auto_data_prune_listener"
+  state: ENABLED
+  permission: READ_ONLY
+}

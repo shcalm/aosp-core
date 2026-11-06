@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.job"
+  name: "allow_cmp_exemption_for_restricted_bucket"
+  state: ENABLED
+  permission: READ_WRITE
+}

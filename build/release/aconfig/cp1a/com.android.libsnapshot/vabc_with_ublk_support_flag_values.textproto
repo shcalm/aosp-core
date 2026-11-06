@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.libsnapshot"
+  name: "vabc_with_ublk_support"
+  state: ENABLED
+  permission: READ_ONLY
+}

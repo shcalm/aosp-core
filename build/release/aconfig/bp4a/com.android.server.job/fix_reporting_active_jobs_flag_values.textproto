@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.job"
+  name: "fix_reporting_active_jobs"
+  state: ENABLED
+  permission: READ_ONLY
+}

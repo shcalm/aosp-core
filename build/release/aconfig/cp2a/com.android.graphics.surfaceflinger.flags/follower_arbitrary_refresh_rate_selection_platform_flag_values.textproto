@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "follower_arbitrary_refresh_rate_selection_platform"
+  state: ENABLED
+  permission: READ_ONLY
+}

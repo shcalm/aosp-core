@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "avoid_ctkd_for_temp_pairing"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_ANOMALY_DETECTOR"
+value {
+  bool_value: true
+}

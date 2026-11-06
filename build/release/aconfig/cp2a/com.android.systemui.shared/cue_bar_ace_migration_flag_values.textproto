@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.shared"
+  name: "cue_bar_ace_migration"
+  state: ENABLED
+  permission: READ_ONLY
+}

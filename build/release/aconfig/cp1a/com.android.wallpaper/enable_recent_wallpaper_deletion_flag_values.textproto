@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wallpaper"
+  name: "enable_recent_wallpaper_deletion"
+  state: ENABLED
+  permission: READ_ONLY
+}

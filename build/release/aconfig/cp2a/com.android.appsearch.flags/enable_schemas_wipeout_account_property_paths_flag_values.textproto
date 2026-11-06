@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_schemas_wipeout_account_property_paths"
+  state: ENABLED
+  permission: READ_ONLY
+}

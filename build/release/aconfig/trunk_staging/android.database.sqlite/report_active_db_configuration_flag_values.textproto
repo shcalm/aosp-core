@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.database.sqlite"
+  name: "report_active_db_configuration"
+  state: ENABLED
+  permission: READ_WRITE
+}

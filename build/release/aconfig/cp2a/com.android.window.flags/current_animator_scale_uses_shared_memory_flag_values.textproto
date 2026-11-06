@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "current_animator_scale_uses_shared_memory"
+  state: ENABLED
+  permission: READ_ONLY
+}

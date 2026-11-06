@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "fix_contrast_and_force_invert_state_for_multi_user"
+  state: ENABLED
+  permission: READ_ONLY
+}

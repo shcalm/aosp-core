@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.jank"
+  name: "retain_widget_parameters"
+  state: ENABLED
+  permission: READ_WRITE
+}

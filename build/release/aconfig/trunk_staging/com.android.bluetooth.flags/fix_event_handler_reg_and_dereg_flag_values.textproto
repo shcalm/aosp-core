@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "fix_event_handler_reg_and_dereg"
+  state: ENABLED
+  permission: READ_WRITE
+}

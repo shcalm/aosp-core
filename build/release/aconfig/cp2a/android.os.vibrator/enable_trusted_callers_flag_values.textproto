@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.vibrator"
+  name: "enable_trusted_callers"
+  state: ENABLED
+  permission: READ_ONLY
+}

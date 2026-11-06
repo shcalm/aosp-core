@@ -1,0 +1,8 @@
+name: "RELEASE_PACKAGE_ROBOTO_FONT_VERSION"
+namespace: "text"
+description: "Version of the Roboto font file."
+value: {
+  string_value: "3.005"
+}
+workflow: PREBUILT
+containers: "system"

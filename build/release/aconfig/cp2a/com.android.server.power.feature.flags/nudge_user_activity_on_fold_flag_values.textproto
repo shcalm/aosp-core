@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.feature.flags"
+  name: "nudge_user_activity_on_fold"
+  state: ENABLED
+  permission: READ_ONLY
+}

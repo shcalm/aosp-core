@@ -1,0 +1,11 @@
+name:  "RELEASE_TELEPHONY_MODULE_FRAMEWORK_OPTIMIZATION"
+namespace:  "telephony"
+description:  "This flag guards turning on code optimization to framework telephony of telephonycore module"
+value: {
+  bool_value: false
+}
+workflow:  LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

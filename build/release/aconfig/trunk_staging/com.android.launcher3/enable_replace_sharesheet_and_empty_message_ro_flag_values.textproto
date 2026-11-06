@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_replace_sharesheet_and_empty_message_ro"
+  state: ENABLED
+  permission: READ_ONLY
+}

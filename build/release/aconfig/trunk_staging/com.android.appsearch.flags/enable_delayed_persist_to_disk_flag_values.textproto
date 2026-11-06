@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_delayed_persist_to_disk"
+  state: ENABLED
+  permission: READ_WRITE
+}

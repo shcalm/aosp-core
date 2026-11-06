@@ -1,0 +1,4 @@
+name: "RELEASE_REDACT_FLAGS_WITHOUT_OVERRIDE"
+value {
+  bool_value: true
+}

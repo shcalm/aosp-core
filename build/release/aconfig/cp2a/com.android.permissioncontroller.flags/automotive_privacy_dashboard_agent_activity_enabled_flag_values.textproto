@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.permissioncontroller.flags"
+  name: "automotive_privacy_dashboard_agent_activity_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

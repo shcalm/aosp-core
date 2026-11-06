@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.swoffload"
+  name: "swoff_streamer_deadlock_protection"
+  state: ENABLED
+  permission: READ_WRITE
+}

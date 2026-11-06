@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.hwui.flags"
+  name: "image_decoder_allocation_limit"
+  state: ENABLED
+  permission: READ_WRITE
+}

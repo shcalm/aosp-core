@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "device_aware_ui_mode"
+  state: ENABLED
+  permission: READ_ONLY
+}

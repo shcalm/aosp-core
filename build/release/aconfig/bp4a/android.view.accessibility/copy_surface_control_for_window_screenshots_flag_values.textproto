@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "copy_surface_control_for_window_screenshots"
+  state: ENABLED
+  permission: READ_ONLY
+}

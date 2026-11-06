@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "reset_state_when_removing_non_connected_hid_device"
+  state: ENABLED
+  permission: READ_ONLY
+}

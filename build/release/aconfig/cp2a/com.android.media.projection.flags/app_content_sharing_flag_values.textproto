@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.projection.flags"
+  name: "app_content_sharing"
+  state: ENABLED
+  permission: READ_ONLY
+}

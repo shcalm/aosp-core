@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_dream_activity_windowing_exclusion"
+  state: ENABLED
+  permission: READ_ONLY
+}

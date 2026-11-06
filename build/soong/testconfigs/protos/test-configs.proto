@@ -1,0 +1,150 @@
+// Copyright 2025 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+package protos;
+option go_package = "android/soong/testconfigs/protos";
+option java_package = "com.android.soong.testconfigs.proto";
+option java_multiple_files = true;
+
+
+// TestConfigs is the top level aggregation structure containing
+// all the information related to test configurations.
+message TestConfigs {
+  // Aggregated list of the test_trigger module.
+  repeated TestTrigger triggers = 1;
+  // Aggregated list of the test_workflow module.
+  repeated TestWorkflow workflows = 2;
+  // Aggregated list of the test_scheduling_plan module.
+  repeated TestSchedulingPlan scheduling_plans = 3;
+  // Aggregated list of the test_execution_plan module.
+  repeated TestExecutionPlan execution_plans = 4;
+}
+
+// TestTrigger details a testing workflow that should be run
+// upon a modified file matching its file_patterns. In addition,
+// once triggered, other test triggers found by its imports should
+// also be triggered.
+message TestTrigger {
+  // Name of the test_trigger module. Unique across triggers.
+  string name = 1;
+  // Path in which the test_trigger module was defined in an Android.bp file.
+  string path = 2;
+  // Paths of other test_trigger modules which should be imported and
+  // triggered alongside this test_trigger.
+  repeated string imports = 3;
+  // Patterns of files that should trigger this test_trigger.
+  repeated string file_patterns = 4;
+  // Workflow to be ran by this test_trigger.
+  oneof workflow {
+    // List of workflows to be ran by this test_trigger.
+    TestWorkflowCollection list = 5;
+    // A single inline workflow to be ran by this test_trigger.
+    TestWorkflowInline inline = 6;
+  }
+  // Ownership information for the test trigger.
+  Owners owners = 7;
+}
+
+// TestWorkflow bundles a scheduling plan with an execution plan
+// for explicit pairings to test.
+message TestWorkflow {
+  // Name of the test_workflow module. Unique across workflows.
+  string name = 1;
+  // Scheduling plan to be used by this workflow.
+  TestSchedulingPlan scheduling_plan = 2;
+  // Execution plan to be used by this workflow.
+  TestExecutionPlan execution_plan = 3;
+}
+
+// TestWorkflowCollection is a list of TestWorkflows.
+// Purposed to be one of the ways a TestTrigger defines its workflow.
+message TestWorkflowCollection {
+  // List of workflows to be ran by this test_trigger.
+  repeated TestWorkflow workflows = 1;
+}
+
+// TestWorkflowInline is a short form of TestWorkflow. It is defined
+// inline within a TestTrigger in place of the TestWorkflowCollection.
+message TestWorkflowInline {
+  // Scheduling plan to be used by this workflow.
+  TestSchedulingPlan scheduling_plan = 1;
+  // Test modules to be ran by this workflow.
+  repeated ModulePlan tests = 2;
+}
+
+// TestSchedulingPlan details the scheduling information related
+// to the test configuration to be ran.
+message TestSchedulingPlan {
+  // Name of the test_scheduling_plan module. Unique across scheduling plans.
+  string name = 1;
+  // Test Scheduling Plans that relate to this plan and form a grouping.
+	// Restricted to "presubmit" and "postsubmit" test_scheduling_plan modules
+	// and not generally available for regular usage.
+  repeated string related_plans = 2;
+}
+
+// TestExecutionPlan details the tests and arguments to be ran
+// as part of its configuration.
+message TestExecutionPlan {
+  // Name of the test_execution_plan module. Unique across execution plans.
+  string name = 1;
+  // Test modules to be ran by this execution plan.
+  repeated ModulePlan tests = 2;
+  // Test arguments to be ran with the test modules as part of this execution plan.
+  repeated KeyValue test_args = 3;
+  // Metadata describing informational pieces of the execution plan.
+  TestExecutionMetadata metadata = 4;
+}
+
+// TestExecutionMetadata contains extra information about the
+// configuration that is not directly related to its execution.
+message TestExecutionMetadata {
+  // [deprecated = true] indicates that the field is deprecated and will eventually be removed.
+  repeated string owners = 1 [deprecated = true]; // Deprecated: Use `Owners` message instead.
+  // The self-reported code under test.
+  // Purposed for coverage reporting.
+  repeated string code_under_test = 2;
+}
+
+// ModulePlan defines a test module and how it should be scoped
+// for inclusion and exclusion of specific test classes and cases.
+// Also contains module level arguments to be ran with the tests.
+message ModulePlan {
+  // Name of the test module.
+  string module = 1;
+  // Inclusion filter of the test module's test class or case.
+  repeated string include = 2;
+  // Exclusion filter of the test module's test class or case.
+  repeated string exclude = 3;
+  // Test arguments specific to this test module.
+  repeated KeyValue module_args = 4;
+  // The hash of the module.
+  string module_hash = 5;
+}
+
+// KeyValue defines how test arguments will be stored as
+// a key value pair.
+message KeyValue {
+  // Key of the argument.
+  string key = 1;
+  // Value of the argument.
+  string value = 2;
+}
+
+// Owners details the ownership information.
+message Owners {
+  // The trendy team that owns the component.
+  string team = 1;
+}

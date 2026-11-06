@@ -1,0 +1,199 @@
+//
+// Copyright (C) 2022 The Android Open Source Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+package {
+    default_team: "trendy_team_fwk_core_networking",
+    // See: http://go/android-license-faq
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+aconfig_declarations {
+    name: "tethering.beta.test.flags",
+    package: "com.android.tethering.beta.test",
+    container: "com.android.tethering",
+    srcs: ["mainline_beta_end_to_end_test.aconfig"],
+}
+
+java_aconfig_library {
+    name: "com.android.tethering.beta.test.flags-aconfig-java",
+    aconfig_declarations: "tethering.beta.test.flags",
+    defaults: ["framework-minus-apex-aconfig-java-defaults"],
+    min_sdk_version: "31",
+    apex_available: ["com.android.tethering"],
+}
+
+aconfig_declarations {
+    name: "tethering.mainline.beta.flags.deprecated",
+    package: "com.android.tethering.mainline.beta",
+    container: "com.android.tethering",
+    srcs: ["mainline_beta.aconfig.deprecated"],
+}
+
+java_aconfig_library {
+    name: "com.android.tethering.mainline.beta.flags-aconfig-java-deprecated",
+    aconfig_declarations: "tethering.mainline.beta.flags.deprecated",
+    defaults: ["framework-minus-apex-aconfig-java-defaults"],
+    min_sdk_version: "31",
+    apex_available: ["com.android.tethering"],
+}
+
+aconfig_declarations {
+    name: "tethering.readonly.flags",
+    package: "com.android.tethering.readonly.flags",
+    container: "com.android.tethering",
+    srcs: ["mainline_beta_readonly.aconfig"],
+}
+
+cc_aconfig_library {
+    name: "libtetheringflags",
+    aconfig_declarations: "tethering.readonly.flags",
+    mode: "force-read-only",
+    shared: {
+        enabled: false,
+    },
+    min_sdk_version: "apex_inherit",
+    apex_available: ["com.android.tethering"],
+}
+
+aconfig_declarations {
+    name: "com.android.tethering.flags-aconfig",
+    package: "com.android.tethering.flags",
+    container: "com.android.tethering",
+    srcs: ["flags.aconfig"],
+    visibility: ["//packages/modules/Connectivity:__subpackages__"],
+}
+
+java_aconfig_library {
+    name: "com.android.tethering.flags-aconfig-java",
+    aconfig_declarations: "com.android.tethering.flags-aconfig",
+    defaults: ["framework-minus-apex-aconfig-java-defaults"],
+    min_sdk_version: "31",
+    apex_available: ["com.android.tethering"],
+}
+
+aconfig_declarations {
+    name: "com.android.net.flags-aconfig-deprecated",
+    package: "com.android.net.flags",
+    exportable: true,
+    container: "com.android.tethering",
+    srcs: ["flags.aconfig.deprecated"],
+    visibility: ["//packages/modules/Connectivity:__subpackages__"],
+}
+
+java_aconfig_library {
+    name: "com.android.net.flags-aconfig-java-deprecated",
+    aconfig_declarations: "com.android.net.flags-aconfig-deprecated",
+    defaults: ["framework-minus-apex-aconfig-java-defaults"],
+    min_sdk_version: "31",
+    apex_available: ["com.android.tethering"],
+}
+
+// This library MUST NOT be available to platform. This is because if the
+// platform depends on a flag, it will not be able to delete that flag until
+// that platform version is no longer supported by mainline. Additionally,
+// there is no any safety mechanism that prevents the module from
+// deleting the flag by mistake, regressing on previous platform versions.
+java_aconfig_library {
+    name: "com.android.net.flags-aconfig-java-export-deprecated",
+    aconfig_declarations: "com.android.net.flags-aconfig-deprecated",
+    defaults: ["framework-minus-apex-aconfig-java-defaults"],
+    min_sdk_version: "31",
+    apex_available: ["com.android.wifi"],
+    mode: "exported",
+}
+
+aconfig_declarations {
+    name: "com.android.net.thread.flags-aconfig",
+    package: "com.android.net.thread.flags",
+    container: "com.android.tethering",
+    srcs: ["thread_flags.aconfig"],
+    visibility: ["//packages/modules/Connectivity:__subpackages__"],
+}
+
+java_aconfig_library {
+    name: "com.android.net.thread.flags-aconfig-java",
+    aconfig_declarations: "com.android.net.thread.flags-aconfig",
+    defaults: ["framework-minus-apex-aconfig-java-defaults"],
+    min_sdk_version: "31",
+    apex_available: ["com.android.tethering"],
+}
+
+cc_aconfig_library {
+    name: "libthreadflags",
+    aconfig_declarations: "com.android.net.thread.flags-aconfig",
+    min_sdk_version: "apex_inherit",
+    apex_available: ["com.android.tethering"],
+}
+
+aconfig_declarations {
+    name: "nearby_flags",
+    package: "com.android.nearby.flags",
+    container: "com.android.tethering",
+    srcs: ["nearby_flags.aconfig"],
+    visibility: ["//packages/modules/Connectivity:__subpackages__"],
+}
+
+java_aconfig_library {
+    name: "com.android.nearby.flags-aconfig-java",
+    aconfig_declarations: "nearby_flags",
+    defaults: ["framework-minus-apex-aconfig-java-defaults"],
+    min_sdk_version: "31",
+    apex_available: ["com.android.tethering"],
+}
+
+aconfig_declarations {
+    name: "com.android.networksecurity.flags-aconfig",
+    package: "com.android.net.ct.flags",
+    container: "com.android.tethering",
+    srcs: ["networksecurity_flags.aconfig"],
+    visibility: ["//packages/modules/Connectivity:__subpackages__"],
+}
+
+java_aconfig_library {
+    name: "networksecurity_flags_java_lib",
+    aconfig_declarations: "com.android.networksecurity.flags-aconfig",
+    min_sdk_version: "31",
+    defaults: ["framework-minus-apex-aconfig-java-defaults"],
+    apex_available: ["com.android.tethering"],
+    visibility: ["//packages/modules/Connectivity:__subpackages__"],
+}
+
+// The library requires the final artifact to contain net-utils-device-common-struct-base.
+java_library {
+    name: "connectivity-net-module-utils-bpf",
+    srcs: [
+        "src/com/android/net/module/util/bpf/*.java",
+    ],
+    sdk_version: "module_current",
+    min_sdk_version: "31",
+    visibility: [
+        // Do not add any lib. This library is only shared inside connectivity module
+        // and its tests.
+        "//packages/modules/Connectivity:__subpackages__",
+    ],
+    libs: [
+        "androidx.annotation_annotation",
+        "framework-connectivity.stubs.module_lib",
+        // For libraries which are statically linked in framework-connectivity, do not
+        // statically link here because callers of this library might already have a static
+        // version linked.
+        "net-utils-device-common-struct-base",
+    ],
+    apex_available: ["com.android.tethering"],
+    lint: {
+        strict_updatability_linting: true,
+    },
+}

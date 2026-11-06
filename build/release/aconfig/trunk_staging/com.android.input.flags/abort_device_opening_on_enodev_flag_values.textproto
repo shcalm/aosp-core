@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "abort_device_opening_on_enodev"
+  state: ENABLED
+  permission: READ_WRITE
+}

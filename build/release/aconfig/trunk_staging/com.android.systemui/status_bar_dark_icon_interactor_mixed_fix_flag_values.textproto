@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_dark_icon_interactor_mixed_fix"
+  state: ENABLED
+  permission: READ_WRITE
+}

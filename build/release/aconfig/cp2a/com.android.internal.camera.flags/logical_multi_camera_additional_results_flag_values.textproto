@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.camera.flags"
+  name: "logical_multi_camera_additional_results"
+  state: ENABLED
+  permission: READ_ONLY
+}

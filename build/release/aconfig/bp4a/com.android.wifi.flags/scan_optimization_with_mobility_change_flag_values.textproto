@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "scan_optimization_with_mobility_change"
+  state: ENABLED
+  permission: READ_ONLY
+}

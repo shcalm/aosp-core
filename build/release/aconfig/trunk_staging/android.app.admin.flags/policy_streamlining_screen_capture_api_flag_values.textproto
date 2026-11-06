@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "policy_streamlining_screen_capture_api"
+  state: ENABLED
+  permission: READ_WRITE
+}

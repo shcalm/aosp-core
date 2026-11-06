@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "use_loopback_interface_permission_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

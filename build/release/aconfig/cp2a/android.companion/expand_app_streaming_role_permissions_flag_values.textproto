@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion"
+  name: "expand_app_streaming_role_permissions"
+  state: ENABLED
+  permission: READ_ONLY
+}

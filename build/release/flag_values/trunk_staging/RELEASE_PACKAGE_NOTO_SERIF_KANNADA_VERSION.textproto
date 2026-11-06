@@ -1,0 +1,4 @@
+name: "RELEASE_PACKAGE_NOTO_SERIF_KANNADA_VERSION"
+value {
+  string_value: "2.005"
+}

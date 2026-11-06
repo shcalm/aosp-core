@@ -1,0 +1,56 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+bootstrap_go_package {
+    name: "soong-aconfig",
+    pkgPath: "android/soong/aconfig",
+    deps: [
+        "blueprint",
+        "blueprint-gobtools",
+        "blueprint-pathtools",
+        "blueprint-proptools",
+        "sbox_proto",
+        "soong",
+        "soong-android",
+    ],
+    srcs: [
+        "aconfig_declarations.go",
+        "aconfig_enc.go",
+        "aconfig_values.go",
+        "aconfig_value_set.go",
+        "all_aconfig_declarations.go",
+        "all_aconfig_declarations_extension.go",
+        "exported_java_aconfig_library.go",
+        "init.go",
+        "testing.go",
+    ],
+    testSrcs: [
+        "aconfig_declarations_test.go",
+        "aconfig_values_test.go",
+        "aconfig_value_set_test.go",
+        "all_aconfig_declarations_extension_test.go",
+    ],
+    pluginFor: ["soong_build"],
+}
+
+all_aconfig_declarations {
+    name: "all_aconfig_declarations",
+    // This is a singleton module, thus its visibility should be restricted as
+    // much as possible. When expanding visibility, ensure that it makes sense
+    // for the new dependency to depend on all aconfig flags declared in the
+    // entire tree. It is **INCORRECT** to generate any on-device or otherwise
+    // published artifacts based on this module.
+    visibility: [
+        "//build/make/tools/finalization",
+        "//frameworks/base/ravenwood",
+        "//vendor:__subpackages__", // for vendor extensions
+    ],
+    api_signature_files: [
+        ":frameworks-base-api-checked-in-current.txt",
+        ":frameworks-base-api-system-checked-in-current.txt",
+        ":frameworks-base-api-system-server-checked-in-current.txt",
+        ":frameworks-base-api-module-lib-checked-in-current.txt",
+    ],
+    finalized_flags_file: ":latest-finalized-flags",
+}

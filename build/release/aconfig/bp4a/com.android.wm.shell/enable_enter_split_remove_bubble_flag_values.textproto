@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "enable_enter_split_remove_bubble"
+  state: ENABLED
+  permission: READ_ONLY
+}

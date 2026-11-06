@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "reject_enable_from_unknown_requester"
+  state: ENABLED
+  permission: READ_ONLY
+}

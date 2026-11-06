@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "fail_on_parcel_size_mismatch"
+  state: ENABLED
+  permission: READ_WRITE
+}

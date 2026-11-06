@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.tracing"
+  name: "protolog_auto_clear_incremental_state"
+  state: ENABLED
+  permission: READ_WRITE
+}

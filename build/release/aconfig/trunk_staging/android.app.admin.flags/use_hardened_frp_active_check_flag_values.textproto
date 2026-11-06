@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "use_hardened_frp_active_check"
+  state: ENABLED
+  permission: READ_WRITE
+}

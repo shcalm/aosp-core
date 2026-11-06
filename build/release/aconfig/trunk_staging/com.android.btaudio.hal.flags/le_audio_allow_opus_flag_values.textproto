@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.btaudio.hal.flags"
+  name: "le_audio_allow_opus"
+  state: ENABLED
+  permission: READ_WRITE
+}

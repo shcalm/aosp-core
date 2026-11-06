@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "ble_hearing_aid_device"
+  state: ENABLED
+  permission: READ_WRITE
+}

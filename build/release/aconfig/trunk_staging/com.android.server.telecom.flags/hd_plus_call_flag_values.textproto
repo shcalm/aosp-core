@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "hd_plus_call"
+  state: ENABLED
+  permission: READ_WRITE
+}

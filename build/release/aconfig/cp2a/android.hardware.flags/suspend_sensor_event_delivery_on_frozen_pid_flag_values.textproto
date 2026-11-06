@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.flags"
+  name: "suspend_sensor_event_delivery_on_frozen_pid"
+  state: ENABLED
+  permission: READ_ONLY
+}

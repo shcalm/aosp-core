@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.text.flags"
+  name: "do_not_overwrite_static_final_field"
+  state: ENABLED
+  permission: READ_ONLY
+}

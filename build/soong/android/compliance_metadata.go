@@ -1,0 +1,555 @@
+// Copyright 2024 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//	http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package android
+
+import (
+	"bytes"
+	"encoding/csv"
+	"fmt"
+	"path/filepath"
+	"slices"
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/google/blueprint"
+)
+
+//go:generate go run ../../blueprint/gobtools/codegen
+
+var (
+	// Constants of property names used in compliance metadata of modules
+	ComplianceMetadataProp = struct {
+		NAME                   string
+		PACKAGE                string
+		MODULE_TYPE            string
+		BASE_MODULE_TYPE       string
+		OS                     string
+		ARCH                   string
+		IS_PRIMARY_ARCH        string
+		VARIANT                string
+		IS_STATIC_LIB          string
+		INSTALLED_FILES        string
+		BUILT_FILES            string
+		STATIC_DEPS            string
+		STATIC_DEP_FILES       string
+		WHOLE_STATIC_DEPS      string
+		WHOLE_STATIC_DEP_FILES string
+		HEADER_LIBS            string
+		LICENSES               string
+
+		// module_type=package
+		PKG_DEFAULT_APPLICABLE_LICENSES string
+
+		// module_type=license
+		LIC_LICENSE_KINDS string
+		LIC_LICENSE_TEXT  string
+		LIC_PACKAGE_NAME  string
+
+		// module_type=license_kind
+		LK_CONDITIONS string
+		LK_URL        string
+
+		// module_type=cipd_package
+		CIPD_VERSION string
+
+		// module_type=prebuilt modules
+		CIPD_SRC          string
+		PREBUILT_SRC_FILE string
+	}{
+		"name",
+		"package",
+		"module_type",
+		"base_module_type",
+		"os",
+		"arch",
+		"is_primary_arch",
+		"variant",
+		"is_static_lib",
+		"installed_files",
+		"built_files",
+		"static_deps",
+		"static_dep_files",
+		"whole_static_deps",
+		"whole_static_dep_files",
+		"header_libs",
+		"licenses",
+
+		"pkg_default_applicable_licenses",
+
+		"lic_license_kinds",
+		"lic_license_text",
+		"lic_package_name",
+
+		"lk_conditions",
+		"lk_url",
+
+		"cipd_version",
+
+		"cipd_src",
+		"prebuilt_src_file",
+	}
+
+	// A constant list of all property names in compliance metadata
+	// Order of properties here is the order of columns in the exported CSV file.
+	COMPLIANCE_METADATA_PROPS = []string{
+		ComplianceMetadataProp.NAME,
+		ComplianceMetadataProp.PACKAGE,
+		ComplianceMetadataProp.MODULE_TYPE,
+		ComplianceMetadataProp.BASE_MODULE_TYPE,
+		ComplianceMetadataProp.OS,
+		ComplianceMetadataProp.ARCH,
+		ComplianceMetadataProp.VARIANT,
+		ComplianceMetadataProp.IS_STATIC_LIB,
+		ComplianceMetadataProp.IS_PRIMARY_ARCH,
+		// Space separated installed files
+		ComplianceMetadataProp.INSTALLED_FILES,
+		// Space separated built files
+		ComplianceMetadataProp.BUILT_FILES,
+		// Space separated module names of static dependencies
+		ComplianceMetadataProp.STATIC_DEPS,
+		// Space separated file paths of static dependencies
+		ComplianceMetadataProp.STATIC_DEP_FILES,
+		// Space separated module names of whole static dependencies
+		ComplianceMetadataProp.WHOLE_STATIC_DEPS,
+		// Space separated file paths of whole static dependencies
+		ComplianceMetadataProp.WHOLE_STATIC_DEP_FILES,
+		// Space separated modules name of header libs
+		ComplianceMetadataProp.HEADER_LIBS,
+		ComplianceMetadataProp.LICENSES,
+		// module_type=package
+		ComplianceMetadataProp.PKG_DEFAULT_APPLICABLE_LICENSES,
+		// module_type=license
+		ComplianceMetadataProp.LIC_LICENSE_KINDS,
+		ComplianceMetadataProp.LIC_LICENSE_TEXT, // resolve to file paths
+		ComplianceMetadataProp.LIC_PACKAGE_NAME,
+		// module_type=license_kind
+		ComplianceMetadataProp.LK_CONDITIONS,
+		ComplianceMetadataProp.LK_URL,
+		// module_type=cipd_package
+		ComplianceMetadataProp.CIPD_VERSION,
+		// module_type=prebuilt modules
+		ComplianceMetadataProp.CIPD_SRC,
+		ComplianceMetadataProp.PREBUILT_SRC_FILE,
+	}
+)
+
+// ComplianceMetadataInfo provides all metadata of a module, e.g. name, module type, package, license,
+// dependencies, built/installed files, etc. It is a wrapper on a map[string]string with some utility
+// methods to get/set properties' values.
+// @auto-generate: gob
+type ComplianceMetadataInfo struct {
+	properties                       map[string]string
+	filesContained                   []string
+	buildOutputPathsOfFilesContained []string
+	prebuiltFilesCopied              []string
+	platformGeneratedFiles           []string
+	productCopyFiles                 []string
+	kernelModuleCopyFiles            []string
+}
+
+func NewComplianceMetadataInfo() *ComplianceMetadataInfo {
+	return &ComplianceMetadataInfo{
+		properties:                       map[string]string{},
+		filesContained:                   make([]string, 0),
+		buildOutputPathsOfFilesContained: make([]string, 0),
+		prebuiltFilesCopied:              make([]string, 0),
+		platformGeneratedFiles:           make([]string, 0),
+		kernelModuleCopyFiles:            make([]string, 0),
+		productCopyFiles:                 make([]string, 0),
+	}
+}
+
+func (c *ComplianceMetadataInfo) SetStringValue(propertyName string, value string) {
+	if !slices.Contains(COMPLIANCE_METADATA_PROPS, propertyName) {
+		panic(fmt.Errorf("Unknown metadata property: %s.", propertyName))
+	}
+	c.properties[propertyName] = value
+}
+
+func (c *ComplianceMetadataInfo) SetListValue(propertyName string, value []string) {
+	c.SetStringValue(propertyName, strings.TrimSpace(strings.Join(value, " ")))
+}
+
+func (c *ComplianceMetadataInfo) SetFilesContained(files []string) {
+	c.filesContained = files
+}
+
+func (c *ComplianceMetadataInfo) GetFilesContained() []string {
+	return c.filesContained
+}
+
+func (c *ComplianceMetadataInfo) SetBuildOutputPathsOfFilesContained(files []string) {
+	c.buildOutputPathsOfFilesContained = files
+}
+
+func (c *ComplianceMetadataInfo) SetPrebuiltFilesCopied(files []string) {
+	c.prebuiltFilesCopied = files
+}
+
+func (c *ComplianceMetadataInfo) GetPrebuiltFilesCopied() []string {
+	return c.prebuiltFilesCopied
+}
+
+func (c *ComplianceMetadataInfo) SetPlatformGeneratedFiles(files []string) {
+	c.platformGeneratedFiles = files
+}
+
+func (c *ComplianceMetadataInfo) GetPlatformGeneratedFiles() []string {
+	return c.platformGeneratedFiles
+}
+
+func (c *ComplianceMetadataInfo) SetProductCopyFiles(files []string) {
+	c.productCopyFiles = files
+}
+
+func (c *ComplianceMetadataInfo) GetProductCopyFiles() []string {
+	return c.productCopyFiles
+}
+
+func (c *ComplianceMetadataInfo) SetKernelModuleCopyFiles(files []string) {
+	c.kernelModuleCopyFiles = files
+}
+
+func (c *ComplianceMetadataInfo) GetKernelModuleCopyFiles() []string {
+	return c.kernelModuleCopyFiles
+}
+
+func (c *ComplianceMetadataInfo) AddBuiltFiles(files ...string) {
+	builtFiles := []string{}
+	builtFilesPropValue := c.getStringValue(ComplianceMetadataProp.BUILT_FILES)
+	builtFiles = append(builtFiles, strings.Split(builtFilesPropValue, " ")...)
+	builtFiles = append(builtFiles, files...)
+	builtFiles = SortedUniqueStrings(builtFiles)
+	c.SetListValue(ComplianceMetadataProp.BUILT_FILES, builtFiles)
+}
+
+func (c *ComplianceMetadataInfo) SetPrebuiltSrc(ctx ModuleContext, src string) {
+	if module, tag := SrcIsModuleWithTag(src); module != "" {
+		m := GetModuleProxyFromPathDep(ctx, module, tag)
+		baseModuleType := OtherModuleProviderOrDefault(ctx, m, CommonModuleInfoProvider).BaseModuleType
+		if ctx.OtherModuleType(m) == "cipd_package" || baseModuleType == "cipd_package" ||
+			ctx.OtherModuleType(m) == "filegroup" || baseModuleType == "filegroup" {
+			paths, err := expandOneSrcPath(sourcePathInput{context: ctx, path: src, includeDirs: true})
+			if err != nil {
+				panic(err)
+			}
+			for _, p := range paths {
+				if strings.HasPrefix(p.String(), ctx.Config().SoongOutDir()) {
+					c.SetStringValue(ComplianceMetadataProp.CIPD_SRC, p.String())
+				} else {
+					c.SetStringValue(ComplianceMetadataProp.PREBUILT_SRC_FILE, p.String())
+				}
+			}
+		}
+	} else {
+		paths, err := expandOneSrcPath(sourcePathInput{context: ctx, path: src, includeDirs: true})
+		if err != nil {
+			panic(err)
+		}
+		for _, p := range paths {
+			c.SetStringValue(ComplianceMetadataProp.PREBUILT_SRC_FILE, p.String())
+		}
+	}
+}
+
+func (c *ComplianceMetadataInfo) getStringValue(propertyName string) string {
+	if !slices.Contains(COMPLIANCE_METADATA_PROPS, propertyName) {
+		panic(fmt.Errorf("Unknown metadata property: %s.", propertyName))
+	}
+	return c.properties[propertyName]
+}
+
+func (c *ComplianceMetadataInfo) getAllValues() map[string]string {
+	return c.properties
+}
+
+// buildComplianceMetadataProvider starts with the ModuleContext.ComplianceMetadataInfo() and fills in more common metadata
+// for different module types without accessing their private fields but through android.Module interface
+// and public/private fields of package android. The final metadata is stored to a module's CommonModuleInfo.
+func buildComplianceMetadataProvider(ctx *moduleContext, m *ModuleBase) *ComplianceMetadataInfo {
+	complianceMetadataInfo := ctx.ComplianceMetadataInfo()
+	complianceMetadataInfo.SetStringValue(ComplianceMetadataProp.NAME, m.Name())
+	complianceMetadataInfo.SetStringValue(ComplianceMetadataProp.PACKAGE, ctx.ModuleDir())
+	complianceMetadataInfo.SetStringValue(ComplianceMetadataProp.MODULE_TYPE, ctx.ModuleType())
+
+	if baseTypePtr := m.baseProperties.Soong_config_base_module_type; baseTypePtr != nil {
+		if baseType := *baseTypePtr; baseType != "" {
+			complianceMetadataInfo.SetStringValue(ComplianceMetadataProp.BASE_MODULE_TYPE, baseType)
+		}
+	}
+
+	switch ctx.ModuleType() {
+	case "license":
+		licenseModule := m.module.(*licenseModule)
+		complianceMetadataInfo.SetListValue(ComplianceMetadataProp.LIC_LICENSE_KINDS, licenseModule.properties.License_kinds)
+		complianceMetadataInfo.SetListValue(ComplianceMetadataProp.LIC_LICENSE_TEXT, PathsForModuleSrc(ctx, licenseModule.properties.License_text.GetOrDefault(ctx, nil)).Strings())
+		complianceMetadataInfo.SetStringValue(ComplianceMetadataProp.LIC_PACKAGE_NAME, String(licenseModule.properties.Package_name))
+	case "license_kind":
+		licenseKindModule := m.module.(*licenseKindModule)
+		complianceMetadataInfo.SetListValue(ComplianceMetadataProp.LK_CONDITIONS, licenseKindModule.properties.Conditions)
+		complianceMetadataInfo.SetStringValue(ComplianceMetadataProp.LK_URL, licenseKindModule.properties.Url)
+	default:
+		complianceMetadataInfo.SetStringValue(ComplianceMetadataProp.OS, ctx.Os().String())
+		complianceMetadataInfo.SetStringValue(ComplianceMetadataProp.ARCH, ctx.Arch().String())
+		complianceMetadataInfo.SetStringValue(ComplianceMetadataProp.IS_PRIMARY_ARCH, strconv.FormatBool(ctx.PrimaryArch()))
+		complianceMetadataInfo.SetStringValue(ComplianceMetadataProp.VARIANT, ctx.ModuleSubDir())
+		if m.primaryLicensesProperty != nil && m.primaryLicensesProperty.getName() == "licenses" {
+			complianceMetadataInfo.SetListValue(ComplianceMetadataProp.LICENSES, m.primaryLicensesProperty.getStrings())
+		}
+
+		var installed InstallPaths
+		installed = append(installed, ctx.installFiles...)
+		installed = append(installed, ctx.katiInstalls.InstallPaths()...)
+		installed = append(installed, ctx.katiSymlinks.InstallPaths()...)
+		installed = append(installed, ctx.katiInitRcInstalls.InstallPaths()...)
+		installed = append(installed, ctx.katiVintfInstalls.InstallPaths()...)
+		// The following module types use PackageFiles instead of InstallFiles so here we need to
+		// collect the fullInstallPaths from the packagingSpecs.
+		// TODO: b/409854522
+		if strings.HasPrefix(ctx.ModuleType(), "sdk_library_internal") ||
+			ctx.ModuleType() == "bpf" ||
+			ctx.ModuleType() == "libbpf_prog" ||
+			ctx.ModuleType() == "avbpubkey__loadHookModule" ||
+			(ctx.ModuleType() == "prebuilt_etc" &&
+				slices.Contains([]string{"preloaded-classes", "public.libraries.android.txt"}, ctx.ModuleName())) ||
+			(ctx.ModuleType() == "prebuilt_root" && ctx.ModuleName() == "init.environ.rc-soong") {
+			for _, s := range ctx.packagingSpecs {
+				installed = append(installed, s.fullInstallPath)
+			}
+		}
+		complianceMetadataInfo.SetListValue(ComplianceMetadataProp.INSTALLED_FILES, FirstUniqueStrings(installed.Strings()))
+
+		// BUILT_FILES
+		builtFiles := ctx.GetOutputFiles().DefaultOutputFiles.Strings()
+		for _, paths := range ctx.GetOutputFiles().TaggedOutputFiles {
+			builtFiles = append(builtFiles, paths.Strings()...)
+		}
+		ctx.ComplianceMetadataInfo().AddBuiltFiles(builtFiles...)
+	}
+	return complianceMetadataInfo
+}
+
+func init() {
+	RegisterComplianceMetadataSingleton(InitRegistrationContext)
+}
+
+func RegisterComplianceMetadataSingleton(ctx RegistrationContext) {
+	ctx.RegisterParallelSingletonType("compliance_metadata_singleton", complianceMetadataSingletonFactory)
+}
+
+var (
+	// sqlite3 command line tool
+	sqlite3 = pctx.HostBinToolVariable("sqlite3_noicu", "sqlite3_noicu")
+
+	// Command to import .csv files to sqlite3 database
+	importCsv = pctx.AndroidStaticRule("importCsv",
+		blueprint.RuleParams{
+			Command: `rm -rf $out && ` +
+				`cat $out.rsp | tr ' ' '\n' | while read -r file || [ -n "$$file" ]; do ${sqlite3_noicu} $out ".import --csv $${file} $$(basename $${file} .csv)"; done`,
+			CommandDeps:     []string{"${sqlite3_noicu}"},
+			Rspfile:         `$out.rsp`,
+			RspfileContent:  `$in`,
+			SandboxDisabled: true,
+		})
+)
+
+func complianceMetadataSingletonFactory() Singleton {
+	return &complianceMetadataSingleton{}
+}
+
+type complianceMetadataSingleton struct {
+}
+
+func writerToCsv(csvWriter *csv.Writer, row []string) {
+	err := csvWriter.Write(row)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func GetComplianceMetadata(ctx OtherModuleProviderContext, module ModuleProxy) *ComplianceMetadataInfo {
+	if commInfo, ok := OtherModuleProvider(ctx, module, CommonModuleInfoProvider); ok {
+		return commInfo.ComplianceMetadata
+	}
+	return nil
+}
+
+// Collect compliance metadata from all Soong modules, write to a CSV file and
+// import compliance metadata from Make and Soong to a sqlite3 database.
+func (c *complianceMetadataSingleton) GenerateBuildActions(ctx SingletonContext) {
+	if !ctx.Config().HasDeviceProduct() {
+		return
+	}
+	var buffer bytes.Buffer
+	csvWriter := csv.NewWriter(&buffer)
+
+	// Collect compliance metadata of modules in Soong and write to out/soong/compliance-metadata/<product>/soong-modules.csv file.
+	columnNames := []string{"id"}
+	columnNames = append(columnNames, COMPLIANCE_METADATA_PROPS...)
+	writerToCsv(csvWriter, columnNames)
+
+	rowId := -1
+	ctx.VisitAllModuleProxies(func(module ModuleProxy) {
+		commonInfo := OtherModulePointerProviderOrDefault(ctx, module, CommonModuleInfoProvider)
+		if !commonInfo.Enabled {
+			return
+		}
+
+		moduleType := ctx.ModuleType(module)
+		if moduleType == "package" {
+			var primaryLicenses []string
+			if packageInfo := commonInfo.PackageInfo; packageInfo != nil {
+				primaryLicenses = packageInfo.PrimaryLicenses
+			}
+			metadataMap := map[string]string{
+				ComplianceMetadataProp.NAME:                            ctx.ModuleName(module),
+				ComplianceMetadataProp.MODULE_TYPE:                     ctx.ModuleType(module),
+				ComplianceMetadataProp.PKG_DEFAULT_APPLICABLE_LICENSES: strings.Join(primaryLicenses, " "),
+			}
+			rowId = rowId + 1
+			metadata := []string{strconv.Itoa(rowId)}
+			for _, propertyName := range COMPLIANCE_METADATA_PROPS {
+				metadata = append(metadata, metadataMap[propertyName])
+			}
+			writerToCsv(csvWriter, metadata)
+			return
+		}
+		if metadataInfo := commonInfo.ComplianceMetadata; metadataInfo != nil {
+			rowId = rowId + 1
+			metadata := []string{strconv.Itoa(rowId)}
+			for _, propertyName := range COMPLIANCE_METADATA_PROPS {
+				metadata = append(metadata, metadataInfo.getStringValue(propertyName))
+			}
+			writerToCsv(csvWriter, metadata)
+			return
+		}
+	})
+	csvWriter.Flush()
+
+	deviceProduct := ctx.Config().DeviceProduct()
+	modulesCsv := PathForOutput(ctx, "compliance-metadata", deviceProduct, "modules.csv")
+	WriteFileRuleVerbatim(ctx, modulesCsv, buffer.String())
+
+	// Metadata generated in Make
+	makeMetadataCsv := PathForOutput(ctx, "compliance-metadata", deviceProduct, "make_metadata.csv")
+	makeModulesCsv := PathForOutput(ctx, "compliance-metadata", deviceProduct, "make_modules.csv")
+
+	productOutPath := filepath.Join(ctx.Config().OutDir(), "target", "product", String(ctx.Config().productVariables.DeviceName))
+	productInstalledFilesCsvHeaders := "installed_file,module_path,is_soong_module,is_prebuilt_make_module,product_copy_files,kernel_module_copy_files,is_platform_generated,static_libs,whole_static_libs,license_text"
+	if !ctx.Config().KatiEnabled() {
+		WriteFileRuleVerbatim(ctx, makeModulesCsv, "name,module_path,module_class,module_type,static_libs,whole_static_libs,built_files,installed_files")
+		ctx.VisitAllModuleProxies(func(module ModuleProxy) {
+			// In soong-only build the installed file list is from android_device module
+			if androidDeviceInfo, ok := OtherModuleProvider(ctx, module, AndroidDeviceInfoProvider); ok && androidDeviceInfo.Main_device {
+				if metadataInfo := GetComplianceMetadata(ctx, module); metadataInfo != nil {
+					if len(metadataInfo.filesContained) > 0 || len(metadataInfo.prebuiltFilesCopied) > 0 {
+						allFiles := make([]string, 0, len(metadataInfo.filesContained)+len(metadataInfo.prebuiltFilesCopied))
+						allFiles = append(allFiles, metadataInfo.filesContained...)
+						prebuiltFilesSrcDest := make(map[string]string)
+						for _, srcDestPair := range metadataInfo.prebuiltFilesCopied {
+							prebuiltFilePath := filepath.Join(productOutPath, strings.Split(srcDestPair, ":")[1])
+							allFiles = append(allFiles, prebuiltFilePath)
+							prebuiltFilesSrcDest[prebuiltFilePath] = srcDestPair
+						}
+						sort.Strings(allFiles)
+
+						destToKernelModuleMap := make(map[string]string)
+						for _, p := range metadataInfo.GetKernelModuleCopyFiles() {
+							pair := strings.Split(p, "::")
+							destToKernelModuleMap[pair[1]] = p
+						}
+
+						destToProductCopyFiles := make(map[string]string)
+						for _, pcf := range metadataInfo.GetProductCopyFiles() {
+							pair := strings.Split(pcf, ":")
+							destToProductCopyFiles[pair[1]] = pcf
+						}
+
+						csvContent := make([]string, 0, len(allFiles)+1)
+						csvContent = append(csvContent, productInstalledFilesCsvHeaders)
+						for _, file := range allFiles {
+							if _, ok := prebuiltFilesSrcDest[file]; ok {
+								srcDestPair := prebuiltFilesSrcDest[file]
+								csvContent = append(csvContent, file+",,,,"+srcDestPair+",,,,,")
+							} else if slices.Contains(metadataInfo.platformGeneratedFiles, file) {
+								csvContent = append(csvContent, file+",,,,,,Y,,,build/soong/licenses/LICENSE")
+							} else if km, ok := destToKernelModuleMap[file]; ok {
+								csvContent = append(csvContent, file+",,,,,"+km+",,,,")
+							} else if p, ok := destToProductCopyFiles[file]; ok {
+								csvContent = append(csvContent, file+",,,,"+p+",,,,,")
+							} else {
+								csvContent = append(csvContent, file+",,Y,,,,,,,")
+							}
+						}
+						WriteFileRuleVerbatim(ctx, makeMetadataCsv, strings.Join(csvContent, "\n"))
+					}
+					return
+				}
+			}
+		})
+	}
+
+	// Compliance metadata for mainline modules in unbundled build.
+	moduleMetadataCsvFiles := []Path{}
+	if ctx.Config().HasUnbundledBuildApps() {
+		unbundledApps := ctx.Config().UnbundledBuildApps()
+		moduleInstalledFilesCsvHeaders := "installed_file,build_output_path"
+		ctx.VisitAllModuleProxies(func(module ModuleProxy) {
+			if !slices.Contains(unbundledApps, module.Name()) {
+				return
+			}
+			if metadataInfo := GetComplianceMetadata(ctx, module); metadataInfo != nil && len(metadataInfo.filesContained) > 0 {
+				csvContent := make([]string, 0, len(metadataInfo.filesContained)+1)
+				csvContent = append(csvContent, moduleInstalledFilesCsvHeaders)
+				for i, file := range metadataInfo.filesContained {
+					csvContent = append(csvContent, file+","+metadataInfo.buildOutputPathsOfFilesContained[i])
+				}
+				moduleMetadataCsv := PathForOutput(ctx, "compliance-metadata", deviceProduct, module.Name()+".csv")
+				moduleMetadataCsvFiles = append(moduleMetadataCsvFiles, moduleMetadataCsv)
+				WriteFileRuleVerbatim(ctx, moduleMetadataCsv, strings.Join(csvContent, "\n"))
+			}
+			return
+		})
+		if !ctx.Config().KatiEnabled() {
+			WriteFileRuleVerbatim(ctx, makeMetadataCsv, productInstalledFilesCsvHeaders)
+		}
+	}
+
+	// Import metadata from Make and Soong to sqlite3 database
+	complianceMetadataDb := PathForOutput(ctx, "compliance-metadata", deviceProduct, "compliance-metadata.db")
+
+	inputs := []Path{
+		modulesCsv,
+		makeMetadataCsv,
+		makeModulesCsv,
+	}
+	if ctx.Config().HasUnbundledBuildApps() {
+		inputs = append(inputs, moduleMetadataCsvFiles...)
+	}
+	ctx.Build(pctx, BuildParams{
+		Rule:   importCsv,
+		Inputs: inputs,
+		Output: complianceMetadataDb,
+	})
+
+	// Phony rule "compliance-metadata.db". "m compliance-metadata.db" to create the compliance metadata database.
+	ctx.Build(pctx, BuildParams{
+		Rule:   blueprint.Phony,
+		Inputs: []Path{complianceMetadataDb},
+		Output: PathForPhony(ctx, "compliance-metadata.db"),
+	})
+
+}

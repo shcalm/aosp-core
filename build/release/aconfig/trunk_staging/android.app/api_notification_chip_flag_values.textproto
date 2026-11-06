@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "api_notification_chip"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.ranging.flags"
+  name: "ranging_stack_updates_26_q_2"
+  state: ENABLED
+  permission: READ_ONLY
+}

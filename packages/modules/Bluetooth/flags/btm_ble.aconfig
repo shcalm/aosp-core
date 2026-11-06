@@ -1,0 +1,19 @@
+package: "com.android.bluetooth.flags"
+container: "com.android.bt"
+
+flag {
+    name: "gd_conn_mgr_one_timeout"
+    namespace: "bluetooth"
+    description: "Have just one timer for connection manager direct connections"
+    bug: "481287758"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "move_conn_mgr_callbacks"
+    namespace: "bluetooth"
+    description: "Move connection management callbacks from GATT to connection manager"
+    bug: "483449240"
+}

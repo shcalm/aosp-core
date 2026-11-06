@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "enable_supervision_settings_screen"
+  state: ENABLED
+  permission: READ_WRITE
+}

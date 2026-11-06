@@ -1,0 +1,8 @@
+name: "RELEASE_USE_SYSTEM_FEATURE_XML_FOR_UNAVAILABLE_FEATURES"
+namespace: "system_performance"
+description: "Enable use of <unavailable-feature /> defs in product/prebuilt xml files for build-time flags and codegen. Requires RELEASE_USE_SYSTEM_FEATURE_BUILD_FLAGS to have any effect."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

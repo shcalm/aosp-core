@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "minimal_telephony_cdm_use_board_api_level"
+  state: ENABLED
+  permission: READ_WRITE
+}

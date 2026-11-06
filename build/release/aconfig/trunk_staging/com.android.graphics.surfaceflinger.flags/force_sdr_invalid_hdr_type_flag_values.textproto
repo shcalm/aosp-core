@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "force_sdr_invalid_hdr_type"
+  state: ENABLED
+  permission: READ_WRITE
+}

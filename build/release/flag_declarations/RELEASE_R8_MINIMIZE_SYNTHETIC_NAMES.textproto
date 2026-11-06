@@ -1,0 +1,8 @@
+name:  "RELEASE_R8_MINIMIZE_SYNTHETIC_NAMES"
+namespace:  "system_performance"
+description:  "feature flag for minimizing R8-generated synthetic names"
+workflow:  LAUNCH
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

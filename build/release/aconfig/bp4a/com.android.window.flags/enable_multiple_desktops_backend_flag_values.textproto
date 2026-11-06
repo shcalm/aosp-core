@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_multiple_desktops_backend"
+  state: ENABLED
+  permission: READ_ONLY
+}

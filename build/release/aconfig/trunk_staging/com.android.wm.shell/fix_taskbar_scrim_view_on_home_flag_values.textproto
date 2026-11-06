@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_taskbar_scrim_view_on_home"
+  state: ENABLED
+  permission: READ_WRITE
+}

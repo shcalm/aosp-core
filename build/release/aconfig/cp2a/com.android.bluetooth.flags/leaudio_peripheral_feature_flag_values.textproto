@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_peripheral_feature"
+  state: ENABLED
+  permission: READ_ONLY
+}

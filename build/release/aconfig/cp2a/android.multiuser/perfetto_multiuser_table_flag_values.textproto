@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "perfetto_multiuser_table"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "add_surface_insets_for_crop"
+  state: ENABLED
+  permission: READ_WRITE
+}

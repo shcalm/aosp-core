@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.usb.flags"
+  name: "enable_power_profile_reporting"
+  state: ENABLED
+  permission: READ_ONLY
+}

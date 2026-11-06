@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "native_alloc_time_based_gc_triggering_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

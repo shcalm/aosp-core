@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "opt_in_rich_ongoing"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "check_set_event_mask_p2_support_before_writing"
+  state: ENABLED
+  permission: READ_WRITE
+}

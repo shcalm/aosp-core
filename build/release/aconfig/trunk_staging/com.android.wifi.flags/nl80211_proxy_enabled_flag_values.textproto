@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "nl80211_proxy_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

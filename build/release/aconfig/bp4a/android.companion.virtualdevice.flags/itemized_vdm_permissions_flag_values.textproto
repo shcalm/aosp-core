@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "itemized_vdm_permissions"
+  state: ENABLED
+  permission: READ_ONLY
+}

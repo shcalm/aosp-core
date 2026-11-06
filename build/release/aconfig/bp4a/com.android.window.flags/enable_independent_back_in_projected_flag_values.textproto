@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_independent_back_in_projected"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "fix_unhold_fg_call"
+  state: ENABLED
+  permission: READ_WRITE
+}

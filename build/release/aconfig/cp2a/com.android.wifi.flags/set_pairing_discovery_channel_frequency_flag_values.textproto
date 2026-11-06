@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "set_pairing_discovery_channel_frequency"
+  state: ENABLED
+  permission: READ_ONLY
+}

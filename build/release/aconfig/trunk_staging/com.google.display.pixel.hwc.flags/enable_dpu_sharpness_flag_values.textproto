@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.google.display.pixel.hwc.flags"
+  name: "enable_dpu_sharpness"
+  state: ENABLED
+  permission: READ_WRITE
+}

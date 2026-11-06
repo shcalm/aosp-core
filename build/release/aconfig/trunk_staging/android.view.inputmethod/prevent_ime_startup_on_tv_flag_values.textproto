@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "prevent_ime_startup_on_tv"
+  state: ENABLED
+  permission: READ_WRITE
+}

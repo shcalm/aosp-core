@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "enforce_emergency_exit_multi_call"
+  state: ENABLED
+  permission: READ_WRITE
+}

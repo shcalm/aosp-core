@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "upgrade_single_6ghz_hotspot_to_dual_band"
+  state: ENABLED
+  permission: READ_ONLY
+}

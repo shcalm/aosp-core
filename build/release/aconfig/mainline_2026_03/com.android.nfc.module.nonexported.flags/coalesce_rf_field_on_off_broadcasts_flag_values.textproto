@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.module.nonexported.flags"
+  name: "coalesce_rf_field_on_off_broadcasts"
+  state: ENABLED
+  permission: READ_ONLY
+}

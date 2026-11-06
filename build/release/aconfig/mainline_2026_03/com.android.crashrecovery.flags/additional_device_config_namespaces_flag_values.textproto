@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.crashrecovery.flags"
+  name: "additional_device_config_namespaces"
+  state: ENABLED
+  permission: READ_ONLY
+}

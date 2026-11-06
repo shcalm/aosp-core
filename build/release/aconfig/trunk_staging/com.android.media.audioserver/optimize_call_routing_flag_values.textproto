@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audioserver"
+  name: "optimize_call_routing"
+  state: ENABLED
+  permission: READ_WRITE
+}

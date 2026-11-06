@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_restrict_visibility_on_empty_permissions"
+  state: ENABLED
+  permission: READ_ONLY
+}

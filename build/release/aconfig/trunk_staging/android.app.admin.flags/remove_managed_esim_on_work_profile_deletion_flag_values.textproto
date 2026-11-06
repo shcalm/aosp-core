@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "remove_managed_esim_on_work_profile_deletion"
+  state: ENABLED
+  permission: READ_WRITE
+}

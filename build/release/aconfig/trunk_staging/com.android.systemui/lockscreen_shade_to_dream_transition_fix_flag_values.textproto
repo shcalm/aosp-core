@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "lockscreen_shade_to_dream_transition_fix"
+  state: ENABLED
+  permission: READ_WRITE
+}

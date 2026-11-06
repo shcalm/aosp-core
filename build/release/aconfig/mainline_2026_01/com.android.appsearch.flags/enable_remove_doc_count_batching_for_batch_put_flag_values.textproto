@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_remove_doc_count_batching_for_batch_put"
+  state: ENABLED
+  permission: READ_ONLY
+}

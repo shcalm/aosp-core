@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "lockscreen_info_coexistence"
+  state: ENABLED
+  permission: READ_WRITE
+}

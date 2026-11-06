@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "enable_zram_writeback"
+  state: ENABLED
+  permission: READ_ONLY
+}

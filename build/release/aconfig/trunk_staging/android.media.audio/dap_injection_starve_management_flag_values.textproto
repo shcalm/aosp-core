@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "dap_injection_starve_management"
+  state: ENABLED
+  permission: READ_WRITE
+}

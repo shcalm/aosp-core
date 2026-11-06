@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.net.ct.flags"
+  name: "flatbuffers_log_list"
+  state: ENABLED
+  permission: READ_ONLY
+}

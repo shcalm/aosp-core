@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.notification"
+  name: "apply_brightness_clamping_for_modes"
+  state: ENABLED
+  permission: READ_ONLY
+}

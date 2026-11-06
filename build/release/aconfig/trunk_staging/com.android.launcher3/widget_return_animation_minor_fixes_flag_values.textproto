@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "widget_return_animation_minor_fixes"
+  state: ENABLED
+  permission: READ_WRITE
+}

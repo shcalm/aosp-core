@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "madvise_type_lookup_table"
+  state: ENABLED
+  permission: READ_WRITE
+}

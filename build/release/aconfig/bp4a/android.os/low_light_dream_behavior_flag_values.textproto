@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "low_light_dream_behavior"
+  state: ENABLED
+  permission: READ_ONLY
+}

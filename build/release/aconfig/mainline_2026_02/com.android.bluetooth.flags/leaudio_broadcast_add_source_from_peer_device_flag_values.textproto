@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_broadcast_add_source_from_peer_device"
+  state: ENABLED
+  permission: READ_ONLY
+}

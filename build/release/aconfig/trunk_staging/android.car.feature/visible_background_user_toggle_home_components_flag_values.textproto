@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "visible_background_user_toggle_home_components"
+  state: ENABLED
+  permission: READ_WRITE
+}

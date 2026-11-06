@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "is_device_upgrading_uses_shared_memory"
+  state: ENABLED
+  permission: READ_ONLY
+}

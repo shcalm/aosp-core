@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "cross_profile_widget_provider_bulk_apis"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_use_context_type_manager"
+  state: ENABLED
+  permission: READ_ONLY
+}

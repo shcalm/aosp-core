@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "remove_device_admin_feature_checks"
+  state: ENABLED
+  permission: READ_ONLY
+}

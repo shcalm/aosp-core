@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hogp_direct_connection_upgrade"
+  state: ENABLED
+  permission: READ_WRITE
+}

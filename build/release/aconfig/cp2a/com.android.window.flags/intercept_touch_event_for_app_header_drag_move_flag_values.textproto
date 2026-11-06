@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "intercept_touch_event_for_app_header_drag_move"
+  state: ENABLED
+  permission: READ_ONLY
+}

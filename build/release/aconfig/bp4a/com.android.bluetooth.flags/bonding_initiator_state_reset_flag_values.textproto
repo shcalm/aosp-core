@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "bonding_initiator_state_reset"
+  state: ENABLED
+  permission: READ_ONLY
+}

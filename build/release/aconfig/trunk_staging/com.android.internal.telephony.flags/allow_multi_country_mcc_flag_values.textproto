@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "allow_multi_country_mcc"
+  state: ENABLED
+  permission: READ_WRITE
+}

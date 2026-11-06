@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "use_uffd_move_ioctl_cmc_gc"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "respect_leaf_task_bounds"
+  state: ENABLED
+  permission: READ_ONLY
+}

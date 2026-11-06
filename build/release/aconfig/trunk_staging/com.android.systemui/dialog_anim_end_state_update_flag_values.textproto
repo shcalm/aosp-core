@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "dialog_anim_end_state_update"
+  state: ENABLED
+  permission: READ_WRITE
+}

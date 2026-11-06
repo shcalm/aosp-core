@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "use_address_type_from_batch_scan_result"
+  state: ENABLED
+  permission: READ_ONLY
+}

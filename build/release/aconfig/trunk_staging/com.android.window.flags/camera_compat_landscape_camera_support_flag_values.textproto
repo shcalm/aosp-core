@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "camera_compat_landscape_camera_support"
+  state: ENABLED
+  permission: READ_WRITE
+}

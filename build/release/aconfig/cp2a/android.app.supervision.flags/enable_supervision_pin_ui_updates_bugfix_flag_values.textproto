@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "enable_supervision_pin_ui_updates_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

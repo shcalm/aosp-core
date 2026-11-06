@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_no_window_decoration_for_desks"
+  state: ENABLED
+  permission: READ_ONLY
+}

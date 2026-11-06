@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "force_encryption_post_successful_pairing"
+  state: ENABLED
+  permission: READ_ONLY
+}

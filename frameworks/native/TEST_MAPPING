@@ -1,0 +1,38 @@
+{
+  "presubmit": [
+    {
+      "name": "SurfaceFlinger_test",
+      "options": [
+        {
+          // TODO(b/305717998): Deflake and re-enable
+          "exclude-filter": "*ChildLayerTest*"
+        }
+      ]
+    },
+    {
+      "name": "CtsGpuTestCases",
+      "options": [
+        {
+          "include-filter": "android.gpu.vulkan.cts.VulkanPreTransformTest"
+        }
+      ]
+    }
+  ],
+  "hwasan-postsubmit": [
+    {
+      "name": "SurfaceFlinger_test"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "SurfaceFlinger_test",
+      "keywords": [ "primary-device" ],
+      "options": [
+	// TODO(b/398306512) Flaky on real device.
+        {
+          "exclude-filter": "LayerRenderTypeTransactionTests/LayerRenderTypeTransactionTest#SetRelativeZBasic_BufferQueue/*"
+        }
+      ]
+    }
+  ]
+}

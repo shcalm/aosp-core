@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.base.core.jni.flags"
+  name: "zygote_set_no_swap_system_server"
+  state: ENABLED
+  permission: READ_WRITE
+}

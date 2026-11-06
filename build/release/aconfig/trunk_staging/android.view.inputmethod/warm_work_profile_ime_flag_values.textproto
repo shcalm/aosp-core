@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "warm_work_profile_ime"
+  state: ENABLED
+  permission: READ_WRITE
+}

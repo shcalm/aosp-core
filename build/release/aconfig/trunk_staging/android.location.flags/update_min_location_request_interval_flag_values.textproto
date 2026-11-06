@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "update_min_location_request_interval"
+  state: ENABLED
+  permission: READ_WRITE
+}

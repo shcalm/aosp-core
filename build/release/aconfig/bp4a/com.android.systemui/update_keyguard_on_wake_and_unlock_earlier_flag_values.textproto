@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "update_keyguard_on_wake_and_unlock_earlier"
+  state: ENABLED
+  permission: READ_ONLY
+}

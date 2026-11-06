@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "fix_sql_injection_hbpcd"
+  state: ENABLED
+  permission: READ_WRITE
+}

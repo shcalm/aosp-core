@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "ble_rnr_when_connected"
+  state: ENABLED
+  permission: READ_ONLY
+}

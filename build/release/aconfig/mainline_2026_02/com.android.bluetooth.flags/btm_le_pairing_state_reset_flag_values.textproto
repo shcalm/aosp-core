@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "btm_le_pairing_state_reset"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "floating_menu_on_headless_user"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.feature.flags"
+  name: "interactive_doze_experience"
+  state: ENABLED
+  permission: READ_ONLY
+}

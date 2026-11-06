@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.feature.flags"
+  name: "dont_churn_tag_database_on_release"
+  state: ENABLED
+  permission: READ_ONLY
+}

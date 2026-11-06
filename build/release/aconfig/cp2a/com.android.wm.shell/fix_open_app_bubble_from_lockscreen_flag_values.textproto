@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_open_app_bubble_from_lockscreen"
+  state: ENABLED
+  permission: READ_ONLY
+}

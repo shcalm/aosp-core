@@ -1,0 +1,11 @@
+name:  "RELEASE_USE_HARDWARE_VIBRATOR_V4"
+namespace:  "haptics"
+description:  "b/417649629: Flag to enable hardware.vibrator-v4"
+value: {
+  bool_value: false
+}
+workflow:  LAUNCH
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

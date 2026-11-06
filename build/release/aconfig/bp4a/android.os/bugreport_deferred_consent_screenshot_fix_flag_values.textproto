@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "bugreport_deferred_consent_screenshot_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

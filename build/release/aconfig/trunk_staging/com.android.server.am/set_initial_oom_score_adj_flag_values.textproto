@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "set_initial_oom_score_adj"
+  state: ENABLED
+  permission: READ_WRITE
+}

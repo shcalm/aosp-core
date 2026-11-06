@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "predictive_back_callback_cancellation_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

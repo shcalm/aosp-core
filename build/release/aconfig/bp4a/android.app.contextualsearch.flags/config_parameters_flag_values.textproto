@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.contextualsearch.flags"
+  name: "config_parameters"
+  state: ENABLED
+  permission: READ_ONLY
+}

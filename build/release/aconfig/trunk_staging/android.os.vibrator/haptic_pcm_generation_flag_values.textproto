@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.vibrator"
+  name: "haptic_pcm_generation"
+  state: ENABLED
+  permission: READ_WRITE
+}

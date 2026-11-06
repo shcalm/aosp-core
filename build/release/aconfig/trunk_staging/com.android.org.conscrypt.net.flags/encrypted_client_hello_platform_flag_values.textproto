@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.org.conscrypt.net.flags"
+  name: "encrypted_client_hello_platform"
+  state: ENABLED
+  permission: READ_ONLY
+}

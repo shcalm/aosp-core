@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "virtual_camera_lower_resource_cost"
+  state: ENABLED
+  permission: READ_WRITE
+}

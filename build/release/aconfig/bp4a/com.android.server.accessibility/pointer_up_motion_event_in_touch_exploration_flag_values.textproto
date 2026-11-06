@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "pointer_up_motion_event_in_touch_exploration"
+  state: ENABLED
+  permission: READ_ONLY
+}

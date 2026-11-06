@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.hwui.flags"
+  name: "animated_image_frame_rate_hint"
+  state: ENABLED
+  permission: READ_ONLY
+}

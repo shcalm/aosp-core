@@ -1,0 +1,4 @@
+name: "RELEASE_LIBBINDER_FIX_RECURSIVE_DOUBLE_DEREFS"
+value {
+  bool_value: true
+}

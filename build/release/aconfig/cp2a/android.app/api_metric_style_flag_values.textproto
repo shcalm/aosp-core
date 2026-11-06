@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "api_metric_style"
+  state: ENABLED
+  permission: READ_ONLY
+}

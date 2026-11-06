@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "catalyst_time_to_take_action_screen"
+  state: ENABLED
+  permission: READ_ONLY
+}

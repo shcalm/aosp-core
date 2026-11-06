@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libgui.flags"
+  name: "bq_producer_backpressure_control"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "user_restriction_config_wifi_shared_private"
+  state: ENABLED
+  permission: READ_WRITE
+}

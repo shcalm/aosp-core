@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "enforce_strict_file_mode_check"
+  state: ENABLED
+  permission: READ_WRITE
+}

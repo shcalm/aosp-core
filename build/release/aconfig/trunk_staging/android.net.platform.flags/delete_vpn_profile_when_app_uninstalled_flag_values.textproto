@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.platform.flags"
+  name: "delete_vpn_profile_when_app_uninstalled"
+  state: ENABLED
+  permission: READ_WRITE
+}

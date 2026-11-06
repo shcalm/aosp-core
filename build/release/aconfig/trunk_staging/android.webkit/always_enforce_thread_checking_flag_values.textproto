@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.webkit"
+  name: "always_enforce_thread_checking"
+  state: ENABLED
+  permission: READ_WRITE
+}

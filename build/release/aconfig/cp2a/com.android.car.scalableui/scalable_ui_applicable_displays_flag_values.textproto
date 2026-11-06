@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.car.scalableui"
+  name: "scalable_ui_applicable_displays"
+  state: ENABLED
+  permission: READ_ONLY
+}

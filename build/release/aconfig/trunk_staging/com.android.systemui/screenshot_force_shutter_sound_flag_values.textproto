@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "screenshot_force_shutter_sound"
+  state: ENABLED
+  permission: READ_WRITE
+}

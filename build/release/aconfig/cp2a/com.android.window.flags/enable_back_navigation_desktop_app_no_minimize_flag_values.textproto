@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_back_navigation_desktop_app_no_minimize"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telecom.flags"
+  name: "skip_audio_update_to_ics"
+  state: ENABLED
+  permission: READ_ONLY
+}

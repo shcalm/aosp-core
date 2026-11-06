@@ -1,0 +1,8 @@
+name: "RELEASE_AISEAL_FRAMEWORK"
+namespace: "virtualization"
+description: "Adds AiSeal framework APIs to the system. AiSeal provides services for AI applications to store and process personal data inside pVM."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

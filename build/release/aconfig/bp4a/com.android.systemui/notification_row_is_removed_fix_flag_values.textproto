@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "notification_row_is_removed_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

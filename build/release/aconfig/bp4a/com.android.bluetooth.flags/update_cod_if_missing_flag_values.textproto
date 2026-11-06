@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "update_cod_if_missing"
+  state: ENABLED
+  permission: READ_ONLY
+}

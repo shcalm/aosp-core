@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "ads_respect_owners_preference"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.ranging.flags"
+  name: "ranging_technology_transitioning"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_TELEPHONY_MODULE_FRAMEWORK_OPTIMIZATION"
+value {
+  bool_value: true
+}

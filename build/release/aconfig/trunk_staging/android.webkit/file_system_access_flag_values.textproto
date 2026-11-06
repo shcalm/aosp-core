@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.webkit"
+  name: "file_system_access"
+  state: ENABLED
+  permission: READ_WRITE
+}

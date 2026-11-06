@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "button_chooser_activity_bottom_margin_system_bar"
+  state: ENABLED
+  permission: READ_WRITE
+}

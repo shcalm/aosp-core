@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "screen_recording_service_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

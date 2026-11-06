@@ -1,0 +1,52 @@
+package: "com.android.bluetooth.flags"
+container: "com.android.bt"
+
+flag {
+    name: "hfp_collision_fix_rfcomm_port_rx_buf_critical_error"
+    namespace: "bluetooth"
+    description: "fix RFCOMM port RX_BUF_CRITICAL error issue caused by HFP collision"
+    bug: "451453504"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "prevent_improper_closure_of_in_use_scn"
+    namespace: "bluetooth"
+    description: "When scn allocation fails, do not close already in use scn"
+    bug: "460151690"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "mark_port_not_in_use_on_release"
+    namespace: "bluetooth"
+    description: "Mark an in use port as not in use when calling port_release_port"
+    bug: "460549793"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "release_port_instead_mux_when_timeout_after_closed"
+    namespace: "bluetooth"
+    description: "Release port instead of release mux when timeout after port closed"
+    bug: "474236480"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "rfcomm_handle_eagain_as_non_blocking"
+    namespace: "bluetooth"
+    description: "Handle EAGAIN by returning true to allow retries in rfcomm data transport"
+    bug: "494514008"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}

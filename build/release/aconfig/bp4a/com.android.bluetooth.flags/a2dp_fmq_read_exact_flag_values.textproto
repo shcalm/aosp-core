@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "a2dp_fmq_read_exact"
+  state: ENABLED
+  permission: READ_ONLY
+}

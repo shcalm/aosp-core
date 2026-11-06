@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "lock_now_coexistence"
+  state: ENABLED
+  permission: READ_WRITE
+}

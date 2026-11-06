@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_broadcast_fix_autonomous_source_adding"
+  state: ENABLED
+  permission: READ_ONLY
+}

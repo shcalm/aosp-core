@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "initiate_bugreport_as_non_admin"
+  state: ENABLED
+  permission: READ_ONLY
+}

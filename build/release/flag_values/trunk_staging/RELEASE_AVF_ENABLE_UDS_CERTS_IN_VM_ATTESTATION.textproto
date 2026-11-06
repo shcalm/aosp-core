@@ -1,0 +1,4 @@
+name: "RELEASE_AVF_ENABLE_UDS_CERTS_IN_VM_ATTESTATION"
+value {
+  bool_value: true
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "normalize_home_intent"
+  state: ENABLED
+  permission: READ_ONLY
+}

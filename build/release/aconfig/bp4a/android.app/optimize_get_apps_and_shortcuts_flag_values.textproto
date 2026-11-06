@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "optimize_get_apps_and_shortcuts"
+  state: ENABLED
+  permission: READ_ONLY
+}

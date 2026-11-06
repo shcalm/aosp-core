@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "virtual_gamepad_override"
+  state: ENABLED
+  permission: READ_ONLY
+}

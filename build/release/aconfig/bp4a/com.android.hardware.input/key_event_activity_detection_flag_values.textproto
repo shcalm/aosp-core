@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "key_event_activity_detection"
+  state: ENABLED
+  permission: READ_ONLY
+}

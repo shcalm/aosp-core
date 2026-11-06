@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "qc_send_error_at_bcc_ibr_disabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

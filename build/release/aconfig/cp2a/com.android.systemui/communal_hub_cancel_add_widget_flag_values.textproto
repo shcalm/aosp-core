@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "communal_hub_cancel_add_widget"
+  state: ENABLED
+  permission: READ_ONLY
+}

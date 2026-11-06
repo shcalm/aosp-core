@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "unify_absolute_volume_management"
+  state: ENABLED
+  permission: READ_WRITE
+}

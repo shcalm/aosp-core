@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.media.flags"
+  name: "index_media_latitude_longitude"
+  state: ENABLED
+  permission: READ_ONLY
+}

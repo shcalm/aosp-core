@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.mainline.beta"
+  name: "bluetooth_tethering_randomized_address"
+  state: ENABLED
+  permission: READ_ONLY
+}

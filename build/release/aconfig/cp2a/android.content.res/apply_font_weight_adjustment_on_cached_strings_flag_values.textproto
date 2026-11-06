@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.res"
+  name: "apply_font_weight_adjustment_on_cached_strings"
+  state: ENABLED
+  permission: READ_ONLY
+}

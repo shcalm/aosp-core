@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "enable_top_ui_controller"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "enable_attention_service_apis"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "use_array_instead_list_in_sec_dev_rec"
+  state: ENABLED
+  permission: READ_ONLY
+}

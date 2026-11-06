@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mediasession.flags"
+  name: "remove_wiu_allowlisting_from_mediacontroller_sendcommand"
+  state: ENABLED
+  permission: READ_ONLY
+}

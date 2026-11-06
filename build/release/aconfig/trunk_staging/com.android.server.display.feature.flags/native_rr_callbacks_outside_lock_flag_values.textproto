@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "native_rr_callbacks_outside_lock"
+  state: ENABLED
+  permission: READ_WRITE
+}

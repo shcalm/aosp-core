@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_early_set_schema_exit"
+  state: ENABLED
+  permission: READ_WRITE
+}

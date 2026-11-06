@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "aware_periodic_ranging_intervals"
+  state: ENABLED
+  permission: READ_ONLY
+}

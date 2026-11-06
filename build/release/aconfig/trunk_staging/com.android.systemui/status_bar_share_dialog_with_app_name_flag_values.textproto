@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_share_dialog_with_app_name"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.intentresolver"
+  name: "launch_editor_as_current_user"
+  state: ENABLED
+  permission: READ_WRITE
+}

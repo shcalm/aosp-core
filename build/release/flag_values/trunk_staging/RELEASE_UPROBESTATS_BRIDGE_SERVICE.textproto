@@ -1,0 +1,4 @@
+name: "RELEASE_UPROBESTATS_BRIDGE_SERVICE"
+value {
+  bool_value: true
+}

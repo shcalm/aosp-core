@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "add_hop_to_event_callback"
+  state: ENABLED
+  permission: READ_ONLY
+}

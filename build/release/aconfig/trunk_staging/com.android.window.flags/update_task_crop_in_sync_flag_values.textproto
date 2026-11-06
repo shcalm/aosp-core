@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "update_task_crop_in_sync"
+  state: ENABLED
+  permission: READ_WRITE
+}

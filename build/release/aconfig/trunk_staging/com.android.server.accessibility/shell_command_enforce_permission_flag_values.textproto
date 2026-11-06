@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "shell_command_enforce_permission"
+  state: ENABLED
+  permission: READ_WRITE
+}

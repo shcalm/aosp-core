@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "binder_netlink_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

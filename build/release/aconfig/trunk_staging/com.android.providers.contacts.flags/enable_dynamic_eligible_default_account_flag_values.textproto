@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.contacts.flags"
+  name: "enable_dynamic_eligible_default_account"
+  state: ENABLED
+  permission: READ_WRITE
+}

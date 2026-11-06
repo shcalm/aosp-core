@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.hwui.flags"
+  name: "surfaceview_stretch_alignment"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wallpaper"
+  name: "enable_effect_for_cat_smile"
+  state: ENABLED
+  permission: READ_WRITE
+}

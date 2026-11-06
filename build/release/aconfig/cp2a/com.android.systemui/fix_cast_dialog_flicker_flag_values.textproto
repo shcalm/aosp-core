@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fix_cast_dialog_flicker"
+  state: ENABLED
+  permission: READ_ONLY
+}

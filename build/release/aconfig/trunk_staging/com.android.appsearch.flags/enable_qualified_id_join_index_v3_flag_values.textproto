@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_qualified_id_join_index_v3"
+  state: ENABLED
+  permission: READ_WRITE
+}

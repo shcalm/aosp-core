@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "split_to_full_set_window_mode"
+  state: ENABLED
+  permission: READ_WRITE
+}

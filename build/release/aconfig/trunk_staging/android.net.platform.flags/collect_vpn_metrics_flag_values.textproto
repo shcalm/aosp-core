@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.platform.flags"
+  name: "collect_vpn_metrics"
+  state: ENABLED
+  permission: READ_WRITE
+}

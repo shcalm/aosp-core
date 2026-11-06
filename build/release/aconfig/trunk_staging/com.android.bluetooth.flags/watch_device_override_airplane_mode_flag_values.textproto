@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "watch_device_override_airplane_mode"
+  state: ENABLED
+  permission: READ_WRITE
+}

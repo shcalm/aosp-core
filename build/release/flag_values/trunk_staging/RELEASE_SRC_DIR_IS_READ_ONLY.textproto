@@ -1,0 +1,4 @@
+name:  "RELEASE_SRC_DIR_IS_READ_ONLY"
+value:  {
+  bool_value:  true
+}

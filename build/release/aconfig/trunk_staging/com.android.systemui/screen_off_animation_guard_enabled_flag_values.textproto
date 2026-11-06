@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "screen_off_animation_guard_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

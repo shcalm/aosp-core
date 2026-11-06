@@ -1,0 +1,4 @@
+name: "RELEASE_ALLOW_PROFCOLLECT_IN_USER"
+value {
+  bool_value: true
+}

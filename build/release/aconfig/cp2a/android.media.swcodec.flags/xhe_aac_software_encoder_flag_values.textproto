@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.swcodec.flags"
+  name: "xhe_aac_software_encoder"
+  state: ENABLED
+  permission: READ_ONLY
+}

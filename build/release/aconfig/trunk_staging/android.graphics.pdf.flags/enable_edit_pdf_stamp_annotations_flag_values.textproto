@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.graphics.pdf.flags"
+  name: "enable_edit_pdf_stamp_annotations"
+  state: ENABLED
+  permission: READ_ONLY
+}

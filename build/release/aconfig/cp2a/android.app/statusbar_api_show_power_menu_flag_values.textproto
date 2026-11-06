@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "statusbar_api_show_power_menu"
+  state: ENABLED
+  permission: READ_ONLY
+}

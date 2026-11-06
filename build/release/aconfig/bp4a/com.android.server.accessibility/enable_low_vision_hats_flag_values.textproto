@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "enable_low_vision_hats"
+  state: ENABLED
+  permission: READ_ONLY
+}

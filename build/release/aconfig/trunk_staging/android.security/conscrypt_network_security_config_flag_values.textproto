@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "conscrypt_network_security_config"
+  state: ENABLED
+  permission: READ_WRITE
+}

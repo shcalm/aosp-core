@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "unify_device_type_verification_logic"
+  state: ENABLED
+  permission: READ_WRITE
+}

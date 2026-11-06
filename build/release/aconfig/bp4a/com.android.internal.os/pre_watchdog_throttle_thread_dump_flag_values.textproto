@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.os"
+  name: "pre_watchdog_throttle_thread_dump"
+  state: ENABLED
+  permission: READ_ONLY
+}

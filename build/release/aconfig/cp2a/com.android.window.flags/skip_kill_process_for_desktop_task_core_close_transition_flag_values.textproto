@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "skip_kill_process_for_desktop_task_core_close_transition"
+  state: ENABLED
+  permission: READ_ONLY
+}

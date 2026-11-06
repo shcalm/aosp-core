@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "app_binding_service_rework"
+  state: ENABLED
+  permission: READ_WRITE
+}

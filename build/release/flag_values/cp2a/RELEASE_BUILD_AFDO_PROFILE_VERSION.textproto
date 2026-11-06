@@ -1,0 +1,4 @@
+name: "RELEASE_BUILD_AFDO_PROFILE_VERSION"
+value: {
+  string_value: "15119254-next"
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_desktop_first_based_drag_to_maximize"
+  state: ENABLED
+  permission: READ_ONLY
+}

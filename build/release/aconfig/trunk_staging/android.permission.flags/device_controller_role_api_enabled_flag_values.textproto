@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "device_controller_role_api_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

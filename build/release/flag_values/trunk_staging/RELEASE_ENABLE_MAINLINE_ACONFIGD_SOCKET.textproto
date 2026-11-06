@@ -1,0 +1,4 @@
+name: "RELEASE_ENABLE_MAINLINE_ACONFIGD_SOCKET"
+value: {
+  bool_value: true
+}

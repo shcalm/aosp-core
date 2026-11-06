@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.biometrics"
+  name: "biometric_prompt_external_display"
+  state: ENABLED
+  permission: READ_WRITE
+}

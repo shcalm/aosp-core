@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.widget.flags"
+  name: "enable_default_visibility_for_sensitive_inputs"
+  state: ENABLED
+  permission: READ_ONLY
+}

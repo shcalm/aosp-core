@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "enable_process_observer_broadcast_on_process_started"
+  state: ENABLED
+  permission: READ_WRITE
+}

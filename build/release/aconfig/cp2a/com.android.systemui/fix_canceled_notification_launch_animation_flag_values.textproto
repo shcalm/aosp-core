@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fix_canceled_notification_launch_animation"
+  state: ENABLED
+  permission: READ_ONLY
+}

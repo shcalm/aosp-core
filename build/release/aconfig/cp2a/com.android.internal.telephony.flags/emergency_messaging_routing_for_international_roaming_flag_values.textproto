@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "emergency_messaging_routing_for_international_roaming"
+  state: ENABLED
+  permission: READ_ONLY
+}

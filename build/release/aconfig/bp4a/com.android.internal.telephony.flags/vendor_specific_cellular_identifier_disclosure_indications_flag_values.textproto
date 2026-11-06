@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "vendor_specific_cellular_identifier_disclosure_indications"
+  state: ENABLED
+  permission: READ_ONLY
+}

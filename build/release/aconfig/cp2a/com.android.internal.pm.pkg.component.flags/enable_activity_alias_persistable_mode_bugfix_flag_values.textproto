@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.pm.pkg.component.flags"
+  name: "enable_activity_alias_persistable_mode_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

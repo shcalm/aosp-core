@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "loopback_access_metrics"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.vibrator"
+  name: "vibration_thread_handling_hal_failure"
+  state: ENABLED
+  permission: READ_ONLY
+}

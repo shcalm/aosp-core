@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "enable_constraint_layout_lockscreen_on_external_display"
+  state: ENABLED
+  permission: READ_ONLY
+}

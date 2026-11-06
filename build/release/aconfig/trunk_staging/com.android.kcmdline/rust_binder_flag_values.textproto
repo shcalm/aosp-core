@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.kcmdline"
+  name: "rust_binder"
+  state: ENABLED
+  permission: READ_WRITE
+}

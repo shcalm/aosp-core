@@ -1,0 +1,8 @@
+name: "RELEASE_DEPRECATE_RUNTIME_APEX"
+namespace: "treble"
+description: "Deprecate com.android.runtime apex"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

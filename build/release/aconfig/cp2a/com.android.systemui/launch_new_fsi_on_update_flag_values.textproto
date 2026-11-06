@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "launch_new_fsi_on_update"
+  state: ENABLED
+  permission: READ_ONLY
+}

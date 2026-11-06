@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "update_device_satellite_plmn_by_configupdater"
+  state: ENABLED
+  permission: READ_WRITE
+}

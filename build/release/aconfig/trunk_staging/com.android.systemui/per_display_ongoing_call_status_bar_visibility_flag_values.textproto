@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "per_display_ongoing_call_status_bar_visibility"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "gatt_multi_bearer_transactions"
+  state: ENABLED
+  permission: READ_ONLY
+}

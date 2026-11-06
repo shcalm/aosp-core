@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_windowing_task_stack_order_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

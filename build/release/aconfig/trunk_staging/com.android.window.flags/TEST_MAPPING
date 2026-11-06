@@ -1,0 +1,19 @@
+{
+  "imports": [
+    {
+      "path": "frameworks/base/packages/SystemUI"
+    },
+    {
+      "path": "frameworks/native"
+    },
+    {
+      "path": "frameworks/native/services/surfaceflinger"
+    },
+    {
+      "path": "frameworks/base/libs/WindowManager/Shell"
+    },
+    {
+      "path": "frameworks/base/services/core/java/com/android/server/wm"
+    }
+  ]
+}

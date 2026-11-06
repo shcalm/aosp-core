@@ -1,0 +1,8 @@
+name: "RELEASE_AVF_ENABLE_SECURITY_VM_WITH_PLACEHOLDER_THAL"
+namespace: "virtualization"
+description: "Enable Trusty Security VM with placeholder Trusted Hals"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

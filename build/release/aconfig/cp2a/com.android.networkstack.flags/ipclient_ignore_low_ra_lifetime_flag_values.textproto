@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.networkstack.flags"
+  name: "ipclient_ignore_low_ra_lifetime"
+  state: ENABLED
+  permission: READ_ONLY
+}

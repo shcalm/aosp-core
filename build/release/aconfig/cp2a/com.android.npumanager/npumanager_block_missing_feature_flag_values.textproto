@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.npumanager"
+  name: "npumanager_block_missing_feature"
+  state: ENABLED
+  permission: READ_ONLY
+}

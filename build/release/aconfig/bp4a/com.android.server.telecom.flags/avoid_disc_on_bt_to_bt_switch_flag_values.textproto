@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "avoid_disc_on_bt_to_bt_switch"
+  state: ENABLED
+  permission: READ_ONLY
+}

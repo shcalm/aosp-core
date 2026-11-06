@@ -1,0 +1,172 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+filegroup {
+    name: "framework-bluetooth-sources",
+    defaults: ["framework-sources-module-defaults"],
+    srcs: [
+        "java/**/*.aidl",
+        "java/**/*.java",
+    ],
+    path: "java",
+    visibility: ["//packages/modules/Bluetooth/framework/tests/unit"],
+}
+
+// defaults shared between `framework-bluetooth` & `framework-bluetooth-pre-jarjar`
+// java_sdk_library `framework-bluetooth` needs sources to generate stubs, so it cannot reuse
+// `framework-bluetooth-pre-jarjar`
+java_defaults {
+    name: "framework-bluetooth-defaults",
+    defaults: [
+        "bluetooth_errorprone_rules",
+        "bluetooth_lint_rules",
+    ],
+    static_libs: [
+        "PlatformProperties",
+        "android.app.privatecompute.flags-aconfig-java-export",
+        "bluetooth_constants-java",
+        "bluetooth_flags_java_lib",
+        "modules-utils-build",
+        "service-bluetooth-binder-aidl",
+    ],
+    libs: [
+        "app-compat-annotations",
+        "framework-tethering.stubs.module_lib",
+        "unsupportedappusage", // for android.compat.annotation.UnsupportedAppUsage
+    ],
+    stub_only_libs: [
+        // TODO: b/332362688 --- Metalava should already ignore our library
+        "bluetooth_flags_java_lib",
+        "framework-tethering.stubs.module_lib",
+    ],
+    srcs: [
+        ":Bluetooth-binder-aidl",
+        ":framework-bluetooth-sources",
+    ],
+    min_sdk_version: "36",
+}
+
+// bluetooth-service needs pre-jarjared version of framework-bluetooth so it can reference copied utility
+// classes before they are renamed.
+java_library {
+    name: "framework-bluetooth-pre-jarjar",
+    defaults: ["framework-bluetooth-defaults"],
+    sdk_version: "module_current",
+    libs: ["framework-annotations-lib"],
+    installable: false,
+    visibility: ["//packages/modules/Bluetooth:__subpackages__"],
+}
+
+// post-jarjar version of framework-bluetooth
+java_sdk_library {
+    name: "framework-bluetooth",
+    defaults: [
+        "bluetooth_framework_errorprone_rules",
+        "framework-bluetooth-defaults",
+        "framework-module-defaults",
+    ],
+
+    jarjar_rules: ":bluetooth-jarjar-rules",
+    installable: true,
+    optimize: {
+        enabled: false,
+    },
+    hostdex: true, // for hiddenapi check
+
+    impl_library_visibility: [
+        "//packages/modules/Bluetooth/android/app:__subpackages__",
+        "//packages/modules/Bluetooth/framework/tests/bumble",
+        "//packages/modules/Bluetooth/service",
+        "//packages/modules/Bluetooth/tests/pandora/android_server",
+        "//packages/services/Car/car-builtin-lib",
+        // TODO(b/431798751)
+        "//packages/services/Car/tests/CarBuiltinLibUnitTest",
+        ":__subpackages__",
+    ],
+
+    apex_available: ["com.android.bt"],
+
+    permitted_packages: [
+        "android.bluetooth",
+        "com.android.bluetooth.jarjar",
+    ],
+    aconfig_declarations: [
+        "bluetooth_aconfig_flags",
+    ],
+    lint: {
+        error_checks: [
+            "Autofill",
+            "DefaultLocale",
+            "DuplicateDefinition",
+            "ExtraText",
+            "ExtraTranslation",
+            "FlaggedApi",
+            "GestureBackNavigation",
+            "GuardedLogInvocation",
+            "HandlerLeak",
+            "InflateParams",
+            "InlinedApi",
+            "LabelFor",
+            "MissingClass",
+            "MonochromeLauncherIcon",
+            "NewApi",
+            "ObsoleteSdkInt",
+            "Recycle",
+            "RtlHardcoded",
+            "RtlSymmetry",
+            "ScrollViewSize",
+            "SetTextI18n",
+            "SimpleDateFormat",
+            "StaticFieldLeak",
+            "StringFormatCount",
+            "StringFormatInvalid",
+            "SupportAnnotationUsage",
+            "TextFields",
+            "TypographyEllipsis",
+            "UseSparseArrays",
+            "UseValueOf",
+            "VectorPath",
+            "VisibleForTests",
+            "Wakelock",
+            "WakelockTimeout",
+            "WrongConstant",
+        ],
+        strict_updatability_linting: true,
+        baseline_filename: "lint-baseline.xml",
+    },
+}
+
+// defaults for tests that need to build against framework-bluetooth's @Hide APIs
+java_defaults {
+    name: "framework-bluetooth-tests-defaults",
+    defaults: ["bluetooth_errorprone_rules"],
+    sdk_version: "core_platform",
+    libs: [
+        // order matters: classes in framework-bluetooth are resolved before framework, meaning
+        // @Hide APIs in framework-bluetooth are resolved before @SystemApi stubs in framework
+        "framework-bluetooth.impl",
+
+        "framework",
+        // if sdk_version="" this gets automatically included, but here we need to add manually.
+        "framework-res",
+    ],
+    defaults_visibility: ["//packages/modules/Bluetooth:__subpackages__"],
+}
+
+filegroup {
+    name: "bluetooth-jarjar-rules",
+    srcs: ["jarjar-rules.txt"],
+}
+
+// Test is using a different jarjar to enforce that there is no class conflict
+// with the currently installed apex
+filegroup {
+    name: "bluetooth-jarjar-rules-tests",
+    srcs: ["jarjar-rules-tests.txt"],
+}
+
+platform_compat_config {
+    name: "framework-bluetooth-compat-config",
+    src: ":framework-bluetooth",
+}

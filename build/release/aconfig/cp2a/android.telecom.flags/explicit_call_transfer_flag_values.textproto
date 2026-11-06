@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "explicit_call_transfer"
+  state: ENABLED
+  permission: READ_ONLY
+}

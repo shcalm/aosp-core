@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "notification_expand_bundle_header_size"
+  state: ENABLED
+  permission: READ_ONLY
+}

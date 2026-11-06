@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.textclassifier"
+  name: "textclassifier_pending_request_timeout_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

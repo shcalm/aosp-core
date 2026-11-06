@@ -1,0 +1,8 @@
+name: "RELEASE_USE_ROBOTO_MONO_FONT"
+namespace: "text"
+description: "feature flag for using RobotoMono font as a replacement of DroidSansMono."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

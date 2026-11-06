@@ -1,0 +1,134 @@
+package: "com.android.bluetooth.flags"
+container: "com.android.bt"
+
+flag {
+    name: "tbs_gatt_no_longer_calls_framework"
+    namespace: "bluetooth"
+    description: "TbsGatt will avoid BluetoothGattServerProxy and use GattServer directly"
+    bug: "422544191"
+}
+
+flag {
+    name: "gatt_offload_api"
+    namespace: "bluetooth"
+    description: "New gatt API to offload characteristics"
+    bug: "427099808"
+    is_exported: true
+}
+
+flag {
+    name: "check_mapclient_connection_policy_for_ancs"
+    namespace: "bluetooth"
+    description: "Check MapClient connection policy for ANCS"
+    bug: "473396352"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "le_subrate_manager"
+    namespace: "bluetooth"
+    description: "Add subrate manager to control LE subrate parameters"
+    bug: "433670627"
+}
+
+flag {
+    name: "gatt_use_better_start_handle_in_service_changed"
+    namespace: "bluetooth"
+    description: "Don't use 0x0001 in all the use cases when application adds or remove a service"
+    bug: "444655559"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "gatt_thread"
+    namespace: "bluetooth"
+    description: "Run all gatt functions on a single thread"
+    bug: "449681465"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "gatt_add_cccd_on_service_changed"
+    namespace: "bluetooth"
+    description: "Add CCCD to the service changed"
+    bug: "450918251"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "send_service_changed_indication_upon_reconnection"
+    namespace: "bluetooth"
+    description: "Send service change indication upon reconnection if required"
+    bug: "459450198"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "gatt_reg_notification_on_jni_thread"
+    namespace: "bluetooth"
+    description: "Push register notification callback on JNI thread"
+    bug: "462776109"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "gatt_return_unsupported_when_not_support_subrating"
+    namespace: "bluetooth"
+    description: "Return UNSUPPORTED Status if local or remote device not supports subrating"
+    bug: "467849306"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "gatt_service_changed_subscription"
+    namespace: "bluetooth"
+    description: "Subscribe to the GATT service changed indications on discovering GATT database"
+    bug: "468061551"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "fix_gatt_cmd_dequeue"
+    namespace: "bluetooth"
+    description: "Fixes issues related to gatt_cmd_dequeue()"
+    bug: "468220386"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "support_multiple_read_rssi"
+    namespace: "bluetooth"
+    description: "Allow multiple clients to read RSSI simultaneously"
+    bug: "481172393"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "correct_gatt_error_code"
+    namespace: "bluetooth"
+    description: "Returns correct status in onConnectionStateChange"
+    bug: "482945446"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}

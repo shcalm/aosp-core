@@ -1,0 +1,8 @@
+name: "RELEASE_PACKAGE_NOTO_SERIF_MALAYALAM_VERSION"
+namespace: "text"
+description: "Version of the Noto Serif Malayalam font."
+value: {
+  string_value: "2.001"
+}
+workflow: PREBUILT
+containers: "system"

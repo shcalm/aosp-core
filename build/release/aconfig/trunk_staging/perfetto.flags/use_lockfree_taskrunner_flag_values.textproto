@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "use_lockfree_taskrunner"
+  state: ENABLED
+  permission: READ_ONLY
+}

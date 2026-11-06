@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_show_icons_in_secure_camera"
+  state: ENABLED
+  permission: READ_WRITE
+}

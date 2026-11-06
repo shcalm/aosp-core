@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.org.conscrypt.net.flags"
+  name: "ct_compat_version_3"
+  state: ENABLED
+  permission: READ_ONLY
+}

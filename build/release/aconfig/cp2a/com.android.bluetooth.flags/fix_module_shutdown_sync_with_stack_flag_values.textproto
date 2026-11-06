@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "fix_module_shutdown_sync_with_stack"
+  state: ENABLED
+  permission: READ_ONLY
+}

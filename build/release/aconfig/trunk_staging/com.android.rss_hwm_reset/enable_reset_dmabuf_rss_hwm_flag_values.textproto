@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.rss_hwm_reset"
+  name: "enable_reset_dmabuf_rss_hwm"
+  state: ENABLED
+  permission: READ_WRITE
+}

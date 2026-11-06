@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telecom.flags"
+  name: "voip_dnd_focus"
+  state: ENABLED
+  permission: READ_WRITE
+}

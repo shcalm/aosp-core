@@ -1,0 +1,8 @@
+name: "RELEASE_BOOTLOADER_DETERMINISTIC_AVB_SALT"
+namespace: "build"
+description: "If true, a deterministic salt will be used in the avb signed bootloader.img partitions."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

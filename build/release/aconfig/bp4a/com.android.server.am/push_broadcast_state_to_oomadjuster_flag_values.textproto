@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "push_broadcast_state_to_oomadjuster"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "add_first_vsync_to_tracker"
+  state: ENABLED
+  permission: READ_WRITE
+}

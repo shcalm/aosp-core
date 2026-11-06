@@ -1,0 +1,20 @@
+bootstrap_go_package {
+    name: "blueprint-uniquelist",
+    pkgPath: "github.com/google/blueprint/uniquelist",
+    srcs: [
+        "uniquelist.go",
+    ],
+    testSrcs: [
+        "uniquelist_test.go",
+    ],
+    deps: [
+        "blueprint-syncmap",
+        "blueprint-proptools",
+    ],
+    visibility: [
+        "//build/blueprint",
+        "//build/blueprint/depset",
+        "//build/blueprint/gobtools/codegen",
+        "//build/soong:__subpackages__",
+    ],
+}

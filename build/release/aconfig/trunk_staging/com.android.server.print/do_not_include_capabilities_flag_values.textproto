@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.print"
+  name: "do_not_include_capabilities"
+  state: ENABLED
+  permission: READ_WRITE
+}

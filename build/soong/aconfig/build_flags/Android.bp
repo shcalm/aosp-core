@@ -1,0 +1,39 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+bootstrap_go_package {
+    name: "soong-aconfig-build_flags",
+    pkgPath: "android/soong/aconfig/build_flags",
+    deps: [
+        "blueprint",
+        "blueprint-gobtools",
+        "blueprint-pathtools",
+        "blueprint-proptools",
+        "sbox_proto",
+        "soong",
+        "soong-android",
+    ],
+    srcs: [
+        "build_flags.go",
+        "build_flags_enc.go",
+        "build_flags_singleton.go",
+        "declarations.go",
+        "init.go",
+        "release_configs.go",
+    ],
+    testSrcs: [
+    ],
+    pluginFor: ["soong_build"],
+}
+
+all_release_configs {
+    name: "all_release_configs",
+    // Visibility must be limited to host tests!
+    visibility: ["//build/make/tools/finalization/finalization-test"],
+}
+
+release_config {
+    name: "my_release_config",
+    visibility: ["//build/release/build_config"],
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.uprobestats.mainline.flags"
+  name: "uprobestats_monitor_disruptive_app_activities"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "sim_next_sub_id"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "fix_no_set_position_mode_when_hal_restarts"
+  state: ENABLED
+  permission: READ_ONLY
+}

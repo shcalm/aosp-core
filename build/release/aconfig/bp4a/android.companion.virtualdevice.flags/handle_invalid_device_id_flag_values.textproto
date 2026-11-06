@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "handle_invalid_device_id"
+  state: ENABLED
+  permission: READ_ONLY
+}

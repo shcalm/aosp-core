@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "ambient_context_emergency_event"
+  state: ENABLED
+  permission: READ_WRITE
+}

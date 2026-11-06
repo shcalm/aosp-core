@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.widget.flags"
+  name: "list_view_count_for_accessibility"
+  state: ENABLED
+  permission: READ_ONLY
+}

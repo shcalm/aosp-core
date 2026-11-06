@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.shared"
+  name: "status_bar_connected_displays"
+  state: ENABLED
+  permission: READ_WRITE
+}

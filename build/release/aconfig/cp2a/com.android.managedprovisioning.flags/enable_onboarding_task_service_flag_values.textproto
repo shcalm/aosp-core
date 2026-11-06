@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.managedprovisioning.flags"
+  name: "enable_onboarding_task_service"
+  state: ENABLED
+  permission: READ_ONLY
+}

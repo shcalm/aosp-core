@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "update_bubble_bar_taskbar_intersection"
+  state: ENABLED
+  permission: READ_WRITE
+}

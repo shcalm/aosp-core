@@ -1,0 +1,6 @@
+flag_value {
+  package: "androidx.window.sidecar.flags"
+  name: "merge_extensions_sidecar"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "release_icon_as_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

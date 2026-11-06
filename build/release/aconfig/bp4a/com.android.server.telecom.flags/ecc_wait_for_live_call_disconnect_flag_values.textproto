@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "ecc_wait_for_live_call_disconnect"
+  state: ENABLED
+  permission: READ_ONLY
+}

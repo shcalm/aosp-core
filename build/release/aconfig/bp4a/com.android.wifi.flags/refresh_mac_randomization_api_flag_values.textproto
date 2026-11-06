@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "refresh_mac_randomization_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

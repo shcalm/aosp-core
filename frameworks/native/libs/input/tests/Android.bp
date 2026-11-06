@@ -1,0 +1,124 @@
+// Build the unit tests.
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "frameworks_native_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["frameworks_native_license"],
+}
+
+cc_test {
+    name: "libinput_tests",
+    host_supported: true,
+    srcs: [
+        "BlockingQueue_test.cpp",
+        "IdGenerator_test.cpp",
+        "InputChannel_test.cpp",
+        "InputConsumerFilteredResampling_test.cpp",
+        "InputConsumerResampling_test.cpp",
+        "InputConsumer_test.cpp",
+        "InputDevice_test.cpp",
+        "InputEvent_test.cpp",
+        "InputPublisherAndConsumerNoResampling_test.cpp",
+        "InputPublisherAndConsumer_test.cpp",
+        "InputVerifier_test.cpp",
+        "MotionPredictorMetricsManager_test.cpp",
+        "MotionPredictor_test.cpp",
+        "OneEuroFilter_test.cpp",
+        "Resampler_test.cpp",
+        "RingBuffer_test.cpp",
+        "TestInputChannel.cpp",
+        "TfLiteMotionPredictor_test.cpp",
+        "TouchResampling_test.cpp",
+        "TouchVideoFrame_test.cpp",
+        "VelocityControl_test.cpp",
+        "VelocityTracker_test.cpp",
+        "VerifiedInputEvent_test.cpp",
+        "VirtualInputDevice_test.cpp",
+    ],
+    header_libs: [
+        "flatbuffer_headers",
+        "tensorflow_headers",
+    ],
+    static_libs: [
+        "libPlatformProperties",
+        "libflagtest",
+        "libgmock",
+        "libgui_window_info_static",
+        "libinput",
+        "libkernelconfigs",
+        "libstatspull-fake",
+        "libstatssocket-fake",
+        "libtflite_static",
+        "libui-types",
+        "libz", // needed by libkernelconfigs
+    ],
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wextra",
+        "-Wno-unused-parameter",
+    ],
+    sanitize: {
+        address: true,
+        hwaddress: true,
+        undefined: true,
+        all_undefined: true,
+        diag: {
+            cfi: true,
+            integer_overflow: true,
+            memtag_heap: true,
+            undefined: true,
+            misc_undefined: [
+                "all",
+                "bounds",
+            ],
+        },
+    },
+    shared_libs: [
+        "libaconfig_storage_read_api_cc",
+        "libbase",
+        "libbinder",
+        "libcutils",
+        "liblog",
+        "libtinyxml2",
+        "libutils",
+        "server_configurable_flags",
+    ],
+    data: [
+        ":motion_predictor_model",
+        "data/*",
+    ],
+    device_first_data: [
+        ":keychars_test_data",
+        ":keylayout_test_data",
+    ],
+    test_options: {
+        unit_test: true,
+    },
+    test_suites: ["device-tests"],
+    native_coverage: false,
+}
+
+// NOTE: This is a compile time test, and does not need to be
+// run. All assertions are static_asserts and will fail during
+// buildtime if something's wrong.
+cc_library_static {
+    name: "StructLayout_test",
+    host_supported: true,
+    srcs: ["StructLayout_test.cpp"],
+    compile_multilib: "both",
+    cflags: [
+        "-Wall",
+        "-Werror",
+        "-Wextra",
+    ],
+    shared_libs: [
+        "libbase",
+        "libbinder",
+        "libcutils",
+        "libinput",
+        "libutils",
+    ],
+}

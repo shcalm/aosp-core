@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "data_service_user_data_toggle_notify"
+  state: ENABLED
+  permission: READ_WRITE
+}

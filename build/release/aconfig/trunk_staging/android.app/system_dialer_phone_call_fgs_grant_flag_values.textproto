@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "system_dialer_phone_call_fgs_grant"
+  state: ENABLED
+  permission: READ_WRITE
+}

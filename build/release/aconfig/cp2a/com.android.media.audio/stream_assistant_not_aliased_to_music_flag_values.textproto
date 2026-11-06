@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audio"
+  name: "stream_assistant_not_aliased_to_music"
+  state: ENABLED
+  permission: READ_ONLY
+}

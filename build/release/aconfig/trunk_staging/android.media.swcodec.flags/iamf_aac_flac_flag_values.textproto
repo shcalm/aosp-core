@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.swcodec.flags"
+  name: "iamf_aac_flac"
+  state: ENABLED
+  permission: READ_ONLY
+}

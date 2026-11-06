@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "add_null_check_for_augmented_inline_request"
+  state: ENABLED
+  permission: READ_ONLY
+}

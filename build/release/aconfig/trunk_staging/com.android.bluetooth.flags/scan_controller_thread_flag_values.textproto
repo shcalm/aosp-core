@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "scan_controller_thread"
+  state: ENABLED
+  permission: READ_WRITE
+}

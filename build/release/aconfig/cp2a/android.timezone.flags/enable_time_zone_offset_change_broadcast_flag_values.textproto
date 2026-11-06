@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.timezone.flags"
+  name: "enable_time_zone_offset_change_broadcast"
+  state: ENABLED
+  permission: READ_ONLY
+}

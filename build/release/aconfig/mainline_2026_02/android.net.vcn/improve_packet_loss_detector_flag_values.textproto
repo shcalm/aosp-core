@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.vcn"
+  name: "improve_packet_loss_detector"
+  state: ENABLED
+  permission: READ_ONLY
+}

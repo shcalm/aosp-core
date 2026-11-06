@@ -1,0 +1,8 @@
+name:  "RELEASE_DEPRECATE_MAINLINE_R_SUPPORT"
+namespace:  "modularization"
+description:  "Controls whether Mainline has deprecated R platform support"
+workflow:  LAUNCH
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "get_user_switchability_permission"
+  state: ENABLED
+  permission: READ_WRITE
+}

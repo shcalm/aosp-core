@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.devicelock.flags"
+  name: "device_id_type_serial"
+  state: ENABLED
+  permission: READ_ONLY
+}

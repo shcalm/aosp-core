@@ -1,0 +1,736 @@
+/*
+ * WPA Supplicant - Supplicant Aidl interface
+ * Copyright (c) 2021, Google Inc. All rights reserved.
+ *
+ * This software may be distributed under the terms of the BSD license.
+ * See README for more details.
+ */
+
+#include "aidl_manager.h"
+#include "aidl_return_util.h"
+#include "misc_utils.h"
+#include "supplicant.h"
+#include "p2p_iface.h"
+
+#include <android-base/file.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+namespace {
+using aidl::android::hardware::wifi::supplicant::misc_utils::ensureConfigFileExistsAtPath;
+using aidl::android::hardware::wifi::supplicant::misc_utils::kConfigFileMode;
+using aidl::android::hardware::wifi::supplicant::misc_utils::kIfaceDriverName;
+
+// Pre-populated interface params for interfaces controlled by wpa_supplicant.
+// Note: This may differ for other OEM's. So, modify this accordingly.
+// When wpa_supplicant is in its APEX, overlay/template configurations should be
+// loaded from the same APEX.
+#ifdef MAINLINE_SUPPLICANT
+// Template conf path.
+constexpr char kSystemTemplateConfPath[] =
+	"/apex/com.android.wifi/etc/wpa_supplicant_mainline.conf";
+// If overlay conf files are provided for the mainline supplicant, they should be copied
+// to the overlay paths specified below. This is commonly done from the device.mk file.
+constexpr char kStaIfaceConfOverlayPath[] =
+	"/system_ext/etc/wifi/wpa_supplicant_mainline_overlay.conf";
+constexpr char kP2pIfaceConfOverlayPath[] =
+	"/system_ext/etc/wifi/p2p_supplicant_mainline_overlay.conf";
+#else
+constexpr char kStaIfaceConfPath[] =
+	"/data/vendor/wifi/wpa/wpa_supplicant.conf";
+constexpr char kStaIfaceConfOverlayPath[] =
+    "/etc/wifi/wpa_supplicant_overlay.conf";
+constexpr char kSystemTemplateConfPath[] =
+    "/system/etc/wifi/wpa_supplicant.conf";
+constexpr char kP2pIfaceConfPath[] =
+	"/data/vendor/wifi/wpa/p2p_supplicant.conf";
+constexpr char kP2pIfaceConfOverlayPath[] =
+	"/etc/wifi/p2p_supplicant_overlay.conf";
+#endif
+
+constexpr char kVendorTemplateConfPath[] =
+    "/etc/wifi/wpa_supplicant.conf";
+
+constexpr char kOldStaIfaceConfPath[] = "/data/misc/wifi/wpa_supplicant.conf";
+constexpr char kOldP2pIfaceConfPath[] = "/data/misc/wifi/p2p_supplicant.conf";
+std::string kUserP2pIfaceConfPath;
+#ifdef MAINLINE_SUPPLICANT
+std::string kUserStaIfaceConfPath;
+#endif
+
+std::string resolveVendorConfPath(const std::string& conf_path)
+{
+#if defined(__ANDROID_APEX__)
+	// returns "/apex/<apexname>" + conf_path
+	std::string path = android::base::GetExecutablePath();
+	return path.substr(0, path.find_first_of('/', strlen("/apex/"))) + conf_path;
+#else
+	return std::string("/vendor") + conf_path;
+#endif
+}
+
+int copyFile(
+	const std::string& src_file_path, const std::string& dest_file_path)
+{
+	std::string file_contents;
+	if (!android::base::ReadFileToString(src_file_path, &file_contents)) {
+		wpa_printf(
+			MSG_ERROR, "Failed to read from %s. Errno: %s",
+			src_file_path.c_str(), strerror(errno));
+		return -1;
+	}
+	if (!android::base::WriteStringToFile(
+		file_contents, dest_file_path, kConfigFileMode, getuid(),
+		getgid())) {
+		wpa_printf(
+			MSG_ERROR, "Failed to write to %s. Errno: %s",
+			dest_file_path.c_str(), strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ * Copy |src_file_path| to |dest_file_path| if it exists.
+ *
+ * Returns 1 if |src_file_path| does not exist or not accessible,
+ * Returns -1 if the copy fails.
+ * Returns 0 if the copy succeeds.
+ */
+int copyFileIfItExists(
+	const std::string& src_file_path, const std::string& dest_file_path)
+{
+	int ret = access(src_file_path.c_str(), R_OK);
+	// Sepolicy denial (2018+ device) will return EACCESS instead of ENOENT.
+	if ((ret != 0) && ((errno == ENOENT) || (errno == EACCES))) {
+		return 1;
+	}
+	ret = copyFile(src_file_path, dest_file_path);
+	if (ret != 0) {
+		wpa_printf(
+			MSG_ERROR, "Failed copying %s to %s.",
+			src_file_path.c_str(), dest_file_path.c_str());
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ * Ensure that the specified config file pointed by |config_file_path| exists.
+ * a) If the |config_file_path| exists with the correct permissions, return.
+ * b) If the |config_file_path| does not exist, but |old_config_file_path|
+ * exists, copy over the contents of the |old_config_file_path| to
+ * |config_file_path|.
+ * c) If the |config_file_path| & |old_config_file_path|
+ * does not exists, copy over the contents of |template_config_file_path|.
+ */
+int ensureConfigFileExists(
+	const std::string& config_file_path,
+	const std::string& old_config_file_path)
+{
+	// Check if config file already exists at |config_file_path|
+	int ret = ensureConfigFileExistsAtPath(config_file_path);
+	if (ret == 0) {
+		wpa_printf(MSG_INFO, "Config file already exists at %s", config_file_path.c_str());
+		return 0;
+	} else if (ret != ENOENT) {
+		return -1;
+	}
+
+	ret = copyFileIfItExists(old_config_file_path, config_file_path);
+	if (ret == 0) {
+		wpa_printf(
+			MSG_INFO, "Migrated conf file from %s to %s",
+			old_config_file_path.c_str(), config_file_path.c_str());
+		unlink(old_config_file_path.c_str());
+		return 0;
+	} else if (ret == -1) {
+		unlink(config_file_path.c_str());
+		return -1;
+	}
+
+	std::string vendor_template_conf_path = resolveVendorConfPath(kVendorTemplateConfPath);
+	ret = copyFileIfItExists(vendor_template_conf_path, config_file_path);
+	if (ret == 0) {
+		wpa_printf(
+		    MSG_INFO, "Copied template conf file from %s to %s",
+		    vendor_template_conf_path.c_str(), config_file_path.c_str());
+		return 0;
+	} else if (ret == -1) {
+		unlink(config_file_path.c_str());
+		return -1;
+	}
+
+	ret = copyFileIfItExists(kSystemTemplateConfPath, config_file_path);
+	if (ret == 0) {
+		wpa_printf(
+		    MSG_INFO, "Copied template conf file from %s to %s",
+		    kSystemTemplateConfPath, config_file_path.c_str());
+		return 0;
+	} else if (ret == -1) {
+		unlink(config_file_path.c_str());
+		return -1;
+	}
+
+	// Did not create the conf file.
+	return -1;
+}
+
+/**
+ * Ensure that the specified mainline supplicant config file exists at |config_file_path|.
+ * a) If the |config_file_path| exists with the correct permissions, return.
+ * b) Otherwise, try to copy over the contents of the template config file.
+ */
+int ensureMainlineSupplicantConfigFileExists(const std::string& config_file_path)
+{
+	wpa_printf(MSG_INFO, "Checking if the config file exists at %s",
+			config_file_path.c_str());
+	int ret = ensureConfigFileExistsAtPath(config_file_path);
+	if (ret == 0) {
+		wpa_printf(MSG_INFO, "Config file was found at the provided path");
+		return 0;
+	} else if (ret != ENOENT) {
+        wpa_printf(MSG_ERROR, "Find failed with code %d", ret);
+		return -1;
+	}
+
+	wpa_printf(MSG_INFO, "Trying to copy the template conf file from %s to %s",
+			kSystemTemplateConfPath, config_file_path.c_str());
+	ret = copyFileIfItExists(kSystemTemplateConfPath, config_file_path);
+	if (ret == 0) {
+		wpa_printf(MSG_INFO, "Template conf file was copied successfully");
+		return 0;
+	} else if (ret == -1) {
+        wpa_printf(MSG_ERROR, "Template file copy failed with unexpected error code");
+		unlink(config_file_path.c_str());
+	}
+
+	// Did not create the conf file.
+	return -1;
+}
+}  // namespace
+
+namespace aidl {
+namespace android {
+namespace hardware {
+namespace wifi {
+namespace supplicant {
+using aidl_return_util::validateAndCall;
+using misc_utils::createStatus;
+using misc_utils::createStatusWithMsg;
+
+Supplicant::Supplicant(struct wpa_global* global) : wpa_global_(global) {}
+bool Supplicant::isValid()
+{
+	// This top level object cannot be invalidated.
+	return true;
+}
+
+::ndk::ScopedAStatus Supplicant::addP2pInterface(
+	const std::string& in_name,
+	std::shared_ptr<ISupplicantP2pIface>* _aidl_return)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::addP2pInterfaceInternal, _aidl_return, in_name);
+}
+
+::ndk::ScopedAStatus Supplicant::addStaInterface(
+	const std::string& in_name,
+	std::shared_ptr<ISupplicantStaIface>* _aidl_return)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::addStaInterfaceInternal, _aidl_return, in_name);
+}
+
+::ndk::ScopedAStatus Supplicant::removeInterface(
+	const IfaceInfo& in_ifaceInfo)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::removeInterfaceInternal, in_ifaceInfo);
+}
+
+::ndk::ScopedAStatus Supplicant::getP2pInterface(
+	const std::string& in_name,
+	std::shared_ptr<ISupplicantP2pIface>* _aidl_return)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::getP2pInterfaceInternal, _aidl_return, in_name);
+}
+
+::ndk::ScopedAStatus Supplicant::getStaInterface(
+	const std::string& in_name,
+	std::shared_ptr<ISupplicantStaIface>* _aidl_return)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::getStaInterfaceInternal, _aidl_return, in_name);
+}
+
+::ndk::ScopedAStatus Supplicant::listInterfaces(
+	std::vector<IfaceInfo>* _aidl_return)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::listInterfacesInternal, _aidl_return);
+}
+
+::ndk::ScopedAStatus Supplicant::registerCallback(
+	const std::shared_ptr<ISupplicantCallback>& in_callback)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::registerCallbackInternal, in_callback);
+}
+
+::ndk::ScopedAStatus Supplicant::registerNonStandardCertCallback(
+	const std::shared_ptr<INonStandardCertCallback>& in_callback)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::registerNonStandardCertCallbackInternal, in_callback);
+}
+
+::ndk::ScopedAStatus Supplicant::setDebugParams(
+	DebugLevel in_level, bool in_showTimestamp,
+	bool in_showKeys)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::setDebugParamsInternal, in_level,
+		in_showTimestamp, in_showKeys);
+}
+
+::ndk::ScopedAStatus Supplicant::setConcurrencyPriority(
+	IfaceType in_type)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::setConcurrencyPriorityInternal, in_type);
+}
+
+::ndk::ScopedAStatus Supplicant::getDebugLevel(DebugLevel* _aidl_return)
+{
+	*_aidl_return = static_cast<DebugLevel>(wpa_debug_level);
+	return ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus Supplicant::isDebugShowTimestampEnabled(bool* _aidl_return)
+{
+	*_aidl_return = ((wpa_debug_timestamp != 0) ? true : false);
+	return ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus Supplicant::isDebugShowKeysEnabled(bool* _aidl_return)
+{
+	*_aidl_return = ((wpa_debug_show_keys != 0) ? true : false);
+	return ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus Supplicant::terminate()
+{
+	wpa_printf(MSG_INFO, "Terminating...");
+	wpa_supplicant_terminate_proc(wpa_global_);
+	return ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus Supplicant::setCurrentUserIdentity(int32_t in_userId)
+{
+    return validateAndCall(
+        this, SupplicantStatusCode::FAILURE_UNKNOWN,
+        &Supplicant::setCurrentUserIdentityInternal, in_userId);
+}
+
+::ndk::ScopedAStatus Supplicant::createRttController(
+	const std::string &in_ifaceName,
+	std::shared_ptr<ISupplicantWifiRttController> *_aidl_return)
+{
+	return validateAndCall(
+		this, SupplicantStatusCode::FAILURE_IFACE_INVALID,
+		&Supplicant::createRttControllerInternal, _aidl_return,
+		in_ifaceName);
+}
+
+ndk::ScopedAStatus Supplicant::addP2pDevInterface(struct wpa_interface iface_params)
+{
+	char primary_ifname[IFNAMSIZ];
+	u32 primary_ifname_len =
+		strlen(iface_params.ifname) - strlen(P2P_MGMT_DEVICE_PREFIX);
+
+	if(primary_ifname_len > IFNAMSIZ) {
+		wpa_printf(MSG_DEBUG, "%s, Invalid primary iface name ", __FUNCTION__);
+		return createStatus(SupplicantStatusCode::FAILURE_ARGS_INVALID);
+	}
+
+	strncpy(primary_ifname, iface_params.ifname +
+		strlen(P2P_MGMT_DEVICE_PREFIX), primary_ifname_len);
+	wpa_printf(MSG_DEBUG, "%s, Initialize p2p-dev-wlan0 iface with"
+		"primary_iface = %s", __FUNCTION__, primary_ifname);
+	struct wpa_supplicant* wpa_s =
+		wpa_supplicant_get_iface(wpa_global_, primary_ifname);
+	if (!wpa_s) {
+		wpa_printf(MSG_DEBUG, "%s,NULL wpa_s for wlan0", __FUNCTION__);
+		return createStatus(SupplicantStatusCode::FAILURE_IFACE_UNKNOWN);
+	}
+
+	const u8 *if_addr = NULL;
+	char force_name[100] = {'\0'};
+	wpa_s->pending_interface_type = WPA_IF_P2P_DEVICE;
+	if (wpa_s->conf->p2p_device_random_mac_addr == 2 &&
+		!is_zero_ether_addr(wpa_s->conf->p2p_device_persistent_mac_addr))
+		if_addr = wpa_s->conf->p2p_device_persistent_mac_addr;
+
+	int ret = wpa_drv_if_add(wpa_s, WPA_IF_P2P_DEVICE, iface_params.ifname, if_addr, NULL,
+		force_name, wpa_s->pending_interface_addr, NULL);
+	if (ret < 0) {
+		wpa_printf(MSG_DEBUG, "P2P: Failed to create P2P Device interface");
+		return createStatus(SupplicantStatusCode::FAILURE_UNKNOWN);
+	}
+
+	os_strlcpy(wpa_s->pending_interface_name, iface_params.ifname,
+		sizeof(wpa_s->pending_interface_name));
+	iface_params.p2p_mgmt = 1;
+	iface_params.driver_param = wpa_s->conf->driver_param;
+	iface_params.ctrl_interface = NULL;
+
+	struct wpa_supplicant *p2pdev_wpa_s = wpa_supplicant_add_iface(
+		wpa_s->global, &iface_params, wpa_s);
+
+	if (!p2pdev_wpa_s) {
+		wpa_printf(MSG_INFO,
+			"Failed to enable P2P Device");
+		return createStatus(SupplicantStatusCode::FAILURE_UNKNOWN);
+	}
+	p2pdev_wpa_s->p2pdev = p2pdev_wpa_s;
+	wpa_s->pending_interface_name[0] = '\0';
+
+	return ndk::ScopedAStatus::ok();
+}
+
+std::pair<std::shared_ptr<ISupplicantP2pIface>, ndk::ScopedAStatus>
+Supplicant::addP2pInterfaceInternal(const std::string& name)
+{
+	std::shared_ptr<ISupplicantP2pIface> iface;
+	// Check if required |ifname| argument is empty.
+	if (name.empty()) {
+		return {nullptr, createStatus(SupplicantStatusCode::FAILURE_ARGS_INVALID)};
+	}
+	if (strncmp(name.c_str(), P2P_MGMT_DEVICE_PREFIX, strlen(P2P_MGMT_DEVICE_PREFIX)) == 0) {
+		struct wpa_supplicant* wpa_s = wpa_supplicant_get_iface(wpa_global_, name.c_str());
+		if (wpa_s) {
+			wpa_printf(MSG_DEBUG, "Remove existing p2p dev interface");
+			wpa_supplicant_remove_iface(wpa_global_, wpa_s, 0);
+		}
+	}
+	// Try to get the wpa_supplicant record for this iface, return
+	// the iface object with the appropriate status code if it exists.
+	ndk::ScopedAStatus status;
+	std::tie(iface, status) = getP2pInterfaceInternal(name);
+	if (status.isOk()) {
+		wpa_printf(MSG_INFO, "Iface already exists, return existing");
+		return {iface, ndk::ScopedAStatus::ok()};
+	}
+
+	struct wpa_interface iface_params = {};
+	iface_params.driver = kIfaceDriverName;
+#ifdef MAINLINE_SUPPLICANT
+	if (kUserP2pIfaceConfPath.empty()) {
+		return {nullptr, createStatusWithMsg(
+			SupplicantStatusCode::FAILURE_UNKNOWN, "Missing user Id for User Conf file")};
+	}
+	bool configFileExists = ensureMainlineSupplicantConfigFileExists(kUserP2pIfaceConfPath) == 0;
+	std::string overlay_path = kP2pIfaceConfOverlayPath;
+	iface_params.confname = kUserP2pIfaceConfPath.c_str();
+#else
+	bool configFileExists = ensureConfigFileExists(kP2pIfaceConfPath, kOldP2pIfaceConfPath) == 0;
+	std::string overlay_path = resolveVendorConfPath(kP2pIfaceConfOverlayPath);
+	iface_params.confname = kP2pIfaceConfPath;
+#endif
+	if (!configFileExists) {
+		wpa_printf(
+			MSG_ERROR, "Conf file does not exist: %s",
+			iface_params.confname);
+		return {nullptr, createStatusWithMsg(
+			SupplicantStatusCode::FAILURE_UNKNOWN, "Conf file does not exist")};
+	}
+	int ret = access(overlay_path.c_str(), R_OK);
+	if (ret == 0) {
+		iface_params.confanother = overlay_path.c_str();
+	}
+
+	iface_params.ifname = name.c_str();
+	if (strncmp(iface_params.ifname, P2P_MGMT_DEVICE_PREFIX,
+		strlen(P2P_MGMT_DEVICE_PREFIX)) == 0) {
+		status = addP2pDevInterface(iface_params);
+		if (!status.isOk()) {
+			return {iface, createStatus(static_cast<SupplicantStatusCode>(
+				status.getServiceSpecificError()))};
+		}
+	} else {
+		struct wpa_supplicant* wpa_s =
+			wpa_supplicant_add_iface(wpa_global_, &iface_params, NULL);
+		if (!wpa_s) {
+			return {nullptr, createStatus(SupplicantStatusCode::FAILURE_UNKNOWN)};
+		}
+		// Request the current scan results from the driver and update
+		// the local BSS list wpa_s->bss. This is to avoid a full scan
+		// while processing the connect request on newly created interface.
+		wpa_supplicant_update_scan_results(wpa_s, NULL);
+	}
+	// The supplicant core creates a corresponding aidl object via
+	// AidlManager when |wpa_supplicant_add_iface| is called.
+	return getP2pInterfaceInternal(name);
+}
+
+std::pair<std::shared_ptr<ISupplicantStaIface>, ndk::ScopedAStatus>
+Supplicant::addStaInterfaceInternal(const std::string& name)
+{
+	std::shared_ptr<ISupplicantStaIface> iface;
+
+	// Check if required |ifname| argument is empty.
+	if (name.empty()) {
+		return {nullptr, createStatus(SupplicantStatusCode::FAILURE_ARGS_INVALID)};
+	}
+	// Try to get the wpa_supplicant record for this iface, return
+	// the iface object with the appropriate status code if it exists.
+	ndk::ScopedAStatus status;
+	std::tie(iface, status) = getStaInterfaceInternal(name);
+	if (status.isOk()) {
+		wpa_printf(MSG_INFO, "Iface already exists, return existing");
+		return {iface, ndk::ScopedAStatus::ok()};
+	}
+
+	struct wpa_interface iface_params = {};
+	iface_params.driver = kIfaceDriverName;
+#ifdef MAINLINE_SUPPLICANT
+	if (kUserStaIfaceConfPath.empty()) {
+		return {nullptr, createStatusWithMsg(
+		SupplicantStatusCode::FAILURE_UNKNOWN, "Missing user Id for User Conf file")};
+	}
+	bool configFileExists = ensureMainlineSupplicantConfigFileExists(kUserStaIfaceConfPath) == 0;
+	std::string overlay_path = kStaIfaceConfOverlayPath;
+	iface_params.confname = kUserStaIfaceConfPath.c_str();
+#else
+	bool configFileExists = ensureConfigFileExists(kStaIfaceConfPath, kOldStaIfaceConfPath) == 0;
+	std::string overlay_path = resolveVendorConfPath(kStaIfaceConfOverlayPath);
+	iface_params.confname = kStaIfaceConfPath;
+#endif
+	if (!configFileExists) {
+		wpa_printf(
+			MSG_ERROR, "Conf file does not exist: %s",
+			iface_params.confname);
+		return {nullptr, createStatusWithMsg(
+		SupplicantStatusCode::FAILURE_UNKNOWN, "Conf file does not exist")};
+	}
+	int ret = access(overlay_path.c_str(), R_OK);
+	if (ret == 0) {
+		iface_params.confanother = overlay_path.c_str();
+	}
+
+	iface_params.ifname = name.c_str();
+	if (strncmp(iface_params.ifname, P2P_MGMT_DEVICE_PREFIX,
+		strlen(P2P_MGMT_DEVICE_PREFIX)) == 0) {
+		status = addP2pDevInterface(iface_params);
+		if (!status.isOk()) {
+			return {iface, createStatus(static_cast<SupplicantStatusCode>(
+				status.getServiceSpecificError()))};
+		}
+	} else {
+		struct wpa_supplicant* wpa_s =
+			wpa_supplicant_add_iface(wpa_global_, &iface_params, NULL);
+		if (!wpa_s) {
+			return {nullptr, createStatus(SupplicantStatusCode::FAILURE_UNKNOWN)};
+		}
+		// Request the current scan results from the driver and update
+		// the local BSS list wpa_s->bss. This is to avoid a full scan
+		// while processing the connect request on newly created interface.
+		wpa_supplicant_update_scan_results(wpa_s, NULL);
+	}
+	// The supplicant core creates a corresponding aidl object via
+	// AidlManager when |wpa_supplicant_add_iface| is called.
+	return getStaInterfaceInternal(name);
+}
+
+ndk::ScopedAStatus Supplicant::removeInterfaceInternal(
+	const IfaceInfo& iface_info)
+{
+	struct wpa_supplicant* wpa_s =
+		wpa_supplicant_get_iface(wpa_global_, iface_info.name.c_str());
+	if (!wpa_s) {
+		return createStatus(SupplicantStatusCode::FAILURE_IFACE_UNKNOWN);
+	}
+	if (wpa_supplicant_remove_iface(wpa_global_, wpa_s, 0)) {
+		return createStatus(SupplicantStatusCode::FAILURE_UNKNOWN);
+	}
+	return ndk::ScopedAStatus::ok();
+}
+
+std::pair<std::shared_ptr<ISupplicantP2pIface>, ndk::ScopedAStatus>
+Supplicant::getP2pInterfaceInternal(const std::string& name)
+{
+	struct wpa_supplicant* wpa_s =
+		wpa_supplicant_get_iface(wpa_global_, name.c_str());
+	if (!wpa_s) {
+		return {nullptr, createStatus(SupplicantStatusCode::FAILURE_IFACE_UNKNOWN)};
+	}
+	AidlManager* aidl_manager = AidlManager::getInstance();
+	std::shared_ptr<ISupplicantP2pIface> iface;
+	if (!aidl_manager ||
+		aidl_manager->getP2pIfaceAidlObjectByIfname(
+		wpa_s->ifname, &iface)) {
+		return {iface, createStatus(SupplicantStatusCode::FAILURE_UNKNOWN)};
+	}
+	// Set this flag true here, since there is no AIDL initialize
+	// method for the p2p config, and the supplicant interface is
+	// not ready when the p2p iface is created.
+	wpa_s->conf->persistent_reconnect = true;
+	return {iface, ndk::ScopedAStatus::ok()};
+}
+
+std::pair<std::shared_ptr<ISupplicantStaIface>, ndk::ScopedAStatus>
+Supplicant::getStaInterfaceInternal(const std::string& name)
+{
+	struct wpa_supplicant* wpa_s =
+		wpa_supplicant_get_iface(wpa_global_, name.c_str());
+	if (!wpa_s) {
+		return {nullptr, createStatus(SupplicantStatusCode::FAILURE_IFACE_UNKNOWN)};
+	}
+	AidlManager* aidl_manager = AidlManager::getInstance();
+	std::shared_ptr<ISupplicantStaIface> iface;
+	if (!aidl_manager ||
+		aidl_manager->getStaIfaceAidlObjectByIfname(
+		wpa_s->ifname, &iface)) {
+		return {iface, createStatus(SupplicantStatusCode::FAILURE_UNKNOWN)};
+	}
+	return {iface, ndk::ScopedAStatus::ok()};
+}
+
+std::pair<std::vector<IfaceInfo>, ndk::ScopedAStatus>
+Supplicant::listInterfacesInternal()
+{
+	std::vector<IfaceInfo> ifaces;
+	for (struct wpa_supplicant* wpa_s = wpa_global_->ifaces; wpa_s;
+		 wpa_s = wpa_s->next) {
+		if (wpa_s->global->p2p_init_wpa_s == wpa_s) {
+			ifaces.emplace_back(IfaceInfo{
+				IfaceType::P2P, wpa_s->ifname});
+		} else {
+			ifaces.emplace_back(IfaceInfo{
+				IfaceType::STA, wpa_s->ifname});
+		}
+	}
+	return {std::move(ifaces), ndk::ScopedAStatus::ok()};
+}
+
+ndk::ScopedAStatus Supplicant::registerCallbackInternal(
+	const std::shared_ptr<ISupplicantCallback>& callback)
+{
+	AidlManager* aidl_manager = AidlManager::getInstance();
+	if (!aidl_manager ||
+		aidl_manager->addSupplicantCallbackAidlObject(callback)) {
+		return createStatus(SupplicantStatusCode::FAILURE_UNKNOWN);
+	}
+	return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Supplicant::registerNonStandardCertCallbackInternal(
+	const std::shared_ptr<INonStandardCertCallback>& callback)
+{
+	AidlManager* aidl_manager = AidlManager::getInstance();
+	if (!aidl_manager ||
+		aidl_manager->registerNonStandardCertCallbackAidlObject(callback)) {
+		return createStatus(SupplicantStatusCode::FAILURE_UNKNOWN);
+	}
+	return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Supplicant::setDebugParamsInternal(
+	DebugLevel level, bool show_timestamp, bool show_keys)
+{
+	if (wpa_supplicant_set_debug_params(
+		wpa_global_, static_cast<uint32_t>(level), show_timestamp,
+		show_keys)) {
+		return createStatus(SupplicantStatusCode::FAILURE_UNKNOWN);
+	}
+	return ndk::ScopedAStatus::ok();
+}
+
+ndk::ScopedAStatus Supplicant::setConcurrencyPriorityInternal(IfaceType type)
+{
+	if (type == IfaceType::STA) {
+		wpa_global_->conc_pref =
+			wpa_global::wpa_conc_pref::WPA_CONC_PREF_STA;
+	} else if (type == IfaceType::P2P) {
+		wpa_global_->conc_pref =
+			wpa_global::wpa_conc_pref::WPA_CONC_PREF_P2P;
+	} else {
+		return createStatus(SupplicantStatusCode::FAILURE_ARGS_INVALID);
+	}
+	return ndk::ScopedAStatus::ok();
+}
+
+::ndk::ScopedAStatus Supplicant::setCurrentUserIdentityInternal(uint32_t in_userId)
+{
+#ifdef MAINLINE_SUPPLICANT
+	// Use user_de storage since there is no user data in supplicant.conf and
+	// supplicant may need access before user unlock device. (i.e. wifi is on)
+	kUserStaIfaceConfPath = "/data/misc_de/" + std::to_string(in_userId)
+		+ "/apexdata/com.android.wifi/mainline_supplicant/wpa/wpa_supplicant_mainline.conf";
+	// Use user_ce storage since p2p configuration file stores user's data.
+	// This data should not be accessible before user unlock device.
+	kUserP2pIfaceConfPath = "/data/misc_ce/" + std::to_string(in_userId)
+		+ "/apexdata/com.android.wifi/mainline_supplicant/wpa/p2p_supplicant_mainline.conf";
+#else
+	kUserP2pIfaceConfPath = "/data/vendor_ce/" + std::to_string(in_userId)
+		+ "/wifi/wpa/p2p_supplicant.conf";
+#endif
+	wpa_printf(MSG_INFO, "User Conf file is configured via aidl: %s",
+		kUserP2pIfaceConfPath.c_str());
+	return ndk::ScopedAStatus::ok();
+}
+
+std::pair<std::shared_ptr<ISupplicantWifiRttController>, ::ndk::ScopedAStatus>
+Supplicant::createRttControllerInternal(const std::string &ifaceName)
+{
+	AidlManager *aidl_manager = AidlManager::getInstance();
+	if (!aidl_manager) {
+		return {nullptr,
+			createStatus(SupplicantStatusCode::FAILURE_UNKNOWN)};
+	}
+#ifndef MAINLINE_SUPPLICANT
+	if (!aidl_manager->isAidlServiceVersionAtLeast(5)) {
+		return {nullptr,
+			createStatus(SupplicantStatusCode::FAILURE_UNSUPPORTED)};
+	}
+#endif
+	// Check if required |ifname| argument is empty.
+	if (ifaceName.empty()) {
+		return {
+			nullptr,
+			createStatus(SupplicantStatusCode::FAILURE_ARGS_INVALID)};
+	}
+	struct wpa_supplicant *wpa_s = wpa_supplicant_get_iface(wpa_global_, ifaceName.c_str());
+	if (!wpa_s) {
+		return {
+			nullptr,
+			createStatus(SupplicantStatusCode::FAILURE_IFACE_UNKNOWN)};
+	}
+
+	std::shared_ptr<ISupplicantWifiRttController> rtt_controller;
+	if (aidl_manager->createOrGetWifiRttControllerAidlObject(
+			wpa_s->ifname, &rtt_controller)) {
+		return {rtt_controller,
+			createStatus(SupplicantStatusCode::FAILURE_IFACE_INVALID)};
+	}
+	return {rtt_controller, ndk::ScopedAStatus::ok()};
+}
+
+
+}  // namespace supplicant
+}  // namespace wifi
+}  // namespace hardware
+}  // namespace android
+}  // namespace aidl

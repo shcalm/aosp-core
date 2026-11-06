@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "input_device_primary_directional_motion_axis_api"
+  state: ENABLED
+  permission: READ_WRITE
+}

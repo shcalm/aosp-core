@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.text.flags"
+  name: "fix_shift_drawing_amount"
+  state: ENABLED
+  permission: READ_ONLY
+}

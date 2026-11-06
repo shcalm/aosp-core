@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "api_notification_action_custom"
+  state: ENABLED
+  permission: READ_ONLY
+}

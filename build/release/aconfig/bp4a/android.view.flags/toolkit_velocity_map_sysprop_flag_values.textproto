@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.flags"
+  name: "toolkit_velocity_map_sysprop"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "root_task_sticky_routing_behaviors"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "exit_split_on_display_move_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

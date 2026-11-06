@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "show_entitlement_ui_to_requesters"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_isolated_storage"
+  state: ENABLED
+  permission: READ_WRITE
+}

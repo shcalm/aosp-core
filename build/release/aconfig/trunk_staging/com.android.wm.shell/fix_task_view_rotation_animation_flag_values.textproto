@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_task_view_rotation_animation"
+  state: ENABLED
+  permission: READ_WRITE
+}

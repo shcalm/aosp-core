@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.tracing"
+  name: "native_proto_logging"
+  state: ENABLED
+  permission: READ_ONLY
+}

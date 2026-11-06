@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "adapter_service_profiles_use_optional"
+  state: ENABLED
+  permission: READ_WRITE
+}

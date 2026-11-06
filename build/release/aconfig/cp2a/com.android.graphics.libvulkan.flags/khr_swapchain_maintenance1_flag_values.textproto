@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libvulkan.flags"
+  name: "khr_swapchain_maintenance1"
+  state: ENABLED
+  permission: READ_ONLY
+}

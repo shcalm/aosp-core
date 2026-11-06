@@ -1,0 +1,7 @@
+{
+  "presubmit": [
+    {
+      "name": "device_config_dump_parser_test_host"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.backup"
+  name: "enable_kv_backup_logs_from_transport_with_proper_flow_id"
+  state: ENABLED
+  permission: READ_ONLY
+}

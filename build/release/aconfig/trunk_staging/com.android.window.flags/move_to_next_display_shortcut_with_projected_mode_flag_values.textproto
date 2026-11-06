@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "move_to_next_display_shortcut_with_projected_mode"
+  state: ENABLED
+  permission: READ_WRITE
+}

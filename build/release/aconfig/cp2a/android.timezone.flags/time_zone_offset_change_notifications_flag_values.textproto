@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.timezone.flags"
+  name: "time_zone_offset_change_notifications"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "global_actions_emphasized_font"
+  state: ENABLED
+  permission: READ_ONLY
+}

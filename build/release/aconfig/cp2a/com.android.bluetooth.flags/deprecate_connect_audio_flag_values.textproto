@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "deprecate_connect_audio"
+  state: ENABLED
+  permission: READ_ONLY
+}

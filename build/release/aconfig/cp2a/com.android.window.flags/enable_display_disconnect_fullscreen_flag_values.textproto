@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_display_disconnect_fullscreen"
+  state: ENABLED
+  permission: READ_ONLY
+}

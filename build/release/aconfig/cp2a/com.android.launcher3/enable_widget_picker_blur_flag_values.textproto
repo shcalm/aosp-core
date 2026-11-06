@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_widget_picker_blur"
+  state: ENABLED
+  permission: READ_ONLY
+}

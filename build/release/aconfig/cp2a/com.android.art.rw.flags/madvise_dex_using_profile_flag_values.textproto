@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "madvise_dex_using_profile"
+  state: ENABLED
+  permission: READ_ONLY
+}

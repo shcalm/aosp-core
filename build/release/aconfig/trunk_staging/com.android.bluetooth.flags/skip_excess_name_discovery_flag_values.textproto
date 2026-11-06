@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "skip_excess_name_discovery"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "simultaneous_outside_and_hover_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,11 @@
+name: "RELEASE_USE_RKATI"
+namespace: "build"
+description: "Use rkati instead of ckati, a rust rewrite"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

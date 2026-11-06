@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "lockscreen_indicate_duplicate_guesses"
+  state: ENABLED
+  permission: READ_ONLY
+}

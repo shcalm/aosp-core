@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "shortcut_helper_multi_display_support"
+  state: ENABLED
+  permission: READ_WRITE
+}

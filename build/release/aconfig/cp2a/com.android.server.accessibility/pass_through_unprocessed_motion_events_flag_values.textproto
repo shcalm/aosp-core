@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "pass_through_unprocessed_motion_events"
+  state: ENABLED
+  permission: READ_ONLY
+}

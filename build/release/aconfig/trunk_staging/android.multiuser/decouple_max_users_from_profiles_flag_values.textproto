@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "decouple_max_users_from_profiles"
+  state: ENABLED
+  permission: READ_WRITE
+}

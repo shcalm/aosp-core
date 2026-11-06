@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.adbd.flags"
+  name: "adbd_restrict_vsock_local_cid"
+  state: ENABLED
+  permission: READ_ONLY
+}

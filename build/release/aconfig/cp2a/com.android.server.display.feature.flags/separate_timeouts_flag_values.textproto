@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "separate_timeouts"
+  state: ENABLED
+  permission: READ_ONLY
+}

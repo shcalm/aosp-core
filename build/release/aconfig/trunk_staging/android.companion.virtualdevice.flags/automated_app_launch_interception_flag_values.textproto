@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "automated_app_launch_interception"
+  state: ENABLED
+  permission: READ_WRITE
+}

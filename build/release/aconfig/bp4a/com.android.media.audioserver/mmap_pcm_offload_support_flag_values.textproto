@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audioserver"
+  name: "mmap_pcm_offload_support"
+  state: ENABLED
+  permission: READ_ONLY
+}

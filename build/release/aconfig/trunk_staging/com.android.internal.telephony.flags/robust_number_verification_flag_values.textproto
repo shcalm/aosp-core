@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "robust_number_verification"
+  state: ENABLED
+  permission: READ_WRITE
+}

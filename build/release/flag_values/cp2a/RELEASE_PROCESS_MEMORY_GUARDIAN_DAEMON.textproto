@@ -1,0 +1,4 @@
+name: "RELEASE_PROCESS_MEMORY_GUARDIAN_DAEMON"
+value {
+  bool_value: true
+}

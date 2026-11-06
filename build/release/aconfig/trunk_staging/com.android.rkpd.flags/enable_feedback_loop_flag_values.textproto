@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.rkpd.flags"
+  name: "enable_feedback_loop"
+  state: ENABLED
+  permission: READ_WRITE
+}

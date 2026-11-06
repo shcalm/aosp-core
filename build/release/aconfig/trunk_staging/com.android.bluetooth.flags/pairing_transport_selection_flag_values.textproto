@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "pairing_transport_selection"
+  state: ENABLED
+  permission: READ_WRITE
+}

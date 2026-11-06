@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tv.feedbackconsent"
+  name: "enable_tfc_foreground_service"
+  state: ENABLED
+  permission: READ_WRITE
+}

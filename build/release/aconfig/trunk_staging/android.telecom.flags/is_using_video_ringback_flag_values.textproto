@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "is_using_video_ringback"
+  state: ENABLED
+  permission: READ_WRITE
+}

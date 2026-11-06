@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.crashrecovery.flags"
+  name: "configure_package_health_observer_rollback_timeout"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.text.flags"
+  name: "fix_dynamic_layout_builder_recycle"
+  state: ENABLED
+  permission: READ_WRITE
+}

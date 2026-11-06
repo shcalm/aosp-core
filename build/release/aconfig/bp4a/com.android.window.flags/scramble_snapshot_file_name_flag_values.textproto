@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "scramble_snapshot_file_name"
+  state: ENABLED
+  permission: READ_ONLY
+}

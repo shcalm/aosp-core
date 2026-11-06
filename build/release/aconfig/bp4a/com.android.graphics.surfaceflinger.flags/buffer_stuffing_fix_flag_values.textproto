@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "buffer_stuffing_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

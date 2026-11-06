@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "dimming_wallpaper_for_maximized_and_tiled"
+  state: ENABLED
+  permission: READ_ONLY
+}

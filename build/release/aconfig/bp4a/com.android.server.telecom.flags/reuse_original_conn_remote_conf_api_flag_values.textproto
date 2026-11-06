@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "reuse_original_conn_remote_conf_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

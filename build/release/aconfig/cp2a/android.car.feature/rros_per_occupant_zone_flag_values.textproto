@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "rros_per_occupant_zone"
+  state: ENABLED
+  permission: READ_ONLY
+}

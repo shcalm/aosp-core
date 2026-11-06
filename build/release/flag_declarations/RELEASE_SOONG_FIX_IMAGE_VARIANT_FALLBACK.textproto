@@ -1,0 +1,12 @@
+name: "RELEASE_SOONG_FIX_IMAGE_VARIANT_FALLBACK"
+namespace: "build"
+description: "Tightens fallbacks in the image mutator to prevent unintentional cross-image dependencies"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"
+bugs: "424439549"

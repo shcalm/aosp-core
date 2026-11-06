@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "use_rt_futex"
+  state: ENABLED
+  permission: READ_ONLY
+}

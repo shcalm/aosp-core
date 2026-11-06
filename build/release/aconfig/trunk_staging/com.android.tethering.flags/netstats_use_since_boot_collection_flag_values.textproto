@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "netstats_use_since_boot_collection"
+  state: ENABLED
+  permission: READ_WRITE
+}

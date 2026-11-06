@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "check_l2c_conn_status_before_param_validation"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubbled_task_height"
+  state: ENABLED
+  permission: READ_WRITE
+}

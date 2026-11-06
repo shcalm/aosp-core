@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.codec"
+  name: "ahardware_buffer_fetch_flag"
+  state: ENABLED
+  permission: READ_WRITE
+}

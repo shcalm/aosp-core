@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "batch_scan_support_check"
+  state: ENABLED
+  permission: READ_ONLY
+}

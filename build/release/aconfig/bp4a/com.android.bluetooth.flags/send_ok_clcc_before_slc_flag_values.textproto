@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "send_ok_clcc_before_slc"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "get_view_coordinates_in_ui_thread"
+  state: ENABLED
+  permission: READ_WRITE
+}

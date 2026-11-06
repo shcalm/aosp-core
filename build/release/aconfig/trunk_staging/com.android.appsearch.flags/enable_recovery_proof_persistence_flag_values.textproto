@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_recovery_proof_persistence"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "dpe_based_on_async_apis_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

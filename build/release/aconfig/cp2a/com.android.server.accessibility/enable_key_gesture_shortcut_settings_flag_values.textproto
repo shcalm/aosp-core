@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "enable_key_gesture_shortcut_settings"
+  state: ENABLED
+  permission: READ_ONLY
+}

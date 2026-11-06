@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "qr_code_scanner_intent_action"
+  state: ENABLED
+  permission: READ_ONLY
+}

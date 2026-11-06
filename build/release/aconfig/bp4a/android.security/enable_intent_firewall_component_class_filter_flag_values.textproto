@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "enable_intent_firewall_component_class_filter"
+  state: ENABLED
+  permission: READ_ONLY
+}

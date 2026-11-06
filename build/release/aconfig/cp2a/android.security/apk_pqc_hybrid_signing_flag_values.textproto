@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "apk_pqc_hybrid_signing"
+  state: ENABLED
+  permission: READ_ONLY
+}

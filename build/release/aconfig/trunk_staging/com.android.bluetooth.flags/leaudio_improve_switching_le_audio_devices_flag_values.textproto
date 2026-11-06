@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_improve_switching_le_audio_devices"
+  state: ENABLED
+  permission: READ_WRITE
+}

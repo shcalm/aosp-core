@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "use_cached_insets_for_display_switch"
+  state: ENABLED
+  permission: READ_ONLY
+}

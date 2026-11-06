@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "fix_edt_multiuser_management"
+  state: ENABLED
+  permission: READ_WRITE
+}

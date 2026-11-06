@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "vcp_handle_group_id_internally"
+  state: ENABLED
+  permission: READ_ONLY
+}

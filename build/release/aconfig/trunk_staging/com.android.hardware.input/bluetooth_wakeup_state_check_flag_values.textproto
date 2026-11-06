@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "bluetooth_wakeup_state_check"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "unify_refresh_rate_callbacks"
+  state: ENABLED
+  permission: READ_ONLY
+}

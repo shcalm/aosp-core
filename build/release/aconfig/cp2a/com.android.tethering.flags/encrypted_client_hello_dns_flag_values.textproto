@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "encrypted_client_hello_dns"
+  state: ENABLED
+  permission: READ_ONLY
+}

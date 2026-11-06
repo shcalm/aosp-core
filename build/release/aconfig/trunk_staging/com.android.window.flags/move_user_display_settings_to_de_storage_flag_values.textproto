@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "move_user_display_settings_to_de_storage"
+  state: ENABLED
+  permission: READ_WRITE
+}

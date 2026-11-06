@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_device_state_auto_rotate_setting_refactor"
+  state: ENABLED
+  permission: READ_ONLY
+}

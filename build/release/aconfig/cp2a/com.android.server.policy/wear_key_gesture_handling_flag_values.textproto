@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.policy"
+  name: "wear_key_gesture_handling"
+  state: ENABLED
+  permission: READ_ONLY
+}

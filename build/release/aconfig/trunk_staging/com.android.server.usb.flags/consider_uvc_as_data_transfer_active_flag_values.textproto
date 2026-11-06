@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.usb.flags"
+  name: "consider_uvc_as_data_transfer_active"
+  state: ENABLED
+  permission: READ_WRITE
+}

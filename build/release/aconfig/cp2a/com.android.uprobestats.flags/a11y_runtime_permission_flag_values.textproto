@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.uprobestats.flags"
+  name: "a11y_runtime_permission"
+  state: ENABLED
+  permission: READ_ONLY
+}

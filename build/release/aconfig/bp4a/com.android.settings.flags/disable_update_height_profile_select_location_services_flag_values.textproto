@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "disable_update_height_profile_select_location_services"
+  state: ENABLED
+  permission: READ_ONLY
+}

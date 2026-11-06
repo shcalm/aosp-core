@@ -1,0 +1,4 @@
+name: "RELEASE_ACONFIG_SUPPORT_MINOR_SDK"
+value {
+  bool_value: true
+}

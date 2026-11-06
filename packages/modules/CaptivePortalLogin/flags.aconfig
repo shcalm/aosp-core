@@ -1,0 +1,9 @@
+package: "com.android.captiveportallogin.flags"
+container: "CaptivePortalLogin"
+
+flag {
+    name: "captive_portal_custom_tabs_public"
+    namespace: "com_android_captiveportallogin"
+    description: "Use Chrome Custom Tab in CaptivePortalLogin"
+    bug: "445315442"
+}

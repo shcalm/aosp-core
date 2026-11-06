@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "use_visible_requested_for_process_tracker"
+  state: ENABLED
+  permission: READ_ONLY
+}

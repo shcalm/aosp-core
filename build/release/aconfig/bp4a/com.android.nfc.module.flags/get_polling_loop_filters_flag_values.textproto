@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.module.flags"
+  name: "get_polling_loop_filters"
+  state: ENABLED
+  permission: READ_ONLY
+}

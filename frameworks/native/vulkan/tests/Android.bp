@@ -1,0 +1,104 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "frameworks_native_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["frameworks_native_license"],
+}
+
+cc_defaults {
+    name: "vulkan_test_layer_defaults",
+
+    cflags: [
+        "-DLOG_TAG=\"VkLayer_testingLayer\"",
+        "-DVK_USE_PLATFORM_ANDROID_KHR",
+    ],
+
+    cppflags: [
+        "-Wno-c99-extensions",
+        "-Wno-c++98-compat-pedantic",
+        "-Wno-exit-time-destructors",
+        "-Wno-float-equal",
+        "-Wno-global-constructors",
+        "-Wno-zero-length-array",
+    ],
+
+    srcs: [
+        "vulkan_test_layer.cpp",
+    ],
+
+    shared_libs: [
+        "libvulkan",
+        "liblog",
+        "libbase",
+    ],
+}
+
+cc_library_shared {
+    name: "libVkLayer_testingLayer",
+    defaults: ["vulkan_test_layer_defaults"],
+    cflags: [
+        "-DTEST_LAYER_NAME=\"VK_LAYER_libVulkanTestLayer\"",
+    ],
+}
+
+cc_library_shared {
+    name: "layerwithout_libVkLayer_prefix",
+    defaults: ["vulkan_test_layer_defaults"],
+    cflags: [
+        "-DTEST_LAYER_NAME=\"VK_LAYER_libVulkanTestLayer_without_libVkLayer_prefix\"",
+    ],
+}
+
+cc_test {
+    name: "libvulkan_test",
+    test_suites: ["general-tests"],
+
+    srcs: [
+        "libvulkan_test.cpp",
+    ],
+
+    strip: {
+        none: true,
+    },
+
+    cflags: [
+        "-DVK_USE_PLATFORM_ANDROID_KHR",
+        "-Wall",
+        "-Werror",
+    ],
+    header_libs: [
+        "hwvulkan_headers",
+        "libvulkanprivate_headers-testing",
+        "vulkan_headers",
+    ],
+
+    cppflags: [
+        "-Wno-c++98-compat-pedantic",
+        "-Wno-c99-extensions",
+        "-Wno-exit-time-destructors",
+        "-Wno-float-equal",
+        "-Wno-global-constructors",
+        "-Wno-zero-length-array",
+    ],
+    shared_libs: [
+        "libbase",
+        "libgraphicsenv",
+        "liblog",
+        "libmediandk",
+        "libvulkan",
+        "libgraphicsenv",
+    ],
+
+    static_libs: [
+        "libgmock",
+        "libgtest",
+        "liblog",
+    ],
+
+    data_libs: [
+        "libVkLayer_testingLayer",
+        "layerwithout_libVkLayer_prefix",
+    ],
+}

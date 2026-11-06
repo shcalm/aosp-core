@@ -1,0 +1,26 @@
+{
+  "presubmit": [
+    {
+      "name": "FrameworksVcnTests"
+    },
+    {
+      "name": "CtsVcnTestCases"
+    }
+  ],
+  "postsubmit": [
+    {
+      "name": "FrameworksVcnTests"
+    },
+    {
+      "name": "CtsVcnTestCases"
+    }
+  ],
+  "captiveportal-networkstack-resolve-tethering-mainline-presubmit": [
+    {
+      "name": "FrameworksVcnTests"
+    },
+    {
+      "name": "CtsVcnTestCases"
+    }
+  ]
+}

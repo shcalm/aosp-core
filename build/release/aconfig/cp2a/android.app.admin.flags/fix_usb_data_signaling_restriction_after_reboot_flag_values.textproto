@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "fix_usb_data_signaling_restriction_after_reboot"
+  state: ENABLED
+  permission: READ_ONLY
+}

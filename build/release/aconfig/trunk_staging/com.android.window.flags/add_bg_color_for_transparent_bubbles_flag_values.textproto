@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "add_bg_color_for_transparent_bubbles"
+  state: ENABLED
+  permission: READ_WRITE
+}

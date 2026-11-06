@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.res"
+  name: "resources_manager_cache_leak_cleanup"
+  state: ENABLED
+  permission: READ_WRITE
+}

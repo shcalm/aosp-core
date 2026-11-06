@@ -1,0 +1,6 @@
+flag_value {
+  package: "powerhal.flags"
+  name: "enable_hboost_janky_level_floor"
+  state: ENABLED
+  permission: READ_WRITE
+}

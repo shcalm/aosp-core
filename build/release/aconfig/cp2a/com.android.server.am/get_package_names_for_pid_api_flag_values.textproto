@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "get_package_names_for_pid_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

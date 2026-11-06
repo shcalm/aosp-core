@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "nsd_query_with_known_answer"
+  state: ENABLED
+  permission: READ_ONLY
+}

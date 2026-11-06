@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_api_call_stats_tracking"
+  state: ENABLED
+  permission: READ_WRITE
+}

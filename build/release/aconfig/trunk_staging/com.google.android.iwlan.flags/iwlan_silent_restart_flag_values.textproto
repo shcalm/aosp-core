@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.google.android.iwlan.flags"
+  name: "iwlan_silent_restart"
+  state: ENABLED
+  permission: READ_WRITE
+}

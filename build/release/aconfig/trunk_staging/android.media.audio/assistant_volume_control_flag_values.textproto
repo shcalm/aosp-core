@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "assistant_volume_control"
+  state: ENABLED
+  permission: READ_WRITE
+}

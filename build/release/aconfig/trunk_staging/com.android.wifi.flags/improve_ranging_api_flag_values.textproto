@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "improve_ranging_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

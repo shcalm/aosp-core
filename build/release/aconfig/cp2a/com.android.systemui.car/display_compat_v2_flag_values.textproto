@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.car"
+  name: "display_compat_v2"
+  state: ENABLED
+  permission: READ_ONLY
+}

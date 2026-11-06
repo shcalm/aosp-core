@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.egl.flags"
+  name: "update_angle_feature_overrides_in_loader_open"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "allow_override_max_ndp_session"
+  state: ENABLED
+  permission: READ_ONLY
+}

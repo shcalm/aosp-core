@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "fix_ime_not_showing_in_floating_mode_after_unlock"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.graphicsenv.flags"
+  name: "angle_feature_overrides"
+  state: ENABLED
+  permission: READ_WRITE
+}

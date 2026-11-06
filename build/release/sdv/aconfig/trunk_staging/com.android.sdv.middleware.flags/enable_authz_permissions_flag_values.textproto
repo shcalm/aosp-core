@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.sdv.middleware.flags"
+  name: "enable_authz_permissions"
+  state: ENABLED
+  permission: READ_WRITE
+}

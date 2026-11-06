@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "opp_device_picker_extra_intent_apis"
+  state: ENABLED
+  permission: READ_WRITE
+}

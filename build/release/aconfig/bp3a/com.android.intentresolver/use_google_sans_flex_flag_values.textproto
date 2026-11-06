@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.intentresolver"
+  name: "use_google_sans_flex"
+  state: ENABLED
+  permission: READ_ONLY
+}

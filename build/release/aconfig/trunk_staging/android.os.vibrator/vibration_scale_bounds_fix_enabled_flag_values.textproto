@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.vibrator"
+  name: "vibration_scale_bounds_fix_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,11 @@
+name: "RELEASE_SOONG_CHECK_ELF_FILES"
+namespace: "build"
+description: "Moves ELF file checks for Soong modules into Soong"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

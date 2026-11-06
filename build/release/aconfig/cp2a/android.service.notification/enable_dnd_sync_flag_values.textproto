@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.notification"
+  name: "enable_dnd_sync"
+  state: ENABLED
+  permission: READ_ONLY
+}

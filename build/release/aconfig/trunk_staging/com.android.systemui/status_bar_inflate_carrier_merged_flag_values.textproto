@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_inflate_carrier_merged"
+  state: ENABLED
+  permission: READ_WRITE
+}

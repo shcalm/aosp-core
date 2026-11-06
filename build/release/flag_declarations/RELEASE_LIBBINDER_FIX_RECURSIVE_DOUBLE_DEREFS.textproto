@@ -1,0 +1,5 @@
+name: "RELEASE_LIBBINDER_FIX_RECURSIVE_DOUBLE_DEREFS"
+namespace: "system_performance"
+description: "Fix recursive double derefs in IPCThreadState::processPostWriteDerefs"
+workflow: LAUNCH
+containers: "system"

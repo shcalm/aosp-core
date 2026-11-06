@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mediasession.flags"
+  name: "remove_audioplayerstatemonitor_static_memoization"
+  state: ENABLED
+  permission: READ_ONLY
+}

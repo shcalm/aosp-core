@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.codec"
+  name: "dynamic_operating_mode_switch"
+  state: ENABLED
+  permission: READ_ONLY
+}

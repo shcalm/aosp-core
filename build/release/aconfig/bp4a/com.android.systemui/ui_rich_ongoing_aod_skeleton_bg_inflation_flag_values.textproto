@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "ui_rich_ongoing_aod_skeleton_bg_inflation"
+  state: ENABLED
+  permission: READ_ONLY
+}

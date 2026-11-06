@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.camera.flags"
+  name: "cap_mandatory_preview_size_to_all_displays"
+  state: ENABLED
+  permission: READ_ONLY
+}

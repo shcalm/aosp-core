@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "disable_touch_input_mapper_pointer_usage"
+  state: ENABLED
+  permission: READ_WRITE
+}

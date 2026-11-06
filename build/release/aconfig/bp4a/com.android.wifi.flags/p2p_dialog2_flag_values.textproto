@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "p2p_dialog2"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "disable_settings_for_virtual_devices"
+  state: ENABLED
+  permission: READ_WRITE
+}

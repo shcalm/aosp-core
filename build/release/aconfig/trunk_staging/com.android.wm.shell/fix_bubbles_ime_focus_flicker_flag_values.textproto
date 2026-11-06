@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubbles_ime_focus_flicker"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "enterprise_esim_using_carrier_privileges"
+  state: ENABLED
+  permission: READ_ONLY
+}

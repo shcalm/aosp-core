@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "perfetto_sdk_tracing_v3"
+  state: ENABLED
+  permission: READ_WRITE
+}

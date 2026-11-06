@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.media.flags"
+  name: "highlight_search_results_feature"
+  state: ENABLED
+  permission: READ_ONLY
+}

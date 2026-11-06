@@ -1,0 +1,4 @@
+name: "RELEASE_R8_FULL_MODE_BY_DEFAULT"
+value {
+  bool_value: true
+}

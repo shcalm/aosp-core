@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "fix_managed_services_double_binding"
+  state: ENABLED
+  permission: READ_WRITE
+}

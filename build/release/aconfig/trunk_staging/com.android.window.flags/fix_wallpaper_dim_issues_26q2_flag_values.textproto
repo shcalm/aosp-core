@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "fix_wallpaper_dim_issues_26q2"
+  state: ENABLED
+  permission: READ_WRITE
+}

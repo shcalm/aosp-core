@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "add_dialog_presentation_check"
+  state: ENABLED
+  permission: READ_WRITE
+}

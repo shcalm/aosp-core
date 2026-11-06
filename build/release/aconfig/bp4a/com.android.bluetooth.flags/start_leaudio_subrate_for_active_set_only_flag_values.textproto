@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "start_leaudio_subrate_for_active_set_only"
+  state: ENABLED
+  permission: READ_ONLY
+}

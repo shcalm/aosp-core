@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "threading_remove_management_thread"
+  state: ENABLED
+  permission: READ_ONLY
+}

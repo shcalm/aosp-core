@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fix_notes_role_in_freeform"
+  state: ENABLED
+  permission: READ_WRITE
+}

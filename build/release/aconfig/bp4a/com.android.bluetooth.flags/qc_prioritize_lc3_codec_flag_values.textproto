@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "qc_prioritize_lc3_codec"
+  state: ENABLED
+  permission: READ_ONLY
+}

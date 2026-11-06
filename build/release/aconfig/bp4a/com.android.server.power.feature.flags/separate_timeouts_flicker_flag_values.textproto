@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.feature.flags"
+  name: "separate_timeouts_flicker"
+  state: ENABLED
+  permission: READ_ONLY
+}

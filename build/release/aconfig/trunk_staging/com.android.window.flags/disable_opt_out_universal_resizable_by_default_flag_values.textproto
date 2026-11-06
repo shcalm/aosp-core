@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "disable_opt_out_universal_resizable_by_default"
+  state: ENABLED
+  permission: READ_WRITE
+}

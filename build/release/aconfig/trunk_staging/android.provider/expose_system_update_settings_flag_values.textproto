@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.provider"
+  name: "expose_system_update_settings"
+  state: ENABLED
+  permission: READ_WRITE
+}

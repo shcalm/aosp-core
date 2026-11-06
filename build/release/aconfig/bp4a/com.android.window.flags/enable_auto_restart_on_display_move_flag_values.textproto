@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_auto_restart_on_display_move"
+  state: ENABLED
+  permission: READ_ONLY
+}

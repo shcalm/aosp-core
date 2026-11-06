@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "macro_based_opportunistic_networks"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.mainline.beta"
+  name: "queue_network_agent_events_in_system_server"
+  state: ENABLED
+  permission: READ_ONLY
+}

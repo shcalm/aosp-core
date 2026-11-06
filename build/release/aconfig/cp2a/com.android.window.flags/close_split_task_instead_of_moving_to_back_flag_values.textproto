@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "close_split_task_instead_of_moving_to_back"
+  state: ENABLED
+  permission: READ_ONLY
+}

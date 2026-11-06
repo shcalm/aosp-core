@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audio"
+  name: "standard_volume_range_apm"
+  state: ENABLED
+  permission: READ_WRITE
+}

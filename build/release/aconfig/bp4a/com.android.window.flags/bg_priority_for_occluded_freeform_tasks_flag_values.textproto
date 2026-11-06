@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "bg_priority_for_occluded_freeform_tasks"
+  state: ENABLED
+  permission: READ_ONLY
+}

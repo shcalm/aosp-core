@@ -1,0 +1,85 @@
+// See go/a-unit-tests
+// Some tests are device only.
+// Some tests are host enabled and run in the CI automatically. But we still
+// want to run them on device too
+{
+  "bt-mainline-presubmit": [
+    { "name": "CtsBluetoothTestCases" },
+    { "name": "BluetoothJavaUnitTests" },
+    { "name": "GoogleBluetoothInstrumentationTests" },
+    { "name": "FrameworkBluetoothTests" },
+    { "name": "ServiceBluetoothTests" },
+    { "name": "bluetooth_csis_test" },
+    { "name": "bluetooth_groups_test" },
+    { "name": "bluetooth_has_test" },
+    { "name": "bluetooth_hh_test" },
+    { "name": "bluetooth_packet_parser_test" },
+    { "name": "bluetooth_ras_test" },
+    { "name": "bluetooth-test-audio-hal-a2dp" },
+    { "name": "bluetooth-test-audio-hal-aidl-leaudio-utils" },
+    { "name": "bluetooth-test-audio-hal-hfp-client-interface" },
+    { "name": "bluetooth-test-audio-hal-le-audio-software" },
+    { "name": "bluetooth_test_broadcaster" },
+    { "name": "bluetooth_test_broadcaster_state_machine" },
+    { "name": "bluetooth_test_common" },
+    { "name": "bluetooth_test_with_timerfd" },
+    { "name": "bluetooth_vc_test" },
+    { "name": "bt_host_test_bta_scn" },
+    { "name": "libaptx_enc_tests" },
+    { "name": "libaptxhd_enc_tests" },
+    { "name": "libbluetooth_private_gatt_rs_test" },
+    { "name": "libbluetooth_log_test" },
+    { "name": "libbluetooth_offload_hci_test" },
+    { "name": "libbluetooth_rs_test" }
+  ],
+  "presubmit": [
+    // android_test targets
+    { "name": "CtsBluetoothTestCases" },
+    { "name": "CtsStrictJavaPackagesTestCases" },
+    { "name": "BluetoothJavaUnitTests" },
+    { "name": "BluetoothInstrumentationTests" },
+    {
+      "name": "GoogleBluetoothInstrumentationTests",
+      "keywords": ["internal"]
+    },
+    { "name": "FrameworkBluetoothTests" },
+    { "name": "ServiceBluetoothTests" },
+    { "name": "bluetooth_csis_test" },
+    { "name": "bluetooth_groups_test" },
+    { "name": "bluetooth_has_test" },
+    { "name": "bluetooth_hh_test" },
+    { "name": "bluetooth_packet_parser_test" },
+    { "name": "bluetooth_ras_test" },
+    { "name": "bluetooth-test-audio-hal-a2dp" },
+    { "name": "bluetooth-test-audio-hal-aidl-leaudio-utils" },
+    { "name": "bluetooth-test-audio-hal-hfp-client-interface" },
+    { "name": "bluetooth-test-audio-hal-le-audio-software" },
+    { "name": "bluetooth_test_broadcaster" },
+    { "name": "bluetooth_test_broadcaster_state_machine" },
+    { "name": "bluetooth_test_common" },
+    { "name": "bluetooth_test_with_timerfd" },
+    { "name": "bluetooth_vc_test" },
+    { "name": "bt_host_test_bta_scn" },
+    { "name": "libaptx_enc_tests" },
+    { "name": "libaptxhd_enc_tests" },
+    { "name": "libbluetooth_private_gatt_rs_test" },
+    { "name": "libbluetooth_log_test" },
+    { "name": "libbluetooth_offload_hci_test" },
+    { "name": "libbluetooth_rs_test" }
+  ],
+  "hwasan-presubmit": [
+    { "name": "CtsBluetoothTestCases" },
+    { "name": "BluetoothJavaUnitTests" },
+    { "name": "BluetoothInstrumentationTests" },
+    { "name": "GoogleBluetoothInstrumentationTests" },
+    { "name": "FrameworkBluetoothTests" },
+    { "name": "ServiceBluetoothTests" },
+    { "name": "bluetooth_test_common" }
+  ],
+  "postsubmit": [
+    { "name": "audio_bluetooth_hw_test" },
+    { "name": "bluetooth_audio_hal_version_test" },
+    { "name": "libbluetooth_offload_leaudio_hci_test" },
+    { "name": "net_test_bta_gatt" }
+  ]
+}

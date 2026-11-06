@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_hotseat_drop_target_validity_checks"
+  state: ENABLED
+  permission: READ_ONLY
+}

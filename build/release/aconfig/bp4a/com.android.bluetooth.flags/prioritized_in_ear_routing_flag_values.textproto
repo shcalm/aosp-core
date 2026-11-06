@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "prioritized_in_ear_routing"
+  state: ENABLED
+  permission: READ_ONLY
+}

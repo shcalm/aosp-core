@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "avoid_l2c_processing_while_stack_shutdown"
+  state: ENABLED
+  permission: READ_ONLY
+}

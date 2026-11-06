@@ -1,0 +1,9 @@
+name: "RELEASE_MEDIAMETRICS_MODULE"
+namespace: "media_reliability"
+description: "If true, then mediametrics functionality is available in apex"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"
+containers: "com.android.media"

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "skip_deactivation_of_desk_with_nothing_in_front"
+  state: ENABLED
+  permission: READ_ONLY
+}

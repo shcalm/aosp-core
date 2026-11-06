@@ -1,0 +1,16 @@
+{
+  "imports": [
+    {
+      "path": "frameworks/base/packages/SystemUI"
+    },
+    {
+      "path": "frameworks/base/packages/SystemUI/compose/core"
+    },
+    {
+      "path": "frameworks/base/packages/SystemUI/compose/scene"
+    },
+    {
+      "path": "frameworks/base/services/core/java/com/android/server/notification"
+    }
+  ]
+}

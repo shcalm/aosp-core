@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "add_drops_fg_extra_diff_accounts"
+  state: ENABLED
+  permission: READ_ONLY
+}

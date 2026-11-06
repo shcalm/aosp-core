@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "keyguard_interactor_for_floating_button"
+  state: ENABLED
+  permission: READ_ONLY
+}

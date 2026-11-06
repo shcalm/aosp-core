@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "auto_sim_pin_management"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "largeparcelable_use_native_parcel"
+  state: ENABLED
+  permission: READ_WRITE
+}

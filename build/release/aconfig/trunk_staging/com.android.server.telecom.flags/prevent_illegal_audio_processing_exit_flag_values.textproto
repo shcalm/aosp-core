@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "prevent_illegal_audio_processing_exit"
+  state: ENABLED
+  permission: READ_WRITE
+}

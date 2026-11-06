@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "disable_audio_sharing_auto_pick_fallback_in_ui"
+  state: ENABLED
+  permission: READ_WRITE
+}

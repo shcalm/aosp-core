@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "manage_lockout_end_time_in_service"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,5 @@
+name: "RELEASE_REMOVE_APPFUNCTION_SIDECAR"
+namespace: "app_function"
+description: "Release flag for removing the appfunction sidecar jar"
+workflow: LAUNCH
+containers: "system_ext"

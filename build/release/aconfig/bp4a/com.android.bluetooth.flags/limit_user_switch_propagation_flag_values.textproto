@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "limit_user_switch_propagation"
+  state: ENABLED
+  permission: READ_ONLY
+}

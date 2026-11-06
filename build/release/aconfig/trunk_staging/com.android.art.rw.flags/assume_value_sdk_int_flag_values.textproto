@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "assume_value_sdk_int"
+  state: ENABLED
+  permission: READ_WRITE
+}

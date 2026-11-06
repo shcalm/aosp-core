@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.media.flags"
+  name: "query_leveldb_for_file_attributes"
+  state: ENABLED
+  permission: READ_ONLY
+}

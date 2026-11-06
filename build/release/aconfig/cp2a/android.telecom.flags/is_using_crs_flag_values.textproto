@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "is_using_crs"
+  state: ENABLED
+  permission: READ_ONLY
+}

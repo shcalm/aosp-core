@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.vibrator"
+  name: "decouple_frequency_profile_from_resonance"
+  state: ENABLED
+  permission: READ_WRITE
+}

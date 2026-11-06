@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "car_property_status_detailed_not_available"
+  state: ENABLED
+  permission: READ_ONLY
+}

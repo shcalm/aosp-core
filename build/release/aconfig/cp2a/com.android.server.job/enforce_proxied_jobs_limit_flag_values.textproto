@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.job"
+  name: "enforce_proxied_jobs_limit"
+  state: ENABLED
+  permission: READ_ONLY
+}

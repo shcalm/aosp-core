@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "limit_persisted_launch_params_freeform"
+  state: ENABLED
+  permission: READ_WRITE
+}

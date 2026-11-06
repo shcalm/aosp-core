@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "configure_app_resolution_change"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.tracing"
+  name: "java_native_protolog"
+  state: ENABLED
+  permission: READ_WRITE
+}

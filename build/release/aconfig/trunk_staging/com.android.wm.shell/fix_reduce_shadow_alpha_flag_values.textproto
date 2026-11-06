@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_reduce_shadow_alpha"
+  state: ENABLED
+  permission: READ_WRITE
+}

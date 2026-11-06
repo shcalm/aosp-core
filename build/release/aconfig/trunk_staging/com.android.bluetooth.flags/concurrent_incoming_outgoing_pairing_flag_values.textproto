@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "concurrent_incoming_outgoing_pairing"
+  state: ENABLED
+  permission: READ_WRITE
+}

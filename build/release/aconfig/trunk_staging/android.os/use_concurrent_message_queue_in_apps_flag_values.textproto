@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "use_concurrent_message_queue_in_apps"
+  state: ENABLED
+  permission: READ_WRITE
+}

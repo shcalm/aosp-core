@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "screen_brightness_dim_on_emulator"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.backup"
+  name: "enable_delayed_restore_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.media.flags"
+  name: "enable_appop_permission_checks_cache"
+  state: ENABLED
+  permission: READ_ONLY
+}

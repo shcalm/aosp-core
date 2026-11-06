@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_flicker_when_app_bubble_from_overflow"
+  state: ENABLED
+  permission: READ_ONLY
+}

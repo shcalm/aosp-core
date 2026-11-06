@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.timezone.flags"
+  name: "enable_ternary_time_format_setting"
+  state: ENABLED
+  permission: READ_WRITE
+}

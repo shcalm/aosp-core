@@ -1,0 +1,4 @@
+name: "RELEASE_TELECOM_MAINLINE_MODULE"
+value {
+  bool_value: true
+}

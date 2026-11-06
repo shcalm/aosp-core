@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "catalyst_flash_notifications"
+  state: ENABLED
+  permission: READ_ONLY
+}

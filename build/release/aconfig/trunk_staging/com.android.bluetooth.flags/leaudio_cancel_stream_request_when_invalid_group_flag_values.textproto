@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_cancel_stream_request_when_invalid_group"
+  state: ENABLED
+  permission: READ_WRITE
+}

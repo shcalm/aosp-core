@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.hwui.flags"
+  name: "add_surfacecontrol_constants"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,740 @@
+// Copyright 2020 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package depset
+
+import (
+	"bytes"
+	"fmt"
+	"reflect"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/google/blueprint/gobtools"
+)
+
+func ExampleDepSet_ToList_postordered() {
+	a := NewBuilder[string](POSTORDER).Direct("a").Build()
+	b := NewBuilder[string](POSTORDER).Direct("b").Transitive(a).Build()
+	c := NewBuilder[string](POSTORDER).Direct("c").Transitive(a).Build()
+	d := NewBuilder[string](POSTORDER).Direct("d").Transitive(b, c).Build()
+
+	fmt.Println(d.ToList())
+	// Output: [a b c d]
+}
+
+func ExampleDepSet_ToList_preordered() {
+	a := NewBuilder[string](PREORDER).Direct("a").Build()
+	b := NewBuilder[string](PREORDER).Direct("b").Transitive(a).Build()
+	c := NewBuilder[string](PREORDER).Direct("c").Transitive(a).Build()
+	d := NewBuilder[string](PREORDER).Direct("d").Transitive(b, c).Build()
+
+	fmt.Println(d.ToList())
+	// Output: [d b a c]
+}
+
+func ExampleDepSet_ToList_topological() {
+	a := NewBuilder[string](TOPOLOGICAL).Direct("a").Build()
+	b := NewBuilder[string](TOPOLOGICAL).Direct("b").Transitive(a).Build()
+	c := NewBuilder[string](TOPOLOGICAL).Direct("c").Transitive(a).Build()
+	d := NewBuilder[string](TOPOLOGICAL).Direct("d").Transitive(b, c).Build()
+
+	fmt.Println(d.ToList())
+	// Output: [d b c a]
+}
+
+// Tests based on Bazel's ExpanderTestBase.java to ensure compatibility
+// https://github.com/bazelbuild/bazel/blob/master/src/test/java/com/google/devtools/build/lib/collect/nestedset/ExpanderTestBase.java
+func TestDepSet(t *testing.T) {
+	tests := []struct {
+		name                             string
+		depSet                           func(t *testing.T, order Order) DepSet[string]
+		postorder, preorder, topological []string
+	}{
+		{
+			name: "simple",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				return New[string](order, []string{"c", "a", "b"}, nil)
+			},
+			postorder:   []string{"c", "a", "b"},
+			preorder:    []string{"c", "a", "b"},
+			topological: []string{"c", "a", "b"},
+		},
+		{
+			name: "simpleNoDuplicates",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				return New[string](order, []string{"c", "a", "a", "a", "b"}, nil)
+			},
+			postorder:   []string{"c", "a", "b"},
+			preorder:    []string{"c", "a", "b"},
+			topological: []string{"c", "a", "b"},
+		},
+		{
+			name: "nesting",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				subset := New[string](order, []string{"c", "a", "e"}, nil)
+				return New[string](order, []string{"b", "d"}, []DepSet[string]{subset})
+			},
+			postorder:   []string{"c", "a", "e", "b", "d"},
+			preorder:    []string{"b", "d", "c", "a", "e"},
+			topological: []string{"b", "d", "c", "a", "e"},
+		},
+		{
+			name: "builderReuse",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				assertEquals := func(t *testing.T, w, g []string) {
+					t.Helper()
+					if !reflect.DeepEqual(w, g) {
+						t.Errorf("want %q, got %q", w, g)
+					}
+				}
+				builder := NewBuilder[string](order)
+				assertEquals(t, nil, builder.Build().ToList())
+
+				builder.Direct("b")
+				assertEquals(t, []string{"b"}, builder.Build().ToList())
+
+				builder.Direct("d")
+				assertEquals(t, []string{"b", "d"}, builder.Build().ToList())
+
+				child := NewBuilder[string](order).Direct("c", "a", "e").Build()
+				builder.Transitive(child)
+				return builder.Build()
+			},
+			postorder:   []string{"c", "a", "e", "b", "d"},
+			preorder:    []string{"b", "d", "c", "a", "e"},
+			topological: []string{"b", "d", "c", "a", "e"},
+		},
+		{
+			name: "builderChaining",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("b").Direct("d").
+					Transitive(NewBuilder[string](order).Direct("c", "a", "e").Build()).Build()
+			},
+			postorder:   []string{"c", "a", "e", "b", "d"},
+			preorder:    []string{"b", "d", "c", "a", "e"},
+			topological: []string{"b", "d", "c", "a", "e"},
+		},
+		{
+			name: "transitiveDepsHandledSeparately",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				subset := NewBuilder[string](order).Direct("c", "a", "e").Build()
+				builder := NewBuilder[string](order)
+				// The fact that we add the transitive subset between the Direct(b) and Direct(d)
+				// calls should not change the result.
+				builder.Direct("b")
+				builder.Transitive(subset)
+				builder.Direct("d")
+				return builder.Build()
+			},
+			postorder:   []string{"c", "a", "e", "b", "d"},
+			preorder:    []string{"b", "d", "c", "a", "e"},
+			topological: []string{"b", "d", "c", "a", "e"},
+		},
+		{
+			name: "nestingNoDuplicates",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				subset := NewBuilder[string](order).Direct("c", "a", "e").Build()
+				return NewBuilder[string](order).Direct("b", "d", "e").Transitive(subset).Build()
+			},
+			postorder:   []string{"c", "a", "e", "b", "d"},
+			preorder:    []string{"b", "d", "e", "c", "a"},
+			topological: []string{"b", "d", "c", "a", "e"},
+		},
+		{
+			name: "chain",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				c := NewBuilder[string](order).Direct("c").Build()
+				b := NewBuilder[string](order).Direct("b").Transitive(c).Build()
+				a := NewBuilder[string](order).Direct("a").Transitive(b).Build()
+
+				return a
+			},
+			postorder:   []string{"c", "b", "a"},
+			preorder:    []string{"a", "b", "c"},
+			topological: []string{"a", "b", "c"},
+		},
+		{
+			name: "diamond",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				d := NewBuilder[string](order).Direct("d").Build()
+				c := NewBuilder[string](order).Direct("c").Transitive(d).Build()
+				b := NewBuilder[string](order).Direct("b").Transitive(d).Build()
+				a := NewBuilder[string](order).Direct("a").Transitive(b).Transitive(c).Build()
+
+				return a
+			},
+			postorder:   []string{"d", "b", "c", "a"},
+			preorder:    []string{"a", "b", "d", "c"},
+			topological: []string{"a", "b", "c", "d"},
+		},
+		{
+			name: "extendedDiamond",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				d := NewBuilder[string](order).Direct("d").Build()
+				e := NewBuilder[string](order).Direct("e").Build()
+				b := NewBuilder[string](order).Direct("b").Transitive(d).Transitive(e).Build()
+				c := NewBuilder[string](order).Direct("c").Transitive(e).Transitive(d).Build()
+				a := NewBuilder[string](order).Direct("a").Transitive(b).Transitive(c).Build()
+				return a
+			},
+			postorder:   []string{"d", "e", "b", "c", "a"},
+			preorder:    []string{"a", "b", "d", "e", "c"},
+			topological: []string{"a", "b", "c", "e", "d"},
+		},
+		{
+			name: "extendedDiamondRightArm",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				d := NewBuilder[string](order).Direct("d").Build()
+				e := NewBuilder[string](order).Direct("e").Build()
+				b := NewBuilder[string](order).Direct("b").Transitive(d).Transitive(e).Build()
+				c2 := NewBuilder[string](order).Direct("c2").Transitive(e).Transitive(d).Build()
+				c := NewBuilder[string](order).Direct("c").Transitive(c2).Build()
+				a := NewBuilder[string](order).Direct("a").Transitive(b).Transitive(c).Build()
+				return a
+			},
+			postorder:   []string{"d", "e", "b", "c2", "c", "a"},
+			preorder:    []string{"a", "b", "d", "e", "c", "c2"},
+			topological: []string{"a", "b", "c", "c2", "e", "d"},
+		},
+		{
+			name: "orderConflict",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				child1 := NewBuilder[string](order).Direct("a", "b").Build()
+				child2 := NewBuilder[string](order).Direct("b", "a").Build()
+				parent := NewBuilder[string](order).Transitive(child1).Transitive(child2).Build()
+				return parent
+			},
+			postorder:   []string{"a", "b"},
+			preorder:    []string{"a", "b"},
+			topological: []string{"b", "a"},
+		},
+		{
+			name: "orderConflictNested",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				a := NewBuilder[string](order).Direct("a").Build()
+				b := NewBuilder[string](order).Direct("b").Build()
+				child1 := NewBuilder[string](order).Transitive(a).Transitive(b).Build()
+				child2 := NewBuilder[string](order).Transitive(b).Transitive(a).Build()
+				parent := NewBuilder[string](order).Transitive(child1).Transitive(child2).Build()
+				return parent
+			},
+			postorder:   []string{"a", "b"},
+			preorder:    []string{"a", "b"},
+			topological: []string{"b", "a"},
+		},
+		{
+			name: "zeroDepSet",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				a := NewBuilder[string](order).Build()
+				var b DepSet[string]
+				c := NewBuilder[string](order).Direct("c").Transitive(a, b).Build()
+				return c
+			},
+			postorder:   []string{"c"},
+			preorder:    []string{"c"},
+			topological: []string{"c"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Run("postorder", func(t *testing.T) {
+				depSet := tt.depSet(t, POSTORDER)
+				if g, w := depSet.ToList(), tt.postorder; !slices.Equal(g, w) {
+					t.Errorf("expected ToList() = %q, got %q", w, g)
+				}
+			})
+			t.Run("preorder", func(t *testing.T) {
+				depSet := tt.depSet(t, PREORDER)
+				if g, w := depSet.ToList(), tt.preorder; !slices.Equal(g, w) {
+					t.Errorf("expected ToList() = %q, got %q", w, g)
+				}
+			})
+			t.Run("topological", func(t *testing.T) {
+				depSet := tt.depSet(t, TOPOLOGICAL)
+				if g, w := depSet.ToList(), tt.topological; !slices.Equal(g, w) {
+					t.Errorf("expected ToList() = %q, got %q", w, g)
+				}
+			})
+		})
+	}
+}
+
+func TestDepSetGob(t *testing.T) {
+	tests := []struct {
+		name   string
+		depSet func(t *testing.T, order Order) DepSet[string]
+	}{
+		{
+			name: "direct",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				return New[string](order, []string{"c", "a", "b"}, nil)
+			},
+		},
+		{
+			name: "simple",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				subset := New[string](order, []string{"c", "a", "e"}, nil)
+				return New[string](order, []string{"b", "d"}, []DepSet[string]{subset})
+			},
+		},
+		{
+			name: "simpleWithDuplicates",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				subset := New[string](order, []string{"c", "a", "e"}, nil)
+				return New[string](order, []string{"c", "a", "a", "a", "b"}, []DepSet[string]{subset, subset})
+			},
+		},
+		{
+			name: "chain",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				c := NewBuilder[string](order).Direct("c").Build()
+				b := NewBuilder[string](order).Direct("b").Transitive(c).Build()
+				a := NewBuilder[string](order).Direct("a").Transitive(b).Build()
+
+				return a
+			},
+		},
+		{
+			name: "diamond",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				d := NewBuilder[string](order).Direct("d").Build()
+				c := NewBuilder[string](order).Direct("c").Transitive(d).Build()
+				b := NewBuilder[string](order).Direct("b").Transitive(d).Build()
+				a := NewBuilder[string](order).Direct("a").Transitive(b).Transitive(c).Build()
+
+				return a
+			},
+		},
+		{
+			name: "extendedDiamond",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				d := NewBuilder[string](order).Direct("d").Build()
+				e := NewBuilder[string](order).Direct("e").Build()
+				b := NewBuilder[string](order).Direct("b").Transitive(d).Transitive(e).Build()
+				c := NewBuilder[string](order).Direct("c").Transitive(e).Transitive(d).Build()
+				a := NewBuilder[string](order).Direct("a").Transitive(b).Transitive(c).Build()
+				return a
+			},
+		},
+		{
+			name: "extendedDiamondRightArm",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				d := NewBuilder[string](order).Direct("d").Build()
+				e := NewBuilder[string](order).Direct("e").Build()
+				b := NewBuilder[string](order).Direct("b").Transitive(d).Transitive(e).Build()
+				c2 := NewBuilder[string](order).Direct("c2").Transitive(e).Transitive(d).Build()
+				c := NewBuilder[string](order).Direct("c").Transitive(c2).Build()
+				a := NewBuilder[string](order).Direct("a").Transitive(b).Transitive(c).Build()
+				return a
+			},
+		},
+		{
+			name: "zeroDepSet",
+			depSet: func(t *testing.T, order Order) DepSet[string] {
+				a := NewBuilder[string](order).Build()
+				var b DepSet[string]
+				c := NewBuilder[string](order).Direct("c").Transitive(a, b).Build()
+				return c
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			toGob := tt.depSet(t, POSTORDER)
+			buf := new(bytes.Buffer)
+			ctx := gobtools.NewReferencesEncoderForTest()
+			err := toGob.EncodeString(ctx, buf)
+			if err != nil {
+				t.Errorf("failed to serialize depset: %s", err)
+			}
+			if err = ctx.EncodeReferences(); err != nil {
+				t.Errorf("failed to encode references: %v", err)
+			}
+			var fromGob DepSet[string]
+			err = fromGob.DecodeString(ctx, bytes.NewReader(buf.Bytes()))
+
+			if err != nil {
+				t.Errorf("failed to deserialize depset: %s", err)
+			}
+			if toGob != fromGob {
+				t.Errorf("depsets are different: %v %v", toGob.ToList(), fromGob.ToList())
+			}
+		})
+	}
+}
+
+type testInterface interface {
+	getName() string
+}
+
+func init() {
+	testStructGobRegId = gobtools.RegisterType(func() gobtools.CustomDec { return new(testStruct) })
+}
+
+var testStructGobRegId int16
+
+func (r testStruct) GetTypeId() int16 {
+	return testStructGobRegId
+}
+
+type testStruct struct {
+	name string
+}
+
+func (r testStruct) getName() string {
+	return r.name
+}
+
+func (r testStruct) Encode(ctx gobtools.EncContext, buf *bytes.Buffer) error {
+	var err error
+
+	if err = gobtools.EncodeString(buf, r.name); err != nil {
+		return err
+	}
+	return err
+}
+
+func (r *testStruct) Decode(ctx gobtools.EncContext, buf *bytes.Reader) error {
+	var err error
+
+	err = gobtools.DecodeString(buf, &r.name)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+func TestEncDecReferencesDepsetStruct(t *testing.T) {
+	defTestStruct := testStruct{name: "string value for test"}
+	transTestStruct := New(PREORDER, []testStruct{defTestStruct}, nil)
+	depsetTesStruct := New(PREORDER, []testStruct{defTestStruct}, []DepSet[testStruct]{transTestStruct})
+	testCases := []struct {
+		name     string
+		encoded  DepSet[testStruct]
+		decoded1 DepSet[testStruct]
+		decoded2 DepSet[testStruct]
+	}{
+		{
+			name:     "depset reference",
+			encoded:  depsetTesStruct,
+			decoded1: DepSet[testStruct]{},
+			decoded2: DepSet[testStruct]{},
+		},
+	}
+
+	for _, tc := range testCases {
+		var err error
+		buf := new(bytes.Buffer)
+		ctx := gobtools.NewReferencesEncoderForTest()
+		if err = tc.encoded.Encode(ctx, buf); err != nil {
+			t.Errorf("failed to encode reference: %v", err)
+		}
+		if err = tc.encoded.Encode(ctx, buf); err != nil {
+			t.Errorf("failed to encode reference: %v", err)
+		}
+		if err = ctx.EncodeReferences(); err != nil {
+			t.Errorf("failed to encode references: %v", err)
+		}
+		reader := bytes.NewReader(buf.Bytes())
+		if tc.decoded1.Decode(ctx, reader); err != nil {
+			t.Errorf("failed to decode references: %v", err)
+		}
+		if tc.decoded2.Decode(ctx, reader); err != nil {
+			t.Errorf("failed to decode references: %v", err)
+		}
+		if !reflect.DeepEqual(tc.encoded, tc.decoded1) {
+			t.Errorf("the decoded data is different from the origin: expected:\n  %#v\n got:\n  %#v", tc.encoded, tc.decoded1)
+		}
+		if !reflect.DeepEqual(tc.encoded, tc.decoded2) {
+			t.Errorf("the decoded data is different from the origin: expected:\n  %#v\n got:\n  %#v", tc.encoded, tc.decoded2)
+		}
+		if tc.decoded1 != tc.decoded2 {
+			t.Errorf("should decode to the same reference: \n  %#v\n %#v", tc.decoded1, tc.decoded2)
+		}
+	}
+}
+
+func TestEncDecReferencesDepsetString(t *testing.T) {
+	defTestString := "string value for test"
+	transTestString := New(PREORDER, []string{defTestString}, nil)
+	depsetTesString := New(PREORDER, []string{defTestString}, []DepSet[string]{transTestString})
+	testCases := []struct {
+		name     string
+		encoded  DepSet[string]
+		decoded1 DepSet[string]
+		decoded2 DepSet[string]
+	}{
+		{
+			name:     "depset reference",
+			encoded:  depsetTesString,
+			decoded1: DepSet[string]{},
+			decoded2: DepSet[string]{},
+		},
+	}
+
+	for _, tc := range testCases {
+		var err error
+		buf := new(bytes.Buffer)
+		ctx := gobtools.NewReferencesEncoderForTest()
+		if err = tc.encoded.EncodeString(ctx, buf); err != nil {
+			t.Errorf("failed to encode reference: %v", err)
+		}
+		if err = tc.encoded.EncodeString(ctx, buf); err != nil {
+			t.Errorf("failed to encode reference: %v", err)
+		}
+		if err = ctx.EncodeReferences(); err != nil {
+			t.Errorf("failed to encode references: %v", err)
+		}
+		reader := bytes.NewReader(buf.Bytes())
+		if tc.decoded1.DecodeString(ctx, reader); err != nil {
+			t.Errorf("failed to decode references: %v", err)
+		}
+		if tc.decoded2.DecodeString(ctx, reader); err != nil {
+			t.Errorf("failed to decode references: %v", err)
+		}
+		if !reflect.DeepEqual(tc.encoded, tc.decoded1) {
+			t.Errorf("the decoded data is different from the origin: expected:\n  %#v\n got:\n  %#v", tc.encoded, tc.decoded1)
+		}
+		if !reflect.DeepEqual(tc.encoded, tc.decoded2) {
+			t.Errorf("the decoded data is different from the origin: expected:\n  %#v\n got:\n  %#v", tc.encoded, tc.decoded2)
+		}
+		if tc.decoded1 != tc.decoded2 {
+			t.Errorf("should decode to the same reference: \n  %#v\n %#v", tc.decoded1, tc.decoded2)
+		}
+	}
+}
+
+func TestEncDecReferencesDepsetInterface(t *testing.T) {
+	defTestStruct := testStruct{name: "string value for test"}
+	transTestStructInterface := New(POSTORDER, []testInterface{defTestStruct}, nil)
+	depsetTesStructInterface := New(POSTORDER, []testInterface{defTestStruct}, []DepSet[testInterface]{transTestStructInterface})
+	testCases := []struct {
+		name     string
+		encoded  DepSet[testInterface]
+		decoded1 DepSet[testInterface]
+		decoded2 DepSet[testInterface]
+	}{
+		{
+			name:     "depset reference",
+			encoded:  depsetTesStructInterface,
+			decoded1: DepSet[testInterface]{},
+			decoded2: DepSet[testInterface]{},
+		},
+	}
+
+	for _, tc := range testCases {
+		var err error
+		buf := new(bytes.Buffer)
+		ctx := gobtools.NewReferencesEncoderForTest()
+		if err = tc.encoded.EncodeInterface(ctx, buf); err != nil {
+			t.Errorf("failed to encode reference: %v", err)
+		}
+		if err = tc.encoded.EncodeInterface(ctx, buf); err != nil {
+			t.Errorf("failed to encode reference: %v", err)
+		}
+		if err = ctx.EncodeReferences(); err != nil {
+			t.Errorf("failed to encode references: %v", err)
+		}
+		reader := bytes.NewReader(buf.Bytes())
+		if tc.decoded1.DecodeInterface(ctx, reader); err != nil {
+			t.Errorf("failed to decode references: %v", err)
+		}
+		if tc.decoded2.DecodeInterface(ctx, reader); err != nil {
+			t.Errorf("failed to decode references: %v", err)
+		}
+		if !reflect.DeepEqual(tc.encoded, tc.decoded1) {
+			t.Errorf("the decoded data is different from the origin: expected:\n  %#v\n got:\n  %#v", tc.encoded, tc.decoded1)
+		}
+		if !reflect.DeepEqual(tc.encoded, tc.decoded2) {
+			t.Errorf("the decoded data is different from the origin: expected:\n  %#v\n got:\n  %#v", tc.encoded, tc.decoded2)
+		}
+		if tc.decoded1 != tc.decoded2 {
+			t.Errorf("should decode to the same reference: \n  %#v\n %#v", tc.decoded1, tc.decoded2)
+		}
+	}
+}
+
+func TestDepSetInvalidOrder(t *testing.T) {
+	orders := []Order{POSTORDER, PREORDER, TOPOLOGICAL}
+
+	run := func(t *testing.T, order1, order2 Order) {
+		defer func() {
+			if r := recover(); r != nil {
+				if err, ok := r.(error); !ok {
+					t.Fatalf("expected panic error, got %v", err)
+				} else if !strings.Contains(err.Error(), "incompatible order") {
+					t.Fatalf("expected incompatible order error, got %v", err)
+				}
+			}
+		}()
+		New(order1, nil, []DepSet[string]{New[string](order2, []string{"a"}, nil)})
+		t.Fatal("expected panic")
+	}
+
+	for _, order1 := range orders {
+		t.Run(order1.String(), func(t *testing.T) {
+			for _, order2 := range orders {
+				t.Run(order2.String(), func(t *testing.T) {
+					if order1 != order2 {
+						run(t, order1, order2)
+					}
+				})
+			}
+		})
+	}
+}
+
+func TestDepSetSetMinus(t *testing.T) {
+	testCases := []struct {
+		name                             string
+		d                                func(order Order) DepSet[string]
+		other                            func(order Order) DepSet[string]
+		postorder, preorder, topological []string
+	}{
+		{
+			name: "simple",
+			d: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("a", "b", "c").Build()
+			},
+			other: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("b").Build()
+			},
+			postorder:   []string{"a", "c"},
+			preorder:    []string{"a", "c"},
+			topological: []string{"a", "c"},
+		},
+		{
+			name: "no overlap",
+			d: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("a", "b").Build()
+			},
+			other: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("c", "d").Build()
+			},
+			postorder:   []string{"a", "b"},
+			preorder:    []string{"a", "b"},
+			topological: []string{"a", "b"},
+		},
+		{
+			name: "subtract superset",
+			d: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("a", "b").Build()
+			},
+			other: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("a", "b", "c").Build()
+			},
+			postorder:   nil,
+			preorder:    nil,
+			topological: nil,
+		},
+		{
+			name: "subtract subset",
+			d: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("a", "b", "c").Build()
+			},
+			other: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("a", "b").Build()
+			},
+			postorder:   []string{"c"},
+			preorder:    []string{"c"},
+			topological: []string{"c"},
+		},
+		{
+			name: "subtract from empty",
+			d: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Build()
+			},
+			other: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("a", "b").Build()
+			},
+			postorder:   nil,
+			preorder:    nil,
+			topological: nil,
+		},
+		{
+			name: "subtract empty",
+			d: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("a", "b").Build()
+			},
+			other: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Build()
+			},
+			postorder:   []string{"a", "b"},
+			preorder:    []string{"a", "b"},
+			topological: []string{"a", "b"},
+		},
+		{
+			name: "subtract self",
+			d: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("a", "b", "c").Build()
+			},
+			other: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("a", "b", "c").Build()
+			},
+			postorder:   nil,
+			preorder:    nil,
+			topological: nil,
+		},
+		{
+			name: "diamond",
+			d: func(order Order) DepSet[string] {
+				d := NewBuilder[string](order).Direct("d").Build()
+				c := NewBuilder[string](order).Direct("c").Transitive(d).Build()
+				b := NewBuilder[string](order).Direct("b").Transitive(d).Build()
+				a := NewBuilder[string](order).Direct("a").Transitive(b).Transitive(c).Build()
+				return a
+			},
+			other: func(order Order) DepSet[string] {
+				return NewBuilder[string](order).Direct("c", "d").Build()
+			},
+			postorder:   []string{"b", "a"},
+			preorder:    []string{"a", "b"},
+			topological: []string{"a", "b"},
+		},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Run("postorder", func(t *testing.T) {
+				d := tt.d(POSTORDER)
+				other := tt.other(POSTORDER)
+				g := d.SetMinus(other).ToList()
+				if !slices.Equal(g, tt.postorder) {
+					t.Errorf("got %q, want %q", g, tt.postorder)
+				}
+			})
+			t.Run("preorder", func(t *testing.T) {
+				d := tt.d(PREORDER)
+				other := tt.other(PREORDER)
+				g := d.SetMinus(other).ToList()
+				if !slices.Equal(g, tt.preorder) {
+					t.Errorf("got %q, want %q", g, tt.preorder)
+				}
+			})
+			t.Run("topological", func(t *testing.T) {
+				d := tt.d(TOPOLOGICAL)
+				other := tt.other(TOPOLOGICAL)
+				g := d.SetMinus(other).ToList()
+				if !slices.Equal(g, tt.topological) {
+					t.Errorf("got %q, want %q", g, tt.topological)
+				}
+			})
+		})
+	}
+}

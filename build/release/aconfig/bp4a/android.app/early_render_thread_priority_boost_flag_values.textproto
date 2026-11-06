@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "early_render_thread_priority_boost"
+  state: ENABLED
+  permission: READ_ONLY
+}

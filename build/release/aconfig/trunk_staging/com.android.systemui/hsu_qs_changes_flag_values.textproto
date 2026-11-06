@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "hsu_qs_changes"
+  state: ENABLED
+  permission: READ_WRITE
+}

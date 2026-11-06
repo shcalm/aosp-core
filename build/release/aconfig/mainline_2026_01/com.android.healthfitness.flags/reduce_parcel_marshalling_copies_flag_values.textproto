@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "reduce_parcel_marshalling_copies"
+  state: ENABLED
+  permission: READ_ONLY
+}

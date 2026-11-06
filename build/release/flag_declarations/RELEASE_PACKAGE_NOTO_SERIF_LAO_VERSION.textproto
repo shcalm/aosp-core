@@ -1,0 +1,8 @@
+name: "RELEASE_PACKAGE_NOTO_SERIF_LAO_VERSION"
+namespace: "text"
+description: "Version of the Noto Serif Lao font."
+value: {
+  string_value: "2.000"
+}
+workflow: PREBUILT
+containers: "system"

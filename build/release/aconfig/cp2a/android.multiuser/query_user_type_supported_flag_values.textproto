@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "query_user_type_supported"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "netstats_per_query_flags"
+  state: ENABLED
+  permission: READ_ONLY
+}

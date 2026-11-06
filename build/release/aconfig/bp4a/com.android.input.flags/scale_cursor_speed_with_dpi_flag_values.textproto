@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.input.flags"
+  name: "scale_cursor_speed_with_dpi"
+  state: ENABLED
+  permission: READ_ONLY
+}

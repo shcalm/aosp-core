@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "flag_handle_hci_error_controller_busy"
+  state: ENABLED
+  permission: READ_ONLY
+}

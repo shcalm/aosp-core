@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "implicit_share_launching_identity_for_result"
+  state: ENABLED
+  permission: READ_ONLY
+}

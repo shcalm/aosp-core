@@ -1,0 +1,5 @@
+com\.android\.dx\.mockito\..+
+kotlin\.test\..+
+kotlin\.reflect\..+
+org\.junit\..+
+org\.mockito\..+

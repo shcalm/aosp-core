@@ -1,0 +1,67 @@
+package: "com.android.bluetooth.flags"
+container: "com.android.bt"
+
+flag {
+    name: "adapter_suspend_mgmt"
+    namespace: "bluetooth"
+    description: "Configure the BT adapter in a suspend state to avoid unexpected wake-up"
+    bug: "366432079"
+}
+
+flag {
+    name: "dont_mask_disconnection_complete_on_suspend"
+    namespace: "bluetooth"
+    description: "Wait for disconnect complete events when suspending, instead of masking them out"
+    bug: "463276426"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+  name: "report_vendor_events_from_acl"
+  namespace: "bluetooth"
+  description: "Allows the Bluetooth stack to listen for and report vendor-specific events received over ACL connections. The valid handle range for these events is specified by the HCI Get Vendor Capabilities command."
+  bug: "456742258"
+  is_exported: true
+}
+
+flag {
+    name: "remove_adapter_dependency"
+    namespace: "bluetooth"
+    description: "Stop depending on the adapter system Service from withing the app"
+    bug: "473091034"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+  name: "check_set_event_mask_p2_support_before_writing"
+  namespace: "bluetooth"
+  description: "Some controllers might not support the command Set event mask page 2. Check the local capabilities before sending."
+  bug: "475438075"
+  metadata {
+        purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+    name : "send_class_change_intent_for_bonded_devices_only"
+    namespace: "bluetooth"
+    description: "Send the ACTION_CLASS_CHANGED intent only for bonded devices only"
+    bug: "479480553"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "wakeup_allow_list_for_tablet"
+    namespace: "bluetooth"
+    description: "Allow devices which match vid/pid to wake up tablet from screen off sleep."
+    bug: "449020271"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}

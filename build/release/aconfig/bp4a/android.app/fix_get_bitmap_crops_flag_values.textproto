@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "fix_get_bitmap_crops"
+  state: ENABLED
+  permission: READ_ONLY
+}

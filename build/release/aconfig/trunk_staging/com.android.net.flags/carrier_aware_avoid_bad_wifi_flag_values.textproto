@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.net.flags"
+  name: "carrier_aware_avoid_bad_wifi"
+  state: ENABLED
+  permission: READ_ONLY
+}

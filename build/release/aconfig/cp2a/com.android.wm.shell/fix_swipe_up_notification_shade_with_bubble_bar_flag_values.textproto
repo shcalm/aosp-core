@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_swipe_up_notification_shade_with_bubble_bar"
+  state: ENABLED
+  permission: READ_ONLY
+}

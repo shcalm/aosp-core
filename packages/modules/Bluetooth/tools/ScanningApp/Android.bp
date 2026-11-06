@@ -1,0 +1,30 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+android_app {
+    name: "ScanningApp",
+    defaults: [
+        "bluetooth_errorprone_rules",
+        "bluetooth_lint_rules",
+    ],
+    min_sdk_version: "36",
+    srcs: ["src/**/*.kt"],
+    manifest: "AndroidManifest.xml",
+
+    static_libs: [
+        "androidx.activity_activity-compose",
+        "androidx.compose.foundation_foundation",
+        "androidx.compose.material3_material3",
+        "androidx.compose.runtime_runtime",
+        "androidx.compose.ui_ui",
+        "androidx.compose.ui_ui-tooling-preview",
+        "androidx.core_core-ktx",
+        "com.google.android.material_material",
+    ],
+
+    platform_apis: true,
+    lint: {
+        baseline_filename: "lint-baseline.xml",
+    },
+}

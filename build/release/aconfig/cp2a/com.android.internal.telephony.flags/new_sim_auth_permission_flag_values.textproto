@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "new_sim_auth_permission"
+  state: ENABLED
+  permission: READ_ONLY
+}

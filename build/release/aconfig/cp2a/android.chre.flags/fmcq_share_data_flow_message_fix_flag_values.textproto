@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.chre.flags"
+  name: "fmcq_share_data_flow_message_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

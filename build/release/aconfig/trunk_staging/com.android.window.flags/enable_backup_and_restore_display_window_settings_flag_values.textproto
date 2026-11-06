@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_backup_and_restore_display_window_settings"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "dont_show_other_users_apps_to_admin"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,11 @@
+name: "RELEASE_BUILD_WITH_JDK_25"
+namespace: "core_libraries"
+description: "Control whether builds use JDK 25."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

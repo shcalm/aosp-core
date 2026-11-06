@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.graphics.pdf.flags"
+  name: "enable_edit_pdf_text_objects"
+  state: ENABLED
+  permission: READ_ONLY
+}

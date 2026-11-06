@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "enable_media_route_2_info_provider_package_name"
+  state: ENABLED
+  permission: READ_WRITE
+}

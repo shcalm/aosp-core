@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.dreams"
+  name: "disallow_dream_on_auto_projection"
+  state: ENABLED
+  permission: READ_WRITE
+}

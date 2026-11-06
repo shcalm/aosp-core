@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.car.carlauncher"
+  name: "app_widget_host"
+  state: ENABLED
+  permission: READ_ONLY
+}

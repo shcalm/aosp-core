@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "bqr_common_part_unified_length"
+  state: ENABLED
+  permission: READ_WRITE
+}

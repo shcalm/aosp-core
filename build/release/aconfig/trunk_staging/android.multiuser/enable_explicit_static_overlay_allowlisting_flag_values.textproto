@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "enable_explicit_static_overlay_allowlisting"
+  state: ENABLED
+  permission: READ_WRITE
+}

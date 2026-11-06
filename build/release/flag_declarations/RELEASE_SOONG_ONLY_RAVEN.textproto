@@ -1,0 +1,11 @@
+name: "RELEASE_SOONG_ONLY_RAVEN"
+namespace: "build"
+description: "Enables building RAVEN with soong-only (no make) builds"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

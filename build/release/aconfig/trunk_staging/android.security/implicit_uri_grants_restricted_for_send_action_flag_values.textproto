@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "implicit_uri_grants_restricted_for_send_action"
+  state: ENABLED
+  permission: READ_WRITE
+}

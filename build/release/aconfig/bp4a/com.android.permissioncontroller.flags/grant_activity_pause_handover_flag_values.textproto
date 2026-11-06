@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.permissioncontroller.flags"
+  name: "grant_activity_pause_handover"
+  state: ENABLED
+  permission: READ_ONLY
+}

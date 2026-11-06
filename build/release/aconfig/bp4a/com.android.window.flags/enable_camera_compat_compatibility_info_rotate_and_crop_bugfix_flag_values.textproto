@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_camera_compat_compatibility_info_rotate_and_crop_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

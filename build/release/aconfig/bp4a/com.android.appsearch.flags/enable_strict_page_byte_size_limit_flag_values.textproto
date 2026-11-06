@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_strict_page_byte_size_limit"
+  state: ENABLED
+  permission: READ_ONLY
+}

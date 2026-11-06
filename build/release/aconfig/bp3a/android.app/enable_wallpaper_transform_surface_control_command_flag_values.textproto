@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "enable_wallpaper_transform_surface_control_command"
+  state: ENABLED
+  permission: READ_ONLY
+}

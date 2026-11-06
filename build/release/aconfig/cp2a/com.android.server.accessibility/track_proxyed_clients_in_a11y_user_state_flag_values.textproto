@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "track_proxyed_clients_in_a11y_user_state"
+  state: ENABLED
+  permission: READ_ONLY
+}

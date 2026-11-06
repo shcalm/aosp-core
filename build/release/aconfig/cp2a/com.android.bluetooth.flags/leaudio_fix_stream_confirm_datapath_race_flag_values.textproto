@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_fix_stream_confirm_datapath_race"
+  state: ENABLED
+  permission: READ_ONLY
+}

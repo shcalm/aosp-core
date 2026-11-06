@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "handle_repeated_display_switches"
+  state: ENABLED
+  permission: READ_WRITE
+}

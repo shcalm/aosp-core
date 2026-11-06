@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_external_display_persistence_bugfix"
+  state: ENABLED
+  permission: READ_WRITE
+}

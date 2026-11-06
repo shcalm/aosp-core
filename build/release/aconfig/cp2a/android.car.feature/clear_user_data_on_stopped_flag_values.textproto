@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "clear_user_data_on_stopped"
+  state: ENABLED
+  permission: READ_ONLY
+}

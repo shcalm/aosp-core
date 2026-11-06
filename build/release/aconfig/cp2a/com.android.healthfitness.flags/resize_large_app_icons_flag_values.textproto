@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "resize_large_app_icons"
+  state: ENABLED
+  permission: READ_ONLY
+}

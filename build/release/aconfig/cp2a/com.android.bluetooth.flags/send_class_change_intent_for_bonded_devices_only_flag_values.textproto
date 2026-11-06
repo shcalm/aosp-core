@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "send_class_change_intent_for_bonded_devices_only"
+  state: ENABLED
+  permission: READ_ONLY
+}

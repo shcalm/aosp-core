@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "use_self_sync_transaction_for_layer"
+  state: ENABLED
+  permission: READ_ONLY
+}

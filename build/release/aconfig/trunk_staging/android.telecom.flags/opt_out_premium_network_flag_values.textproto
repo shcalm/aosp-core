@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "opt_out_premium_network"
+  state: ENABLED
+  permission: READ_WRITE
+}

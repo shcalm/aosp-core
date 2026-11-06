@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.aconfig_new_storage"
+  name: "enable_earlier_aconfigd"
+  state: ENABLED
+  permission: READ_ONLY
+}

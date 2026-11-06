@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "sqlite_discrete_op_event_logging_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

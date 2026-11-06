@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.vold.flags"
+  name: "enhance_fuse_unmount"
+  state: ENABLED
+  permission: READ_ONLY
+}

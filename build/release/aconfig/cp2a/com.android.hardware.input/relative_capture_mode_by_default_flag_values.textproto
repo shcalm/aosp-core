@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "relative_capture_mode_by_default"
+  state: ENABLED
+  permission: READ_ONLY
+}

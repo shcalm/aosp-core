@@ -1,0 +1,8 @@
+name: "RELEASE_ALLOW_PROFCOLLECT_IN_USER"
+namespace: "llvm_and_toolchains"
+description: "Enable profcollect modules in user builds for allowlisted devices"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

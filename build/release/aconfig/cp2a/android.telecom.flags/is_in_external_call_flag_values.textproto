@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "is_in_external_call"
+  state: ENABLED
+  permission: READ_ONLY
+}

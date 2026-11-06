@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "use_caller_token_in_launcher_apps"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "remove_hidden_module_usage"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.chre.flags"
+  name: "fmcq_implementation"
+  state: ENABLED
+  permission: READ_ONLY
+}

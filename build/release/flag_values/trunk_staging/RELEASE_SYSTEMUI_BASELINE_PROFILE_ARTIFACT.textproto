@@ -1,0 +1,4 @@
+name: "RELEASE_SYSTEMUI_BASELINE_PROFILE_ARTIFACT"
+value: {
+  string_value: "systemui_baseline_profile_trunk_staging.txt.prof"
+}

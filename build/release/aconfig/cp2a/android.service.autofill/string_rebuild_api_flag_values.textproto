@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "string_rebuild_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

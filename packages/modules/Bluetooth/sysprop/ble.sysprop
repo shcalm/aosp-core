@@ -1,0 +1,353 @@
+module: "android.sysprop.bluetooth.Ble"
+owner: Platform
+
+prop {
+    api_name: "vnd_included"
+    type: Boolean
+    default_value: "true"
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.vnd.included"
+}
+
+prop {
+    api_name: "random_address_rotation_interval_min"
+    type: Integer
+    default_value: "7"
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.random_address_rotation_interval_min"
+}
+
+prop {
+    api_name: "random_address_rotation_interval_max"
+    type: Integer
+    default_value: "15"
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.random_address_rotation_interval_max"
+}
+
+prop {
+    api_name: "allow_enc_with_bredr"
+    type: Boolean
+    default_value: "false"
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.allow_enc_with_bredr"
+}
+
+prop {
+    api_name: "iso_aggressive_connection_threshold"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.iso_aggressive_connection_threshold"
+}
+
+prop {
+    api_name: "iso_min_connection_interval"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.iso_min_connection_interval"
+}
+
+prop {
+    api_name: "iso_max_connection_interval"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.iso_max_connection_interval"
+}
+
+# Minimum batch trigger interval to check for batched results when the screen is off
+prop {
+    api_name: "batch_scan_screen_off_minimum_delay_floor_ms"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.batch_scan.screen_off_minimum_delay_floor_ms.config"
+}
+
+# Adjusted minimum report delay for unfiltered batch scan clients
+prop {
+    api_name: "batch_scan_unfiltered_delay_floor_ms"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.batch_scan.unfiltered_delay_floor_ms.config"
+}
+
+# Adjusted minimum report delay for unfiltered batch scan clients when the screen is off
+prop {
+    api_name: "batch_scan_unfiltered_screen_off_delay_floor_ms"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.batch_scan.unfiltered_screen_off_delay_floor_ms.config"
+}
+
+# Start screen-off trigger interval throttling after the screen has been off for this period of
+# time. This allows the screen-on intervals to be used for a short period of time after the screen
+# has gone off, and avoids too much flipping between screen-off and screen-on backoffs when the
+# screen is off for a short period of time.
+prop {
+    api_name: "batch_scan_screen_off_delay_ms"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.batch_scan.screen_off_delay_ms.config"
+}
+
+# Remote RSSI read throttle time
+prop {
+    api_name: "rssi_read_throttle_ms"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.rssi_read_throttle_ms.config"
+}
+
+# Bluetooth Subrating Mode Configurations
+
+# Bluetooth Subrate Mode - LOW configurations
+prop {
+    api_name: "subrate_mode_low_min_subrate"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_mode_low_min_subrate.config"
+}
+
+prop {
+    api_name: "subrate_mode_low_max_subrate"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_mode_low_max_subrate.config"
+}
+
+prop {
+    api_name: "subrate_mode_low_cont_number"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_mode_low_cont_number.config"
+}
+
+# Bluetooth Subrate Mode - BALANCED configurations
+prop {
+    api_name: "subrate_mode_balanced_min_subrate"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_mode_balanced_min_subrate.config"
+}
+
+prop {
+    api_name: "subrate_mode_balanced_max_subrate"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_mode_balanced_max_subrate.config"
+}
+
+prop {
+    api_name: "subrate_mode_balanced_cont_number"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_mode_balanced_cont_number.config"
+}
+
+
+# Bluetooth Subrate Mode - HIGH configurations
+prop {
+    api_name: "subrate_mode_high_min_subrate"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_mode_high_min_subrate.config"
+}
+
+prop {
+    api_name: "subrate_mode_high_max_subrate"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_mode_high_max_subrate.config"
+}
+
+prop {
+    api_name: "subrate_mode_high_cont_number"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_mode_high_cont_number.config"
+}
+
+prop {
+    api_name: "subrate_le_audio_mode_max_subrate"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_le_audio_mode_max_subrate.config"
+}
+
+prop {
+    api_name: "subrate_le_audio_mode_min_subrate"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_le_audio_mode_min_subrate.config"
+}
+
+prop {
+    api_name: "subrate_le_audio_mode_cont_number"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.client.subrate_le_audio_mode_cont_number.config"
+}
+
+# Bluetooth Subrate Manager Mode Configurations : continuation number ratio
+prop {
+    api_name: "subrate_manager_low_mode_cont_num_ratio"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.low_mode_cont_num_ratio.config"
+}
+
+prop {
+    api_name: "subrate_manager_balanced_mode_cont_num_ratio"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.balanced_mode_cont_num_ratio.config"
+}
+
+prop {
+    api_name: "subrate_manager_high_mode_cont_num_ratio"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.high_mode_cont_num_ratio.config"
+}
+
+prop {
+    api_name: "subrate_manager_lea_mode_cont_num_ratio"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.lea_mode_cont_num_ratio.config"
+}
+
+# Bluetooth Subrate Manager Mode Configurations : continuation number maximum
+prop {
+    api_name: "subrate_manager_low_mode_cont_num_max"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.low_mode_cont_num_max.config"
+}
+
+prop {
+    api_name: "subrate_manager_balanced_mode_cont_num_max"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.balanced_mode_cont_num_max.config"
+}
+
+prop {
+    api_name: "subrate_manager_high_mode_cont_num_max"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.high_mode_cont_num_max.config"
+}
+
+prop {
+    api_name: "subrate_manager_lea_mode_cont_num_max"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.lea_mode_cont_num_max.config"
+}
+
+
+# Bluetooth Subrate Manager Mode Configurations : Fixed Parameter Flag
+prop {
+    api_name: "subrate_manager_low_mode_fixed_flag"
+    type: Boolean
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.low_mode_fixed_flag.config"
+}
+
+prop {
+    api_name: "subrate_manager_balanced_mode_fixed_flag"
+    type: Boolean
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.balanced_mode_fixed_flag.config"
+}
+
+prop {
+    api_name: "subrate_manager_high_mode_fixed_flag"
+    type: Boolean
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.high_mode_fixed_flag.config"
+}
+
+prop {
+    api_name: "subrate_manager_lea_mode_fixed_flag"
+    type: Boolean
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.sm.lea_mode_fixed_flag.config"
+}
+
+prop {
+    api_name: "lecoc_fixed_psm_slots"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.lecoc.fixed_psm_slots.config"
+}
+
+prop {
+    api_name: "primary_supervision_timeout"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.primary_supervision_timeout.config"
+}
+
+prop {
+    api_name: "high_data_throughput_phy"
+    type: Boolean
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.high_data_throughput_phy.enabled"
+}
+
+prop {
+    api_name: "max_tx_power_dbm"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.max_tx_power_dbm.config"
+}
+
+# Bluetooth Scan Throttle Configuration
+prop {
+    api_name: "scan_allowance_seconds"
+    type: Integer
+    scope: Internal
+    access: Readonly
+    prop_name: "bluetooth.ble.scan.scan_allowance_seconds.config"
+}

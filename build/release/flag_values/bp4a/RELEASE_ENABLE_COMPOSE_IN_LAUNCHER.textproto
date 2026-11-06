@@ -1,0 +1,4 @@
+name: "RELEASE_ENABLE_COMPOSE_IN_LAUNCHER"
+value {
+  bool_value: true
+}

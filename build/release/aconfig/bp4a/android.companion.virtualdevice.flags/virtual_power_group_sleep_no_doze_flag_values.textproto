@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "virtual_power_group_sleep_no_doze"
+  state: ENABLED
+  permission: READ_ONLY
+}

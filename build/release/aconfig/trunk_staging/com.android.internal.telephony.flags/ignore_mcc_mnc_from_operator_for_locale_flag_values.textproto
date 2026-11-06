@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "ignore_mcc_mnc_from_operator_for_locale"
+  state: ENABLED
+  permission: READ_WRITE
+}

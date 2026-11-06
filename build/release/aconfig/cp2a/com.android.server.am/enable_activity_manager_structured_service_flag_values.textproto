@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "enable_activity_manager_structured_service"
+  state: ENABLED
+  permission: READ_ONLY
+}

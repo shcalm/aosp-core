@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "enable_battery_level_update_only_through_hf_indicator"
+  state: ENABLED
+  permission: READ_ONLY
+}

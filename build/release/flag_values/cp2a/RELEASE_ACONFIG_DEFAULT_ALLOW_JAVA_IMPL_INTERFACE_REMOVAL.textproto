@@ -1,0 +1,4 @@
+name: "RELEASE_ACONFIG_DEFAULT_ALLOW_JAVA_IMPL_INTERFACE_REMOVAL"
+value {
+  bool_value: true
+}

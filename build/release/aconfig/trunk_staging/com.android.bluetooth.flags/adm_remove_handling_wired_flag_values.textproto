@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "adm_remove_handling_wired"
+  state: ENABLED
+  permission: READ_WRITE
+}

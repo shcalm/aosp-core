@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "report_vendor_events_from_acl"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "stream_assistant_public"
+  state: ENABLED
+  permission: READ_WRITE
+}

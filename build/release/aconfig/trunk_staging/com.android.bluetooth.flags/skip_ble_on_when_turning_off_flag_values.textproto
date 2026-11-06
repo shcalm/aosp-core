@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "skip_ble_on_when_turning_off"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "send_discovered_dev_to_new_pkgs"
+  state: ENABLED
+  permission: READ_ONLY
+}

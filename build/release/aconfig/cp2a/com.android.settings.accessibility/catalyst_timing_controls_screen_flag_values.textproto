@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "catalyst_timing_controls_screen"
+  state: ENABLED
+  permission: READ_ONLY
+}

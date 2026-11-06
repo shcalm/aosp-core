@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.connectivity"
+  name: "sync_airplane_mode_with_watches"
+  state: ENABLED
+  permission: READ_WRITE
+}

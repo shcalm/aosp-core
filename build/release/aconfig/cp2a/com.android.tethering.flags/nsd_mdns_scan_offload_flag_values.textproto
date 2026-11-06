@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.flags"
+  name: "nsd_mdns_scan_offload"
+  state: ENABLED
+  permission: READ_ONLY
+}

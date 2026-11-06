@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.bluetooth.platform.flags"
+  name: "grant_permission_via_module_protection_level"
+  state: ENABLED
+  permission: READ_ONLY
+}

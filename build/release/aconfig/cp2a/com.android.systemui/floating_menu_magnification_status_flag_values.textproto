@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "floating_menu_magnification_status"
+  state: ENABLED
+  permission: READ_ONLY
+}

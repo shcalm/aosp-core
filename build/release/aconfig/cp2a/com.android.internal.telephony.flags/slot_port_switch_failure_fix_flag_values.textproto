@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "slot_port_switch_failure_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

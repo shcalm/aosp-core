@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "allow_supervising_profile"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "extend_aapm_to_a11y_services"
+  state: ENABLED
+  permission: READ_ONLY
+}

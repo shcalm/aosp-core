@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "emergency_over_nr_requires_vonr_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

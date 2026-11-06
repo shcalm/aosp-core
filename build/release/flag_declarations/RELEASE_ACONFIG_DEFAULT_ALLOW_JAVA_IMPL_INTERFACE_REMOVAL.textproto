@@ -1,0 +1,8 @@
+name: "RELEASE_ACONFIG_DEFAULT_ALLOW_JAVA_IMPL_INTERFACE_REMOVAL"
+namespace: "system_performance"
+description: "When true, default to allowing removal of unnecessary internal Java aconfig codegen whenever possible."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

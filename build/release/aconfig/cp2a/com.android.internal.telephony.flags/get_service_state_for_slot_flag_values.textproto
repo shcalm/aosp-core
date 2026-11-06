@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "get_service_state_for_slot"
+  state: ENABLED
+  permission: READ_ONLY
+}

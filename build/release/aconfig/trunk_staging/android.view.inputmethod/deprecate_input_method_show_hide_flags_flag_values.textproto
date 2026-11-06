@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "deprecate_input_method_show_hide_flags"
+  state: ENABLED
+  permission: READ_WRITE
+}

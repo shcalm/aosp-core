@@ -1,0 +1,4 @@
+name: "RELEASE_BUILD_CLANG_SHORT_VERSION"
+value: {
+  string_value: "22"
+}

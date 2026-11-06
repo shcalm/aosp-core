@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "restrict_communal_app_widget_host_listening"
+  state: ENABLED
+  permission: READ_ONLY
+}

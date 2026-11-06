@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "show_biometric_prompt_secondary_display_message"
+  state: ENABLED
+  permission: READ_ONLY
+}

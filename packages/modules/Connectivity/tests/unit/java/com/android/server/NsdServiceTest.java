@@ -1,0 +1,4175 @@
+/*
+ * Copyright (C) 2017 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.server;
+
+import static android.Manifest.permission.ACCESS_LOCAL_NETWORK;
+import static android.Manifest.permission.DEVICE_POWER;
+import static android.Manifest.permission.NEARBY_WIFI_DEVICES;
+import static android.Manifest.permission.NETWORK_SETTINGS;
+import static android.Manifest.permission.NETWORK_STACK;
+import static android.Manifest.permission.REGISTER_NSD_OFFLOAD_ENGINE;
+import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED;
+import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND;
+import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_GONE;
+import static android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE;
+import static android.content.pm.PackageManager.FEATURE_LEANBACK;
+import static android.content.pm.PackageManager.PERMISSION_DENIED;
+import static android.content.pm.PackageManager.PERMISSION_GRANTED;
+import static android.net.InetAddresses.parseNumericAddress;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_LOCAL_NETWORK;
+import static android.net.NetworkCapabilities.TRANSPORT_ETHERNET;
+import static android.net.NetworkCapabilities.TRANSPORT_VPN;
+import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
+import static android.net.NetworkStack.PERMISSION_MAINLINE_NETWORK_STACK;
+import static android.net.connectivity.ConnectivityCompatChanges.ENABLE_MATCH_NON_THREAD_LOCAL_NETWORKS;
+import static android.net.connectivity.ConnectivityCompatChanges.ENABLE_PLATFORM_MDNS_BACKEND;
+import static android.net.connectivity.ConnectivityCompatChanges.RESTRICT_LOCAL_NETWORK;
+import static android.net.connectivity.ConnectivityCompatChanges.RUN_NATIVE_NSD_ONLY_IF_LEGACY_APPS_T_AND_LATER;
+import static android.net.nsd.DiscoveryRequest.FLAG_NO_PICKER;
+import static android.net.nsd.DiscoveryRequest.FLAG_SHOW_PICKER;
+import static android.net.nsd.DiscoveryRequest.FLAG_USER_APPROVED_ONLY;
+import static android.net.nsd.NsdManager.FAILURE_BAD_PARAMETERS;
+import static android.net.nsd.NsdManager.FAILURE_INTERNAL_ERROR;
+import static android.net.nsd.NsdManager.FAILURE_MAX_LIMIT;
+import static android.net.nsd.NsdManager.FAILURE_OPERATION_NOT_RUNNING;
+import static android.net.nsd.NsdManager.FAILURE_PERMISSION_DENIED;
+import static android.net.nsd.OffloadEngine.OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK;
+import static android.net.nsd.OffloadEngine.OFFLOAD_TYPE_FILTER_QUERIES;
+import static android.net.nsd.OffloadEngine.OFFLOAD_TYPE_FILTER_REPLIES;
+import static android.net.nsd.OffloadEngine.OFFLOAD_TYPE_QUERY;
+import static android.net.nsd.OffloadEngine.OFFLOAD_TYPE_REPLY;
+import static android.os.PatternMatcher.PATTERN_LITERAL;
+import static android.os.PatternMatcher.PATTERN_PREFIX;
+import static android.os.PatternMatcher.PATTERN_SUFFIX;
+
+import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+
+import static com.android.server.NsdService.DEFAULT_RUNNING_APP_ACTIVE_IMPORTANCE_CUTOFF;
+import static com.android.server.NsdService.MdnsListener;
+import static com.android.server.NsdService.NO_TRANSACTION;
+import static com.android.server.NsdService.checkHostname;
+import static com.android.server.NsdService.parseTypeAndSubtype;
+import static com.android.server.connectivity.mdns.MdnsConstants.SERVICE_REMOVED_BY_GOODBYE_RECEIVED;
+import static com.android.server.connectivity.mdns.MdnsConstants.SERVICE_REMOVED_BY_TTL_EXPIRED;
+import static com.android.server.connectivity.mdns.util.MdnsUtils.createOffloadServiceInfoFromDiscoveryOffload;
+import static com.android.testutils.ContextUtils.mockService;
+import static com.android.tethering.flags.Flags.FLAG_NSD_MDNS_SCAN_OFFLOAD;
+import static com.android.tethering.flags.Flags.FLAG_NSD_SERVICE_PICKER;
+import static com.android.tethering.flags.Flags.nsdMdnsScanOffload;
+
+import static libcore.junit.util.compat.CoreCompatChangeRule.DisableCompatChanges;
+import static libcore.junit.util.compat.CoreCompatChangeRule.EnableCompatChanges;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import android.app.ActivityManager;
+import android.app.ActivityManager.OnUidImportanceListener;
+import android.compat.testing.PlatformCompatChangeRule;
+import android.content.AttributionSource;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.INetd;
+import android.net.Network;
+import android.net.mdns.aidl.DiscoveryInfo;
+import android.net.mdns.aidl.GetAddressInfo;
+import android.net.mdns.aidl.IMDnsEventListener;
+import android.net.mdns.aidl.RegistrationInfo;
+import android.net.mdns.aidl.ResolutionInfo;
+import android.net.nsd.AdvertisingRequest;
+import android.net.nsd.DiscoveryRequest;
+import android.net.nsd.INsdManagerCallback;
+import android.net.nsd.INsdServiceConnector;
+import android.net.nsd.MDnsManager;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdManager.DiscoveryListener;
+import android.net.nsd.NsdManager.RegistrationListener;
+import android.net.nsd.NsdManager.ResolveListener;
+import android.net.nsd.NsdManager.ServiceInfoCallback;
+import android.net.nsd.NsdServiceInfo;
+import android.net.nsd.OffloadEngine;
+import android.net.nsd.OffloadServiceInfo;
+import android.net.nsd.OffloadSession;
+import android.net.wifi.WifiManager;
+import android.os.Binder;
+import android.os.Build;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.IBinder;
+import android.os.PatternMatcher;
+import android.os.Process;
+import android.os.RemoteException;
+import android.os.UserHandle;
+import android.permission.PermissionManager;
+import android.platform.test.annotations.RequiresFlagsDisabled;
+import android.platform.test.annotations.RequiresFlagsEnabled;
+import android.platform.test.flag.junit.CheckFlagsRule;
+import android.platform.test.flag.junit.DeviceFlagsValueProvider;
+import android.util.ArraySet;
+import android.util.Pair;
+
+import androidx.annotation.NonNull;
+import androidx.test.filters.SmallTest;
+
+import com.android.connectivity.resources.aidl.NsdPickerConnector;
+import com.android.connectivity.resources.aidl.NsdServiceReceiver;
+import com.android.metrics.NetworkNsdReportedMetrics;
+import com.android.net.module.util.SharedLog;
+import com.android.server.NsdService.Dependencies;
+import com.android.server.connectivity.mdns.MdnsAdvertiser;
+import com.android.server.connectivity.mdns.MdnsAdvertisingOptions;
+import com.android.server.connectivity.mdns.MdnsDiscoveryManager;
+import com.android.server.connectivity.mdns.MdnsInterfaceSocket;
+import com.android.server.connectivity.mdns.MdnsSearchOptions;
+import com.android.server.connectivity.mdns.MdnsServiceBrowserListener;
+import com.android.server.connectivity.mdns.MdnsServiceInfo;
+import com.android.server.connectivity.mdns.MdnsServiceInfo.TextEntry;
+import com.android.server.connectivity.mdns.MdnsServiceTypeClient.DiscoveryOffloadInfo;
+import com.android.server.connectivity.mdns.MdnsSocketProvider;
+import com.android.server.connectivity.mdns.MdnsSocketProvider.SocketRequestMonitor;
+import com.android.server.connectivity.mdns.OffloadCallback;
+import com.android.server.connectivity.mdns.internal.ServiceAccessDb;
+import com.android.server.connectivity.mdns.internal.ServiceAccessRepository;
+import com.android.server.connectivity.mdns.util.MdnsUtils;
+import com.android.testutils.DevSdkIgnoreRule;
+import com.android.testutils.DevSdkIgnoreRunner;
+import com.android.testutils.HandlerUtils;
+import com.android.testutils.com.android.testutils.SetFeatureFlagsRule;
+import com.android.testutils.com.android.testutils.SetFeatureFlagsRule.FeatureFlag;
+import com.android.tethering.flags.Flags;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
+import org.junit.rules.TestRule;
+import org.junit.runner.RunWith;
+import org.mockito.AdditionalAnswers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.IntConsumer;
+
+// TODOs:
+//  - test client can send requests and receive replies
+//  - test NSD_ON ENABLE/DISABLED listening
+@DevSdkIgnoreRunner.MonitorThreadLeak
+@RunWith(DevSdkIgnoreRunner.class)
+@SmallTest
+@DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.S_V2)
+public class NsdServiceTest {
+    @Rule
+    public final DevSdkIgnoreRule mIgnoreRule = new DevSdkIgnoreRule();
+
+    @Rule
+    public final CheckFlagsRule mCheckFlagsRule =
+            DeviceFlagsValueProvider.createCheckFlagsRule();
+
+    private final HashMap<String, Boolean> mFeatureFlags = new HashMap<>();
+    @Rule
+    public final SetFeatureFlagsRule mSetFeatureFlagsRule =
+            new SetFeatureFlagsRule((name, enabled) -> {
+                mFeatureFlags.put(name, enabled);
+                return null;
+            }, (name) -> mFeatureFlags.getOrDefault(name, false));
+
+    @Rule
+    public final TestName mTestName = new TestName();
+
+    static final int PROTOCOL = NsdManager.PROTOCOL_DNS_SD;
+    private static final long CLEANUP_DELAY_MS = 500;
+    private static final long TIMEOUT_MS = 500;
+    private static final long TEST_TIME_MS = 123L;
+    private static final String SERVICE_NAME = "a_name";
+    private static final String SERVICE_TYPE = "_test._tcp";
+    private static final String SERVICE_TYPE_WITH_LOCAL_TLD = SERVICE_TYPE + ".local";
+    private static final String SERVICE_FULL_NAME = SERVICE_NAME + "." + SERVICE_TYPE;
+    private static final String OTHER_SERVICE_NAME = "other_name";
+    private static final String DOMAIN_NAME = "mytestdevice.local";
+    private static final int PORT = 2201;
+    private static final int IFACE_IDX_ANY = 0;
+    private static final int TEST_INTERFACE_INDEX = 1234;
+    private static final String IPV4_ADDRESS = "192.0.2.0";
+    private static final String IPV6_ADDRESS = "2001:db8::";
+    private static final String FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED =
+            "android.net.connectivity.android.permission.flags"
+                    + ".access_local_network_permission_enabled";
+    private static final String TEST_RESOURCES_PACKAGE = "com.android.test.res";
+    private static final Network TEST_NETWORK = new Network(999);
+    private static final String TEST_APP_NAME = "Test App";
+
+
+    // Records INsdManagerCallback created when NsdService#connect is called.
+    // Only accessed on the test thread, since NsdService#connect is called by the NsdManager
+    // constructor called on the test thread.
+    private final Queue<INsdManagerCallback> mCreatedCallbacks = new LinkedList<>();
+
+    @Rule
+    public TestRule compatChangeRule = new PlatformCompatChangeRule();
+    @Rule
+    public TestRule ignoreRule = new DevSdkIgnoreRule();
+
+    @Mock Context mContext;
+    @Mock PackageManager mPackageManager;
+    @Mock ContentResolver mResolver;
+    @Mock MDnsManager mMockMDnsM;
+    @Mock Dependencies mDeps;
+    @Mock MdnsDiscoveryManager mDiscoveryManager;
+    @Mock MdnsAdvertiser mAdvertiser;
+    @Mock MdnsSocketProvider mSocketProvider;
+    @Mock WifiManager mWifiManager;
+    @Mock WifiManager.MulticastLock mMulticastLock;
+    @Mock ActivityManager mActivityManager;
+    @Mock ConnectivityManager mConnectivityManager;
+    @Mock
+    PermissionManager mPermissionManager;
+    @Mock NetworkNsdReportedMetrics mMetrics;
+    @Mock MdnsUtils.Clock mClock;
+    @Mock ServiceAccessDb mServiceAccessDb;
+    ServiceAccessRepository mAccessRepository;
+    SocketRequestMonitor mSocketRequestMonitor;
+    OnUidImportanceListener mUidImportanceListener;
+    HandlerThread mThread;
+    // A handler for running test code on the test thread. This is not the same Handler as used by
+    // NsdService, but it uses the same looper.
+    Handler mHandler;
+    NsdService mService;
+    OffloadCallback mOffloadCallback;
+    private String mPackageName;
+
+    private static class LinkToDeathRecorder extends Binder {
+        IBinder.DeathRecipient mDr;
+
+        @Override
+        public void linkToDeath(@NonNull DeathRecipient recipient, int flags) {
+            super.linkToDeath(recipient, flags);
+            mDr = recipient;
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.METHOD})
+    private @interface EnableCompatChangesForSystem {
+        long changeId();
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
+        mThread = new HandlerThread("mock-service-handler");
+        mThread.start();
+        mHandler = new Handler(mThread.getLooper());
+        mPackageName = getInstrumentation().getContext().getPackageName();
+        mAccessRepository = new ServiceAccessRepository(mContext, mThread.getLooper(),
+                new SharedLog("TestAccessRepo"), mServiceAccessDb);
+        when(mContext.getContentResolver()).thenReturn(mResolver);
+        when(mContext.getSystemService(PermissionManager.class)).thenReturn(mPermissionManager);
+        mockService(mContext, MDnsManager.class, MDnsManager.MDNS_SERVICE, mMockMDnsM);
+        mockService(mContext, WifiManager.class, Context.WIFI_SERVICE, mWifiManager);
+        mockService(mContext, ActivityManager.class, Context.ACTIVITY_SERVICE, mActivityManager);
+        mockService(mContext, ConnectivityManager.class, Context.CONNECTIVITY_SERVICE,
+                mConnectivityManager);
+        doReturn(mPackageManager).when(mContext).getPackageManager();
+        doReturn(mContext).when(mContext).createContextAsUser(any(), anyInt());
+        final String packageName = getInstrumentation().getContext().getPackageName();
+        doReturn(packageName).when(mContext).getPackageName();
+        // Some tests mock getCallingUid, ensure getPackageUid follows the return value
+        doAnswer(inv -> mDeps.getCallingUid()).when(mPackageManager).getPackageUid(
+                eq(getInstrumentation().getContext().getPackageName()),
+                anyInt());
+        final ApplicationInfo testAppInfo = new ApplicationInfo();
+        doReturn(testAppInfo).when(mPackageManager).getApplicationInfoAsUser(
+                eq(getInstrumentation().getContext().getPackageName()),
+                /* flags= */ anyInt(), /* userHandle= */ any());
+        doReturn(TEST_APP_NAME).when(mPackageManager).getApplicationLabel(testAppInfo);
+        if (mContext.getSystemService(MDnsManager.class) == null) {
+            // Test is using mockito-extended
+            doCallRealMethod().when(mContext).getSystemService(MDnsManager.class);
+            doCallRealMethod().when(mContext).getSystemService(WifiManager.class);
+            doCallRealMethod().when(mContext).getSystemService(ActivityManager.class);
+            doCallRealMethod().when(mContext).getSystemService(ConnectivityManager.class);
+        }
+        doReturn(true).when(mMockMDnsM).registerService(
+                anyInt(), anyString(), anyString(), anyInt(), any(), anyInt());
+        doReturn(true).when(mMockMDnsM).stopOperation(anyInt());
+        doReturn(true).when(mMockMDnsM).discover(anyInt(), anyString(), anyInt());
+        doReturn(true).when(mMockMDnsM).resolve(
+                anyInt(), anyString(), anyString(), anyString(), anyInt());
+        doReturn(false).when(mDeps).isMdnsDiscoveryManagerEnabled(any(Context.class));
+        doAnswer(inv -> {
+            mOffloadCallback = (OffloadCallback) inv.getArguments()[4];
+            return mDiscoveryManager;
+        }).when(mDeps).makeMdnsDiscoveryManager(any(), any(), any(), any(), any());
+        doReturn(mMulticastLock).when(mWifiManager).createMulticastLock(any());
+        doReturn(mSocketProvider).when(mDeps).makeMdnsSocketProvider(
+                any(), any(), any(), any(), any());
+        doReturn(DEFAULT_RUNNING_APP_ACTIVE_IMPORTANCE_CUTOFF).when(mDeps).getDeviceConfigInt(
+                eq(NsdService.MDNS_CONFIG_RUNNING_APP_ACTIVE_IMPORTANCE_CUTOFF), anyInt());
+        doAnswer(inv -> {
+            mOffloadCallback = (OffloadCallback) inv.getArguments()[6];
+            return mAdvertiser;
+        }).when(mDeps).makeMdnsAdvertiser(any(), any(), any(), any(), any(), any(), any());
+        doReturn(mMetrics).when(mDeps).makeNetworkNsdReportedMetrics(anyInt(), anyInt());
+        doReturn(mClock).when(mDeps).makeClock();
+        doReturn(TEST_TIME_MS).when(mClock).elapsedRealtime();
+
+        doAnswer(inv -> {
+            final String flag = inv.getArgument(0);
+            // Let @FeatureFlag annotation override the default value.
+            if (mFeatureFlags.containsKey(flag)) {
+                return mFeatureFlags.get(flag);
+            }
+            // Default to true for FLAG_NSD_SERVICE_PICKER for tests that don't specify it.
+            if (FLAG_NSD_SERVICE_PICKER.equals(flag)) {
+                return true;
+            }
+            return false;
+        }).when(mDeps).isAconfigFlagEnabled(anyString());
+
+        doAnswer(inv -> mFeatureFlags.getOrDefault(
+                com.android.tethering.mainline.beta.Flags.FLAG_TETHERING_AND_P2P_GO_LOCAL_AGENT,
+                false))
+                .when(mDeps).isSupportTetheringAndP2pGoLocalAgent(any(Context.class));
+
+        doReturn(mAccessRepository).when(mDeps).makeAccessRepository(any(), any(), any());
+
+        doReturn(false).when(mDeps).isCompatChangeEnabledForSystem(anyLong());
+        final Method method = getClass().getMethod(mTestName.getMethodName());
+        for (EnableCompatChangesForSystem annotation : method.getAnnotationsByType(
+                EnableCompatChangesForSystem.class)) {
+            doReturn(true).when(mDeps).isCompatChangeEnabledForSystem(annotation.changeId());
+        }
+
+        mService = makeService();
+        final ArgumentCaptor<SocketRequestMonitor> cbMonitorCaptor =
+                ArgumentCaptor.forClass(SocketRequestMonitor.class);
+        verify(mDeps).makeMdnsSocketProvider(
+                any(), any(), any(), cbMonitorCaptor.capture(), any());
+        mSocketRequestMonitor = cbMonitorCaptor.getValue();
+
+        final ArgumentCaptor<OnUidImportanceListener> uidListenerCaptor =
+                ArgumentCaptor.forClass(OnUidImportanceListener.class);
+        verify(mActivityManager).addOnUidImportanceListener(uidListenerCaptor.capture(), anyInt());
+        mUidImportanceListener = uidListenerCaptor.getValue();
+
+        doReturn(Process.myUid()).when(mDeps).getCallingUid();
+        doReturn(Process.myPid()).when(mDeps).getCallingPid();
+        doReturn(true).when(mDeps).isPickerAutoUpgradeEnabled(anyInt());
+        doReturn(TEST_RESOURCES_PACKAGE).when(mDeps).getConnectivityResourcesPackageName(any());
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        if (mThread != null) {
+            mThread.quitSafely();
+            mThread.join();
+        }
+
+        // Clear inline mocks as there are possible memory leaks if not done (see mockito
+        // doc for clearInlineMocks), and some tests create many of them.
+        Mockito.framework().clearInlineMocks();
+    }
+
+    // Native mdns provided by Netd is removed after U.
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @Test
+    @DisableCompatChanges({
+            RUN_NATIVE_NSD_ONLY_IF_LEGACY_APPS_T_AND_LATER,
+            ENABLE_PLATFORM_MDNS_BACKEND})
+    public void testPreSClients() throws Exception {
+        // Pre S client connected, the daemon should be started.
+        connectClient(mService);
+        final INsdManagerCallback cb1 = getCallback();
+        final IBinder.DeathRecipient deathRecipient1 = verifyLinkToDeath(cb1);
+        verify(mMockMDnsM, times(1)).registerEventListener(any());
+        verify(mMockMDnsM, times(1)).startDaemon();
+
+        connectClient(mService);
+        final INsdManagerCallback cb2 = getCallback();
+        final IBinder.DeathRecipient deathRecipient2 = verifyLinkToDeath(cb2);
+        // Daemon has been started, it should not try to start it again.
+        verify(mMockMDnsM, times(1)).registerEventListener(any());
+        verify(mMockMDnsM, times(1)).startDaemon();
+
+        deathRecipient1.binderDied();
+        // Still 1 client remains, daemon shouldn't be stopped.
+        waitForIdle();
+        verify(mMockMDnsM, never()).stopDaemon();
+
+        deathRecipient2.binderDied();
+        // All clients are disconnected, the daemon should be stopped.
+        verifyDelayMaybeStopDaemon(CLEANUP_DELAY_MS);
+    }
+
+    @Test
+    @EnableCompatChanges(RUN_NATIVE_NSD_ONLY_IF_LEGACY_APPS_T_AND_LATER)
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testNoDaemonStartedWhenClientsConnect() throws Exception {
+        // Creating an NsdManager will not cause daemon startup.
+        connectClient(mService);
+        verify(mMockMDnsM, never()).registerEventListener(any());
+        verify(mMockMDnsM, never()).startDaemon();
+        final INsdManagerCallback cb1 = getCallback();
+        final IBinder.DeathRecipient deathRecipient1 = verifyLinkToDeath(cb1);
+
+        // Creating another NsdManager will not cause daemon startup either.
+        connectClient(mService);
+        verify(mMockMDnsM, never()).registerEventListener(any());
+        verify(mMockMDnsM, never()).startDaemon();
+        final INsdManagerCallback cb2 = getCallback();
+        final IBinder.DeathRecipient deathRecipient2 = verifyLinkToDeath(cb2);
+
+        // If there is no active request, try to clean up the daemon but should not do it because
+        // daemon has not been started.
+        deathRecipient1.binderDied();
+        verify(mMockMDnsM, never()).unregisterEventListener(any());
+        verify(mMockMDnsM, never()).stopDaemon();
+        deathRecipient2.binderDied();
+        verify(mMockMDnsM, never()).unregisterEventListener(any());
+        verify(mMockMDnsM, never()).stopDaemon();
+    }
+
+    private IBinder.DeathRecipient verifyLinkToDeath(INsdManagerCallback cb)
+            throws Exception {
+        final IBinder.DeathRecipient dr = ((LinkToDeathRecorder) cb.asBinder()).mDr;
+        assertNotNull(dr);
+        return dr;
+    }
+
+    @Test
+    @EnableCompatChanges(RUN_NATIVE_NSD_ONLY_IF_LEGACY_APPS_T_AND_LATER)
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testClientRequestsAreGCedAtDisconnection() throws Exception {
+        final NsdManager client = connectClient(mService);
+        final INsdManagerCallback cb1 = getCallback();
+        final IBinder.DeathRecipient deathRecipient = verifyLinkToDeath(cb1);
+        verify(mMockMDnsM, never()).registerEventListener(any());
+        verify(mMockMDnsM, never()).startDaemon();
+
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        request.setPort(PORT);
+
+        // Client registration request
+        final RegistrationListener listener1 = mock(RegistrationListener.class);
+        client.registerService(request, PROTOCOL, listener1);
+        waitForIdle();
+        verify(mMockMDnsM).registerEventListener(any());
+        verify(mMockMDnsM).startDaemon();
+        verify(mMockMDnsM).registerService(
+                eq(2), eq(SERVICE_NAME), eq(SERVICE_TYPE), eq(PORT), any(), eq(IFACE_IDX_ANY));
+
+        // Client discovery request
+        final DiscoveryListener listener2 = mock(DiscoveryListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, listener2);
+        waitForIdle();
+        verify(mMockMDnsM).discover(3 /* id */, SERVICE_TYPE, IFACE_IDX_ANY);
+
+        // Client resolve request
+        final ResolveListener listener3 = mock(ResolveListener.class);
+        client.resolveService(request, listener3);
+        waitForIdle();
+        verify(mMockMDnsM).resolve(
+                4 /* id */, SERVICE_NAME, SERVICE_TYPE, "local." /* domain */, IFACE_IDX_ANY);
+
+        // Client disconnects, stop the daemon after CLEANUP_DELAY_MS.
+        deathRecipient.binderDied();
+        verifyDelayMaybeStopDaemon(CLEANUP_DELAY_MS);
+        // checks that request are cleaned
+        verify(mMockMDnsM).stopOperation(2 /* id */);
+        verify(mMockMDnsM).stopOperation(3 /* id */);
+        verify(mMockMDnsM).stopOperation(4 /* id */);
+    }
+
+    @Test
+    @EnableCompatChanges(RUN_NATIVE_NSD_ONLY_IF_LEGACY_APPS_T_AND_LATER)
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testCleanupDelayNoRequestActive() throws Exception {
+        final NsdManager client = connectClient(mService);
+
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        request.setPort(PORT);
+        final RegistrationListener listener1 = mock(RegistrationListener.class);
+        client.registerService(request, PROTOCOL, listener1);
+        waitForIdle();
+        verify(mMockMDnsM).registerEventListener(any());
+        verify(mMockMDnsM).startDaemon();
+        final INsdManagerCallback cb1 = getCallback();
+        final IBinder.DeathRecipient deathRecipient = verifyLinkToDeath(cb1);
+        verify(mMockMDnsM).registerService(
+                eq(2), eq(SERVICE_NAME), eq(SERVICE_TYPE), eq(PORT), any(), eq(IFACE_IDX_ANY));
+
+        client.unregisterService(listener1);
+        waitForIdle();
+        verify(mMockMDnsM).stopOperation(2 /* id */);
+
+        verifyDelayMaybeStopDaemon(CLEANUP_DELAY_MS);
+        reset(mMockMDnsM);
+        deathRecipient.binderDied();
+        // Client disconnects, daemon should not be stopped after CLEANUP_DELAY_MS.
+        verify(mMockMDnsM, never()).unregisterEventListener(any());
+        verify(mMockMDnsM, never()).stopDaemon();
+    }
+
+    private IMDnsEventListener getEventListener() {
+        final ArgumentCaptor<IMDnsEventListener> listenerCaptor =
+                ArgumentCaptor.forClass(IMDnsEventListener.class);
+        verify(mMockMDnsM).registerEventListener(listenerCaptor.capture());
+        return listenerCaptor.getValue();
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testDiscoverOnTetheringDownstream() throws Exception {
+        final NsdManager client = connectClient(mService);
+        final int interfaceIdx = 123;
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, discListener);
+        waitForIdle();
+
+        final IMDnsEventListener eventListener = getEventListener();
+        final ArgumentCaptor<Integer> discIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).discover(discIdCaptor.capture(), eq(SERVICE_TYPE),
+                eq(0) /* interfaceIdx */);
+        // NsdManager uses a separate HandlerThread to dispatch callbacks (on ServiceHandler), so
+        // this needs to use a timeout
+        verify(discListener, timeout(TIMEOUT_MS)).onDiscoveryStarted(SERVICE_TYPE);
+        final int discId = discIdCaptor.getValue();
+        verify(mMetrics).reportServiceDiscoveryStarted(true /* isLegacy */, discId);
+
+        final DiscoveryInfo discoveryInfo = new DiscoveryInfo(
+                discId,
+                IMDnsEventListener.SERVICE_FOUND,
+                SERVICE_NAME,
+                SERVICE_TYPE,
+                DOMAIN_NAME,
+                interfaceIdx,
+                INetd.LOCAL_NET_ID); // LOCAL_NET_ID (99) used on tethering downstreams
+        eventListener.onServiceDiscoveryStatus(discoveryInfo);
+        waitForIdle();
+
+        final ArgumentCaptor<NsdServiceInfo> discoveredInfoCaptor =
+                ArgumentCaptor.forClass(NsdServiceInfo.class);
+        verify(discListener, timeout(TIMEOUT_MS)).onServiceFound(discoveredInfoCaptor.capture());
+        final NsdServiceInfo foundInfo = discoveredInfoCaptor.getValue();
+        assertEquals(SERVICE_NAME, foundInfo.getServiceName());
+        assertEquals(SERVICE_TYPE, foundInfo.getServiceType());
+        assertNull(foundInfo.getHost());
+        assertNull(foundInfo.getNetwork());
+        assertEquals(interfaceIdx, foundInfo.getInterfaceIndex());
+
+        // After discovering the service, verify resolving it
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        client.resolveService(foundInfo, resolveListener);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> resolvIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).resolve(resolvIdCaptor.capture(), eq(SERVICE_NAME), eq(SERVICE_TYPE),
+                eq("local.") /* domain */, eq(interfaceIdx));
+
+        final int servicePort = 10123;
+        final ResolutionInfo resolutionInfo = new ResolutionInfo(
+                resolvIdCaptor.getValue(),
+                IMDnsEventListener.SERVICE_RESOLVED,
+                null /* serviceName */,
+                null /* serviceType */,
+                null /* domain */,
+                SERVICE_FULL_NAME,
+                DOMAIN_NAME,
+                servicePort,
+                new byte[0] /* txtRecord */,
+                interfaceIdx);
+
+        doReturn(true).when(mMockMDnsM).getServiceAddress(anyInt(), any(), anyInt());
+        eventListener.onServiceResolutionStatus(resolutionInfo);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> getAddrIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).getServiceAddress(getAddrIdCaptor.capture(), eq(DOMAIN_NAME),
+                eq(interfaceIdx));
+
+        final String serviceAddress = "192.0.2.123";
+        final int getAddrId = getAddrIdCaptor.getValue();
+        final GetAddressInfo addressInfo = new GetAddressInfo(
+                getAddrId,
+                IMDnsEventListener.SERVICE_GET_ADDR_SUCCESS,
+                SERVICE_FULL_NAME,
+                serviceAddress,
+                interfaceIdx,
+                INetd.LOCAL_NET_ID);
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        eventListener.onGettingServiceAddressStatus(addressInfo);
+        waitForIdle();
+
+        final ArgumentCaptor<NsdServiceInfo> resInfoCaptor =
+                ArgumentCaptor.forClass(NsdServiceInfo.class);
+        verify(resolveListener, timeout(TIMEOUT_MS)).onServiceResolved(resInfoCaptor.capture());
+        verify(mMetrics).reportServiceResolved(true /* isLegacy */, getAddrId, 10L /* durationMs */,
+                false /* isServiceFromCache */, 0 /* sentQueryCount */);
+
+        final NsdServiceInfo resolvedService = resInfoCaptor.getValue();
+        assertEquals(SERVICE_NAME, resolvedService.getServiceName());
+        assertEquals("." + SERVICE_TYPE, resolvedService.getServiceType());
+        assertEquals(parseNumericAddress(serviceAddress), resolvedService.getHost());
+        assertEquals(servicePort, resolvedService.getPort());
+        assertNull(resolvedService.getNetwork());
+        assertEquals(interfaceIdx, resolvedService.getInterfaceIndex());
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    public void testDiscoverOnTetheringDownstream_DiscoveryManager() throws Exception {
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, discListener);
+        waitForIdle();
+
+        final ArgumentCaptor<MdnsServiceBrowserListener> discoverListenerCaptor =
+                ArgumentCaptor.forClass(MdnsServiceBrowserListener.class);
+        final InOrder discManagerOrder = inOrder(mDiscoveryManager);
+        discManagerOrder.verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD),
+                discoverListenerCaptor.capture(), any());
+
+        final int interfaceIdx = 123;
+        final MdnsServiceInfo mockServiceInfo = new MdnsServiceInfo(
+                SERVICE_NAME, /* serviceInstanceName */
+                SERVICE_TYPE_WITH_LOCAL_TLD.split("\\."), /* serviceType */
+                List.of(), /* subtypes */
+                new String[] {"android", "local"}, /* hostName */
+                12345, /* port */
+                List.of(IPV4_ADDRESS),
+                List.of(IPV6_ADDRESS),
+                List.of(), /* textEntries */
+                interfaceIdx, /* interfaceIndex */
+                null /* network */,
+                Instant.MAX /* expirationTime */,
+                0L /* cachedCapabilitiesBits */);
+
+        // Verify service is found with the interface index
+        discoverListenerCaptor.getValue().onServiceNameDiscovered(
+                mockServiceInfo, false /* isServiceFromCache */);
+        final ArgumentCaptor<NsdServiceInfo> foundInfoCaptor =
+                ArgumentCaptor.forClass(NsdServiceInfo.class);
+        verify(discListener, timeout(TIMEOUT_MS)).onServiceFound(foundInfoCaptor.capture());
+        final NsdServiceInfo foundInfo = foundInfoCaptor.getValue();
+        assertNull(foundInfo.getNetwork());
+        assertEquals(interfaceIdx, foundInfo.getInterfaceIndex());
+
+        // Using the returned service info to resolve or register callback uses the interface index
+        client.resolveService(foundInfo, mock(ResolveListener.class));
+        client.registerServiceInfoCallback(foundInfo, Runnable::run,
+                mock(ServiceInfoCallback.class));
+        waitForIdle();
+
+        discManagerOrder.verify(mDiscoveryManager, times(2)).registerListener(any(), any(), argThat(
+                o -> o.getNetwork() == null && o.getInterfaceIndex() == interfaceIdx));
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testDiscoverOnBlackholeNetwork() throws Exception {
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, discListener);
+        waitForIdle();
+
+        final IMDnsEventListener eventListener = getEventListener();
+        final ArgumentCaptor<Integer> discIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).discover(discIdCaptor.capture(), eq(SERVICE_TYPE),
+                eq(0) /* interfaceIdx */);
+        // NsdManager uses a separate HandlerThread to dispatch callbacks (on ServiceHandler), so
+        // this needs to use a timeout
+        verify(discListener, timeout(TIMEOUT_MS)).onDiscoveryStarted(SERVICE_TYPE);
+        final int discId = discIdCaptor.getValue();
+        verify(mMetrics).reportServiceDiscoveryStarted(true /* isLegacy */, discId);
+
+        final DiscoveryInfo discoveryInfo = new DiscoveryInfo(
+                discId,
+                IMDnsEventListener.SERVICE_FOUND,
+                SERVICE_NAME,
+                SERVICE_TYPE,
+                DOMAIN_NAME,
+                123 /* interfaceIdx */,
+                INetd.DUMMY_NET_ID); // netId of the blackhole network
+        eventListener.onServiceDiscoveryStatus(discoveryInfo);
+        waitForIdle();
+
+        verify(discListener, never()).onServiceFound(any());
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testServiceRegistrationSuccessfulAndFailed() throws Exception {
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        request.setPort(PORT);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        client.registerService(request, PROTOCOL, regListener);
+        waitForIdle();
+
+        final IMDnsEventListener eventListener = getEventListener();
+        final ArgumentCaptor<Integer> regIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).registerService(regIdCaptor.capture(),
+                eq(SERVICE_NAME), eq(SERVICE_TYPE), eq(PORT), any(), eq(IFACE_IDX_ANY));
+
+        // Register service successfully.
+        final int regId = regIdCaptor.getValue();
+        final RegistrationInfo registrationInfo = new RegistrationInfo(
+                regId,
+                IMDnsEventListener.SERVICE_REGISTERED,
+                SERVICE_NAME,
+                SERVICE_TYPE,
+                PORT,
+                new byte[0] /* txtRecord */,
+                IFACE_IDX_ANY);
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        eventListener.onServiceRegistrationStatus(registrationInfo);
+
+        final ArgumentCaptor<NsdServiceInfo> registeredInfoCaptor =
+                ArgumentCaptor.forClass(NsdServiceInfo.class);
+        verify(regListener, timeout(TIMEOUT_MS))
+                .onServiceRegistered(registeredInfoCaptor.capture());
+        final NsdServiceInfo registeredInfo = registeredInfoCaptor.getValue();
+        assertEquals(SERVICE_NAME, registeredInfo.getServiceName());
+        verify(mMetrics).reportServiceRegistrationSucceeded(
+                true /* isLegacy */, regId, 10L /* durationMs */);
+
+        // Fail to register service.
+        final RegistrationInfo registrationFailedInfo = new RegistrationInfo(
+                regId,
+                IMDnsEventListener.SERVICE_REGISTRATION_FAILED,
+                null /* serviceName */,
+                null /* registrationType */,
+                0 /* port */,
+                new byte[0] /* txtRecord */,
+                IFACE_IDX_ANY);
+        doReturn(TEST_TIME_MS + 20L).when(mClock).elapsedRealtime();
+        eventListener.onServiceRegistrationStatus(registrationFailedInfo);
+        verify(regListener, timeout(TIMEOUT_MS))
+                .onRegistrationFailed(any(), eq(FAILURE_INTERNAL_ERROR));
+        verify(mMetrics).reportServiceRegistrationFailed(
+                true /* isLegacy */, regId, 20L /* durationMs */);
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testServiceDiscoveryFailed() throws Exception {
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, discListener);
+        waitForIdle();
+
+        final IMDnsEventListener eventListener = getEventListener();
+        final ArgumentCaptor<Integer> discIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).discover(discIdCaptor.capture(), eq(SERVICE_TYPE), eq(IFACE_IDX_ANY));
+        verify(discListener, timeout(TIMEOUT_MS)).onDiscoveryStarted(SERVICE_TYPE);
+        final int discId = discIdCaptor.getValue();
+        verify(mMetrics).reportServiceDiscoveryStarted(true /* isLegacy */, discId);
+
+        // Fail to discover service.
+        final DiscoveryInfo discoveryFailedInfo = new DiscoveryInfo(
+                discId,
+                IMDnsEventListener.SERVICE_DISCOVERY_FAILED,
+                null /* serviceName */,
+                null /* registrationType */,
+                null /* domainName */,
+                IFACE_IDX_ANY,
+                0 /* netId */);
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        eventListener.onServiceDiscoveryStatus(discoveryFailedInfo);
+        verify(discListener, timeout(TIMEOUT_MS))
+                .onStartDiscoveryFailed(SERVICE_TYPE, FAILURE_INTERNAL_ERROR);
+        verify(mMetrics).reportServiceDiscoveryFailed(
+                true /* isLegacy */, discId, 10L /* durationMs */);
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testServiceResolutionFailed() throws Exception {
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+
+        final IMDnsEventListener eventListener = getEventListener();
+        final ArgumentCaptor<Integer> resolvIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).resolve(resolvIdCaptor.capture(), eq(SERVICE_NAME), eq(SERVICE_TYPE),
+                eq("local.") /* domain */, eq(IFACE_IDX_ANY));
+
+        // Fail to resolve service.
+        final int resolvId = resolvIdCaptor.getValue();
+        final ResolutionInfo resolutionFailedInfo = new ResolutionInfo(
+                resolvId,
+                IMDnsEventListener.SERVICE_RESOLUTION_FAILED,
+                null /* serviceName */,
+                null /* serviceType */,
+                null /* domain */,
+                null /* serviceFullName */,
+                null /* domainName */,
+                0 /* port */,
+                new byte[0] /* txtRecord */,
+                IFACE_IDX_ANY);
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        eventListener.onServiceResolutionStatus(resolutionFailedInfo);
+        verify(resolveListener, timeout(TIMEOUT_MS))
+                .onResolveFailed(any(), eq(FAILURE_INTERNAL_ERROR));
+        verify(mMetrics).reportServiceResolutionFailed(
+                true /* isLegacy */, resolvId, 10L /* durationMs */);
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testGettingAddressFailed() throws Exception {
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+
+        final IMDnsEventListener eventListener = getEventListener();
+        final ArgumentCaptor<Integer> resolvIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).resolve(resolvIdCaptor.capture(), eq(SERVICE_NAME), eq(SERVICE_TYPE),
+                eq("local.") /* domain */, eq(IFACE_IDX_ANY));
+
+        // Resolve service successfully.
+        final ResolutionInfo resolutionInfo = new ResolutionInfo(
+                resolvIdCaptor.getValue(),
+                IMDnsEventListener.SERVICE_RESOLVED,
+                null /* serviceName */,
+                null /* serviceType */,
+                null /* domain */,
+                SERVICE_FULL_NAME,
+                DOMAIN_NAME,
+                PORT,
+                new byte[0] /* txtRecord */,
+                IFACE_IDX_ANY);
+        doReturn(true).when(mMockMDnsM).getServiceAddress(anyInt(), any(), anyInt());
+        eventListener.onServiceResolutionStatus(resolutionInfo);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> getAddrIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).getServiceAddress(getAddrIdCaptor.capture(), eq(DOMAIN_NAME),
+                eq(IFACE_IDX_ANY));
+
+        // Fail to get service address.
+        final int getAddrId = getAddrIdCaptor.getValue();
+        final GetAddressInfo gettingAddrFailedInfo = new GetAddressInfo(
+                getAddrId,
+                IMDnsEventListener.SERVICE_GET_ADDR_FAILED,
+                null /* hostname */,
+                null /* address */,
+                IFACE_IDX_ANY,
+                0 /* netId */);
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        eventListener.onGettingServiceAddressStatus(gettingAddrFailedInfo);
+        verify(resolveListener, timeout(TIMEOUT_MS))
+                .onResolveFailed(any(), eq(FAILURE_INTERNAL_ERROR));
+        verify(mMetrics).reportServiceResolutionFailed(
+                true /* isLegacy */, getAddrId, 10L /* durationMs */);
+    }
+
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @Test
+    public void testPerClientListenerLimit() throws Exception {
+        final NsdManager client1 = connectClient(mService);
+        final NsdManager client2 = connectClient(mService);
+
+        final String testType1 = "_testtype1._tcp";
+        final NsdServiceInfo testServiceInfo1 = new NsdServiceInfo("MyTestService1", testType1);
+        testServiceInfo1.setPort(12345);
+        final String testType2 = "_testtype2._tcp";
+        final NsdServiceInfo testServiceInfo2 = new NsdServiceInfo("MyTestService2", testType2);
+        testServiceInfo2.setPort(12345);
+
+        // Each client can register 200 requests (for example 100 discover and 100 register).
+        final int numEachListener = 100;
+        final ArrayList<DiscoveryListener> discListeners = new ArrayList<>(numEachListener);
+        final ArrayList<RegistrationListener> regListeners = new ArrayList<>(numEachListener);
+        for (int i = 0; i < numEachListener; i++) {
+            final DiscoveryListener discListener1 = mock(DiscoveryListener.class);
+            discListeners.add(discListener1);
+            final RegistrationListener regListener1 = mock(RegistrationListener.class);
+            regListeners.add(regListener1);
+            final DiscoveryListener discListener2 = mock(DiscoveryListener.class);
+            discListeners.add(discListener2);
+            final RegistrationListener regListener2 = mock(RegistrationListener.class);
+            regListeners.add(regListener2);
+            client1.discoverServices(testType1, NsdManager.PROTOCOL_DNS_SD,
+                    (Network) null, Runnable::run, discListener1);
+            client1.registerService(testServiceInfo1, NsdManager.PROTOCOL_DNS_SD, Runnable::run,
+                    regListener1);
+
+            client2.registerService(testServiceInfo2, NsdManager.PROTOCOL_DNS_SD, Runnable::run,
+                    regListener2);
+            client2.discoverServices(testType2, NsdManager.PROTOCOL_DNS_SD,
+                    (Network) null, Runnable::run, discListener2);
+        }
+
+        // Use a longer timeout than usual for the handler to process all the events. The
+        // registrations take about 1s on a high-end 2013 device.
+        HandlerUtils.waitForIdle(mHandler, 30_000L);
+        for (int i = 0; i < discListeners.size(); i++) {
+            // Callbacks are sent on the manager handler which is different from mHandler, so use
+            // a short timeout (each callback should come quickly after the previous one).
+            verify(discListeners.get(i), timeout(TEST_TIME_MS))
+                    .onDiscoveryStarted(i % 2 == 0 ? testType1 : testType2);
+
+            // registerService does not get a callback before probing finishes (will not happen as
+            // this is mocked)
+            verifyNoMoreInteractions(regListeners.get(i));
+        }
+
+        // The next registrations should fail
+        final DiscoveryListener failDiscListener1 = mock(DiscoveryListener.class);
+        final RegistrationListener failRegListener1 = mock(RegistrationListener.class);
+        final DiscoveryListener failDiscListener2 = mock(DiscoveryListener.class);
+        final RegistrationListener failRegListener2 = mock(RegistrationListener.class);
+
+        client1.discoverServices(testType1, NsdManager.PROTOCOL_DNS_SD,
+                (Network) null, Runnable::run, failDiscListener1);
+        verify(failDiscListener1, timeout(TEST_TIME_MS))
+                .onStartDiscoveryFailed(testType1, FAILURE_MAX_LIMIT);
+
+        client1.registerService(testServiceInfo1, NsdManager.PROTOCOL_DNS_SD, Runnable::run,
+                failRegListener1);
+        verify(failRegListener1, timeout(TEST_TIME_MS)).onRegistrationFailed(
+                argThat(a -> testServiceInfo1.getServiceName().equals(a.getServiceName())),
+                eq(FAILURE_MAX_LIMIT));
+
+        client1.discoverServices(testType2, NsdManager.PROTOCOL_DNS_SD,
+                (Network) null, Runnable::run, failDiscListener2);
+        verify(failDiscListener2, timeout(TEST_TIME_MS))
+                .onStartDiscoveryFailed(testType2, FAILURE_MAX_LIMIT);
+
+        client1.registerService(testServiceInfo2, NsdManager.PROTOCOL_DNS_SD, Runnable::run,
+                failRegListener2);
+        verify(failRegListener2, timeout(TEST_TIME_MS)).onRegistrationFailed(
+                argThat(a -> testServiceInfo2.getServiceName().equals(a.getServiceName())),
+                eq(FAILURE_MAX_LIMIT));
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testNoCrashWhenProcessResolutionAfterBinderDied() throws Exception {
+        final NsdManager client = connectClient(mService);
+        final INsdManagerCallback cb = getCallback();
+        final IBinder.DeathRecipient deathRecipient = verifyLinkToDeath(cb);
+        deathRecipient.binderDied();
+
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+
+        verify(mMockMDnsM, never()).registerEventListener(any());
+        verify(mMockMDnsM, never()).startDaemon();
+        verify(mMockMDnsM, never()).resolve(anyInt() /* id */, anyString() /* serviceName */,
+                anyString() /* registrationType */, anyString() /* domain */,
+                anyInt()/* interfaceIdx */);
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testStopServiceResolution() {
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> resolvIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).resolve(resolvIdCaptor.capture(), eq(SERVICE_NAME), eq(SERVICE_TYPE),
+                eq("local.") /* domain */, eq(IFACE_IDX_ANY));
+
+        final int resolveId = resolvIdCaptor.getValue();
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        client.stopServiceResolution(resolveListener);
+        waitForIdle();
+
+        verify(mMockMDnsM).stopOperation(resolveId);
+        verify(resolveListener, timeout(TIMEOUT_MS)).onResolutionStopped(argThat(ns ->
+                request.getServiceName().equals(ns.getServiceName())
+                        && request.getServiceType().equals(ns.getServiceType())));
+        verify(mMetrics).reportServiceResolutionStop(
+                true /* isLegacy */, resolveId, 10L /* durationMs */, 0 /* sentQueryCount */);
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testStopResolutionFailed() {
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> resolvIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).resolve(resolvIdCaptor.capture(), eq(SERVICE_NAME), eq(SERVICE_TYPE),
+                eq("local.") /* domain */, eq(IFACE_IDX_ANY));
+
+        final int resolveId = resolvIdCaptor.getValue();
+        doReturn(false).when(mMockMDnsM).stopOperation(anyInt());
+        client.stopServiceResolution(resolveListener);
+        waitForIdle();
+
+        verify(mMockMDnsM).stopOperation(resolveId);
+        verify(resolveListener, timeout(TIMEOUT_MS)).onStopResolutionFailed(argThat(ns ->
+                        request.getServiceName().equals(ns.getServiceName())
+                                && request.getServiceType().equals(ns.getServiceType())),
+                eq(FAILURE_OPERATION_NOT_RUNNING));
+    }
+
+    @Test @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.TIRAMISU)
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testStopResolutionDuringGettingAddress() throws RemoteException {
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+
+        final IMDnsEventListener eventListener = getEventListener();
+        final ArgumentCaptor<Integer> resolvIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).resolve(resolvIdCaptor.capture(), eq(SERVICE_NAME), eq(SERVICE_TYPE),
+                eq("local.") /* domain */, eq(IFACE_IDX_ANY));
+
+        // Resolve service successfully.
+        final ResolutionInfo resolutionInfo = new ResolutionInfo(
+                resolvIdCaptor.getValue(),
+                IMDnsEventListener.SERVICE_RESOLVED,
+                null /* serviceName */,
+                null /* serviceType */,
+                null /* domain */,
+                SERVICE_FULL_NAME,
+                DOMAIN_NAME,
+                PORT,
+                new byte[0] /* txtRecord */,
+                IFACE_IDX_ANY);
+        doReturn(true).when(mMockMDnsM).getServiceAddress(anyInt(), any(), anyInt());
+        eventListener.onServiceResolutionStatus(resolutionInfo);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> getAddrIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).getServiceAddress(getAddrIdCaptor.capture(), eq(DOMAIN_NAME),
+                eq(IFACE_IDX_ANY));
+
+        final int getAddrId = getAddrIdCaptor.getValue();
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        client.stopServiceResolution(resolveListener);
+        waitForIdle();
+
+        verify(mMockMDnsM).stopOperation(getAddrId);
+        verify(resolveListener, timeout(TIMEOUT_MS)).onResolutionStopped(argThat(ns ->
+                request.getServiceName().equals(ns.getServiceName())
+                        && request.getServiceType().equals(ns.getServiceType())));
+        verify(mMetrics).reportServiceResolutionStop(
+                true /* isLegacy */, getAddrId, 10L /* durationMs */,  0 /* sentQueryCount */);
+    }
+
+    private void verifyUpdatedServiceInfo(NsdServiceInfo info, String serviceName,
+            String serviceType, List<InetAddress> address, int port, int interfaceIndex,
+            Network network) {
+        assertEquals(serviceName, info.getServiceName());
+        assertEquals(serviceType, info.getServiceType());
+        assertEquals(address, info.getHostAddresses());
+        assertEquals(port, info.getPort());
+        assertEquals(network, info.getNetwork());
+        assertEquals(interfaceIndex, info.getInterfaceIndex());
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testRegisterAndUnregisterServiceInfoCallback() {
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ServiceInfoCallback serviceInfoCallback = mock(ServiceInfoCallback.class);
+        request.setNetwork(TEST_NETWORK);
+        client.registerServiceInfoCallback(request, Runnable::run, serviceInfoCallback);
+        waitForIdle();
+        // Verify the registration callback start.
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        verify(mSocketProvider).startMonitoringSockets();
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD),
+                listenerCaptor.capture(), argThat(options ->
+                        TEST_NETWORK.equals(options.getNetwork())));
+
+        final MdnsListener listener = listenerCaptor.getValue();
+        final int servInfoId = listener.mTransactionId;
+        // Verify the service info callback registered.
+        verify(mMetrics).reportServiceInfoCallbackRegistered(servInfoId);
+
+        final MdnsServiceInfo mdnsServiceInfo = makeTestServiceInfo();
+
+        // Callbacks for query sent.
+        listener.onDiscoveryQuerySent(Collections.emptyList(), 1 /* transactionId */);
+
+        // Verify onServiceFound callback
+        listener.onServiceFound(mdnsServiceInfo, true /* isServiceFromCache */);
+        final ArgumentCaptor<NsdServiceInfo> updateInfoCaptor =
+                ArgumentCaptor.forClass(NsdServiceInfo.class);
+        verify(serviceInfoCallback, timeout(TIMEOUT_MS).times(1))
+                .onServiceUpdated(updateInfoCaptor.capture());
+        verifyUpdatedServiceInfo(updateInfoCaptor.getAllValues().get(0) /* info */, SERVICE_NAME,
+                SERVICE_TYPE,
+                List.of(parseNumericAddress(IPV4_ADDRESS), parseNumericAddress(IPV6_ADDRESS)),
+                PORT, IFACE_IDX_ANY, TEST_NETWORK);
+
+        // Service addresses changed.
+        final String v4Address = "192.0.2.1";
+        final String v6Address = "2001:db8::1";
+        final MdnsServiceInfo updatedServiceInfo = new MdnsServiceInfo(
+                SERVICE_NAME,
+                SERVICE_TYPE_WITH_LOCAL_TLD.split("\\."),
+                List.of(), /* subtypes */
+                new String[]{"android", "local"}, /* hostName */
+                PORT,
+                List.of(v4Address),
+                List.of(v6Address),
+                List.of() /* textEntries */,
+                1234,
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                0L /* cachedCapabilitiesBits */);
+
+        // Verify onServiceUpdated callback.
+        listener.onServiceUpdated(updatedServiceInfo);
+        verify(serviceInfoCallback, timeout(TIMEOUT_MS).times(2))
+                .onServiceUpdated(updateInfoCaptor.capture());
+        verifyUpdatedServiceInfo(updateInfoCaptor.getAllValues().get(2) /* info */, SERVICE_NAME,
+                SERVICE_TYPE,
+                List.of(parseNumericAddress(v4Address), parseNumericAddress(v6Address)),
+                PORT, IFACE_IDX_ANY, TEST_NETWORK);
+
+        // Service lost then recovered.
+        listener.onServiceRemoved(updatedServiceInfo, SERVICE_REMOVED_BY_TTL_EXPIRED);
+        listener.onServiceFound(updatedServiceInfo, false /* isServiceFromCache */);
+
+        // Verify service callback unregistration.
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        client.unregisterServiceInfoCallback(serviceInfoCallback);
+        waitForIdle();
+        verify(serviceInfoCallback, timeout(TIMEOUT_MS)).onServiceInfoCallbackUnregistered();
+        verify(mMetrics).reportServiceInfoCallbackUnregistered(servInfoId, 10L /* durationMs */,
+                3 /* updateCallbackCount */, 1 /* lostCallbackCount */,
+                true /* isServiceFromCache */, 1 /* sentQueryCount */,
+                1 /* cachedServiceExpiredCount */);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testRegisterServiceCallbackFailed() {
+        final NsdManager client = connectClient(mService);
+        final String invalidServiceType = "a_service";
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, invalidServiceType);
+        final ServiceInfoCallback serviceInfoCallback = mock(ServiceInfoCallback.class);
+        client.registerServiceInfoCallback(request, Runnable::run, serviceInfoCallback);
+        waitForIdle();
+
+        // Fail to register service callback.
+        verify(serviceInfoCallback, timeout(TIMEOUT_MS))
+                .onServiceInfoCallbackRegistrationFailed(eq(FAILURE_BAD_PARAMETERS));
+        verify(mMetrics).reportServiceInfoCallbackRegistrationFailed(NO_TRANSACTION);
+    }
+
+    @Test
+    public void testUnregisterNotRegisteredCallback() {
+        final NsdManager client = connectClient(mService);
+        final ServiceInfoCallback serviceInfoCallback = mock(ServiceInfoCallback.class);
+
+        // This should not throw
+        client.unregisterServiceInfoCallback(serviceInfoCallback);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testRegisterServiceInfoCallback_MissingLocalNetworkPermission_Fails() {
+        mAccessRepository.unloadPackage(Process.myUid(), mPackageName);
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_SOFT_DENIED).when(
+                mPermissionManager).checkPermissionForStartDataDelivery(
+                ACCESS_LOCAL_NETWORK, attributionSource, null);
+
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ServiceInfoCallback serviceInfoCallback = mock(ServiceInfoCallback.class);
+        request.setNetwork(TEST_NETWORK);
+
+        // Fail to register service callback.
+        client.registerServiceInfoCallback(request, Runnable::run, serviceInfoCallback);
+        waitForIdle();
+        verify(serviceInfoCallback, timeout(TIMEOUT_MS))
+                .onServiceInfoCallbackRegistrationFailed(eq(FAILURE_PERMISSION_DENIED));
+        verify(mPermissionManager, never()).finishDataDelivery(ACCESS_LOCAL_NETWORK,
+                attributionSource);
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testRegisterServiceInfoCallback_ChosenViaPicker_Succeeds() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        mAccessRepository.unloadPackage(Process.myUid(), mPackageName);
+        final NsdManager client = connectClient(mService);
+        final ServiceInfoCallback serviceInfoCallback = mock(ServiceInfoCallback.class);
+        final NsdServiceInfo serviceInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE + ".");
+        serviceInfo.setNetwork(TEST_NETWORK);
+
+        startDiscoveryWithPicker(client);
+        final NsdPickerConnector connector = verifyPickerStarted();
+        connector.notifyServiceSelected(serviceInfo);
+        client.registerServiceInfoCallback(serviceInfo, Runnable::run, serviceInfoCallback);
+        waitForIdle();
+
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD), any(),
+                argThat(options -> SERVICE_NAME.equals(options.getResolveInstanceName())));
+        verify(serviceInfoCallback, never()).onServiceInfoCallbackRegistrationFailed(anyInt());
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testRegisterServiceInfoCallback_HasLocalNetworkPermission_Succeeds() {
+        mAccessRepository.unloadPackage(Process.myUid(), mPackageName);
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_GRANTED).when(
+                mPermissionManager).checkPermissionForStartDataDelivery(
+                ACCESS_LOCAL_NETWORK, attributionSource, null);
+
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ServiceInfoCallback serviceInfoCallback = mock(ServiceInfoCallback.class);
+        request.setNetwork(TEST_NETWORK);
+        client.registerServiceInfoCallback(request, Runnable::run, serviceInfoCallback);
+        waitForIdle();
+        // Verify the registration callback start.
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD),
+                listenerCaptor.capture(), argThat(
+                        options -> TEST_NETWORK.equals(options.getNetwork())));
+
+        final MdnsServiceInfo mdnsServiceInfo = makeTestServiceInfo();
+
+        // Discover the service and report back
+        final MdnsListener listener = listenerCaptor.getValue();
+        listener.onDiscoveryQuerySent(Collections.emptyList(), 1 /* transactionId */);
+        listener.onServiceFound(mdnsServiceInfo, true /* isServiceFromCache */);
+
+        // Service addresses changed.
+        final String v4Address = "192.0.2.1";
+        final String v6Address = "2001:db8::1";
+        final MdnsServiceInfo updatedServiceInfo = new MdnsServiceInfo(
+                SERVICE_NAME,
+                SERVICE_TYPE_WITH_LOCAL_TLD.split("\\."),
+                List.of(), /* subtypes */
+                new String[]{"android", "local"}, /* hostName */
+                PORT,
+                List.of(v4Address),
+                List.of(v6Address),
+                List.of() /* textEntries */,
+                1234,
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                0L /* cachedCapabilitiesBits */);
+
+        // Update, lose, and then recover the service. finishDataDelivery() still only be called
+        // once.
+        listener.onServiceUpdated(updatedServiceInfo);
+        listener.onServiceRemoved(updatedServiceInfo, SERVICE_REMOVED_BY_GOODBYE_RECEIVED);
+        listener.onServiceFound(updatedServiceInfo, false /* isServiceFromCache */);
+
+        // Verify service callback unregistration.
+        client.unregisterServiceInfoCallback(serviceInfoCallback);
+        waitForIdle();
+        verify(mPermissionManager, times(1)).finishDataDelivery(ACCESS_LOCAL_NETWORK,
+                attributionSource);
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testPickerStartIntent_AppNameNotFound() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+
+        doThrow(new PackageManager.NameNotFoundException()).when(mPackageManager)
+                .getApplicationInfoAsUser(anyString(), anyInt(), any());
+
+        startDiscoveryWithPicker(client);
+        final ArgumentCaptor<Intent> intentCaptor = ArgumentCaptor.forClass(Intent.class);
+        verify(mContext).startActivityAsUser(intentCaptor.capture(), any());
+
+        final Intent intent = intentCaptor.getValue();
+        assertEquals(NsdPickerConnector.ACTION_PICKER, intent.getAction());
+        assertEquals(getInstrumentation().getContext().getPackageName(),
+                intent.getStringExtra(NsdPickerConnector.EXTRA_APP_NAME));
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testPickerStartIntent_EmptyAppName() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+
+        final String packageName = getInstrumentation().getContext().getPackageName();
+        final ApplicationInfo testAppInfo = new ApplicationInfo();
+        doReturn(testAppInfo).when(mPackageManager).getApplicationInfoAsUser(
+                eq(packageName), /* flags= */ anyInt(), /* userHandle= */ any());
+        doReturn("").when(mPackageManager).getApplicationLabel(testAppInfo);
+
+        startDiscoveryWithPicker(client);
+        final ArgumentCaptor<Intent> intentCaptor = ArgumentCaptor.forClass(Intent.class);
+        verify(mContext).startActivityAsUser(intentCaptor.capture(), any());
+
+        final Intent intent = intentCaptor.getValue();
+        assertEquals(NsdPickerConnector.ACTION_PICKER, intent.getAction());
+        assertEquals(packageName, intent.getStringExtra(NsdPickerConnector.EXTRA_APP_NAME));
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testPickerStart_SecondaryUser() {
+        final UserHandle user = UserHandle.of(11);
+        doReturn(user.getUid(123)).when(mDeps).getCallingUid();
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+
+        client.discoverServices(new DiscoveryRequest.Builder(SERVICE_TYPE)
+                .setFlags(FLAG_SHOW_PICKER)
+                .build(), Runnable::run, mock(DiscoveryListener.class));
+        waitForIdle();
+
+        verify(mContext).startActivityAsUser(any(), eq(user));
+    }
+
+    private void setMdnsDiscoveryManagerEnabled() {
+        doReturn(true).when(mDeps).isMdnsDiscoveryManagerEnabled(any(Context.class));
+    }
+
+    private void setMdnsAdvertiserEnabled() {
+        doReturn(true).when(mDeps).isMdnsAdvertiserEnabled(any(Context.class));
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testMdnsDiscoveryManagerFeature() {
+        // Create NsdService w/o feature enabled.
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListenerWithoutFeature = mock(DiscoveryListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, discListenerWithoutFeature);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> legacyIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).discover(legacyIdCaptor.capture(), any(), anyInt());
+        verifyNoMoreInteractions(mDiscoveryManager);
+
+        setMdnsDiscoveryManagerEnabled();
+        final DiscoveryListener discListenerWithFeature = mock(DiscoveryListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, discListenerWithFeature);
+        waitForIdle();
+
+        final ArgumentCaptor<MdnsServiceBrowserListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsServiceBrowserListener.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD),
+                listenerCaptor.capture(), any());
+
+        client.stopServiceDiscovery(discListenerWithoutFeature);
+        waitForIdle();
+        verify(mMockMDnsM).stopOperation(legacyIdCaptor.getValue());
+
+        client.stopServiceDiscovery(discListenerWithFeature);
+        waitForIdle();
+        verify(mDiscoveryManager).unregisterListener(SERVICE_TYPE_WITH_LOCAL_TLD,
+                listenerCaptor.getValue());
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testDiscoveryWithMdnsDiscoveryManager() {
+        setMdnsDiscoveryManagerEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        // Verify the discovery start / stop.
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, TEST_NETWORK, r -> r.run(), discListener);
+        waitForIdle();
+        verify(mSocketProvider).startMonitoringSockets();
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD),
+                listenerCaptor.capture(), argThat(options ->
+                        TEST_NETWORK.equals(options.getNetwork())));
+        verify(discListener, timeout(TIMEOUT_MS)).onDiscoveryStarted(SERVICE_TYPE);
+
+        final MdnsListener listener = listenerCaptor.getValue();
+        final int discId = listener.mTransactionId;
+        verify(mMetrics).reportServiceDiscoveryStarted(false /* isLegacy */, discId);
+
+        // Callbacks for query sent.
+        listener.onDiscoveryQuerySent(Collections.emptyList(), 1 /* transactionId */);
+        listener.onDiscoveryQuerySent(Collections.emptyList(), 2 /* transactionId */);
+        listener.onDiscoveryQuerySent(Collections.emptyList(), 3 /* transactionId */);
+
+        final MdnsServiceInfo foundInfo = new MdnsServiceInfo(
+                SERVICE_NAME, /* serviceInstanceName */
+                SERVICE_TYPE_WITH_LOCAL_TLD.split("\\."), /* serviceType */
+                List.of(), /* subtypes */
+                new String[] {"android", "local"}, /* hostName */
+                12345, /* port */
+                List.of(IPV4_ADDRESS),
+                List.of(IPV6_ADDRESS),
+                List.of(), /* textEntries */
+                1234, /* interfaceIndex */
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                0L /* cachedCapabilitiesBits */);
+
+        // Verify onServiceNameDiscovered callback
+        listener.onServiceNameDiscovered(foundInfo, true /* isServiceFromCache */);
+        verify(discListener, timeout(TIMEOUT_MS)).onServiceFound(argThat(info ->
+                info.getServiceName().equals(SERVICE_NAME)
+                        // Service type in discovery callbacks has a dot at the end
+                        && info.getServiceType().equals(SERVICE_TYPE + ".")
+                        && info.getNetwork().equals(TEST_NETWORK)));
+
+        final MdnsServiceInfo removedInfo = new MdnsServiceInfo(
+                SERVICE_NAME, /* serviceInstanceName */
+                SERVICE_TYPE_WITH_LOCAL_TLD.split("\\."), /* serviceType */
+                null, /* subtypes */
+                null, /* hostName */
+                0, /* port */
+                List.of(), /* ipv4Address */
+                List.of(), /* ipv6Address */
+                null, /* textEntries */
+                1234, /* interfaceIndex */
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                0L /* cachedCapabilitiesBits */);
+        // Verify onServiceNameRemoved callback
+        listener.onServiceNameRemoved(removedInfo, SERVICE_REMOVED_BY_TTL_EXPIRED);
+        verify(discListener, timeout(TIMEOUT_MS)).onServiceLost(argThat(info ->
+                info.getServiceName().equals(SERVICE_NAME)
+                        // Service type in discovery callbacks has a dot at the end
+                        && info.getServiceType().equals(SERVICE_TYPE + ".")
+                        && info.getNetwork().equals(TEST_NETWORK)));
+
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        client.stopServiceDiscovery(discListener);
+        waitForIdle();
+        verify(mDiscoveryManager).unregisterListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD), any());
+        verify(discListener, timeout(TIMEOUT_MS)).onDiscoveryStopped(SERVICE_TYPE);
+        verify(mSocketProvider, timeout(CLEANUP_DELAY_MS + TIMEOUT_MS)).requestStopWhenInactive();
+        verify(mMetrics).reportServiceDiscoveryStop(false /* isLegacy */, discId,
+                10L /* durationMs */, 1 /* foundCallbackCount */, 1 /* lostCallbackCount */,
+                1 /* servicesCount */, 3 /* sentQueryCount */, true /* isServiceFromCache */,
+                1 /* cachedServiceExpiredCount */);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testDiscoveryWithMdnsDiscoveryManager_FailedWithInvalidServiceType() {
+        setMdnsDiscoveryManagerEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        final String invalidServiceType = "a_service";
+        client.discoverServices(
+                invalidServiceType, PROTOCOL, TEST_NETWORK, r -> r.run(), discListener);
+        waitForIdle();
+        verify(discListener, timeout(TIMEOUT_MS))
+                .onStartDiscoveryFailed(invalidServiceType, FAILURE_INTERNAL_ERROR);
+        verify(mMetrics, times(1)).reportServiceDiscoveryFailed(
+                false /* isLegacy */, NO_TRANSACTION, 0L /* durationMs */);
+
+        client.discoverServices(
+                SERVICE_TYPE_WITH_LOCAL_TLD, PROTOCOL, TEST_NETWORK, r -> r.run(), discListener);
+        waitForIdle();
+        verify(discListener, timeout(TIMEOUT_MS))
+                .onStartDiscoveryFailed(SERVICE_TYPE_WITH_LOCAL_TLD, FAILURE_INTERNAL_ERROR);
+        verify(mMetrics, times(2)).reportServiceDiscoveryFailed(
+                false /* isLegacy */, NO_TRANSACTION, 0L /* durationMs */);
+
+        final String serviceTypeWithoutTcpOrUdpEnding = "_test._com";
+        client.discoverServices(
+                serviceTypeWithoutTcpOrUdpEnding, PROTOCOL, TEST_NETWORK, r -> r.run(),
+                discListener);
+        waitForIdle();
+        verify(discListener, timeout(TIMEOUT_MS))
+                .onStartDiscoveryFailed(serviceTypeWithoutTcpOrUdpEnding, FAILURE_INTERNAL_ERROR);
+        verify(mMetrics, times(3)).reportServiceDiscoveryFailed(
+                false /* isLegacy */, NO_TRANSACTION, 0L /* durationMs */);
+    }
+
+    @Test
+    @EnableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsDisabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testLocalNetworkDevOptIn_permissionCheckFails_returnsInternalError() {
+        setMdnsDiscoveryManagerEnabled();
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_SOFT_DENIED).when(
+                mPermissionManager).checkPermissionForStartDataDelivery(
+                NEARBY_WIFI_DEVICES, attributionSource, null);
+
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, TEST_NETWORK, r -> r.run(), discListener);
+        waitForIdle();
+        verify(discListener, timeout(TIMEOUT_MS)).onStartDiscoveryFailed(SERVICE_TYPE,
+                FAILURE_INTERNAL_ERROR);
+        verify(mPermissionManager, never()).finishDataDelivery(NEARBY_WIFI_DEVICES,
+                attributionSource);
+    }
+
+    private void runMissingLocalNetworkPermissionDiscoveryFailsTest(long discoveryFlags) {
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_SOFT_DENIED).when(
+                mPermissionManager).checkPermissionForStartDataDelivery(
+                ACCESS_LOCAL_NETWORK, attributionSource, null);
+
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        final DiscoveryRequest request = new DiscoveryRequest.Builder(SERVICE_TYPE)
+                .setFlags(discoveryFlags)
+                .setNetwork(TEST_NETWORK)
+                .build();
+        client.discoverServices(request, Runnable::run, discListener);
+        waitForIdle();
+        verify(discListener, timeout(TIMEOUT_MS)).onStartDiscoveryFailed(SERVICE_TYPE,
+                FAILURE_PERMISSION_DENIED);
+        verify(mPermissionManager, never()).finishDataDelivery(ACCESS_LOCAL_NETWORK,
+                attributionSource);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testDiscoveryWithMdnsDiscoveryManager_NoPermissionWithNoPicker_Fails() {
+        setMdnsDiscoveryManagerEnabled();
+        runMissingLocalNetworkPermissionDiscoveryFailsTest(FLAG_NO_PICKER);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testDiscoveryWithMdnsDiscoveryManager_NoPermissionWithPickerDisabled_Fails() {
+        setMdnsDiscoveryManagerEnabled();
+        doReturn(false).when(mDeps).isAconfigFlagEnabled(FLAG_NSD_SERVICE_PICKER);
+        mService = makeService();
+        runMissingLocalNetworkPermissionDiscoveryFailsTest(/* discoveryFlags=*/0);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDiscovery_MissingLocalNetworkPermission_FindServicesWithPicker()
+            throws Exception {
+        assumeTrue(android.permission.flags.Flags.accessLocalNetworkPermissionEnabled());
+        setMdnsDiscoveryManagerEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = startDiscoveryWithPicker(client);
+
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE + ".local"),
+                listenerCaptor.capture(), any());
+        final MdnsListener mdnsListener = listenerCaptor.getValue();
+
+        final NsdPickerConnector connector = verifyPickerStarted();
+        final NsdServiceReceiver receiver = setMockPickerReceiver(connector);
+
+        final MdnsServiceInfo mdnsServiceInfo = makeTestServiceInfo();
+        mdnsListener.onServiceNameDiscovered(mdnsServiceInfo, false /* isServiceFromCache */);
+        waitForIdle();
+        // TODO: verify actual service contents, and find 2 services
+        verify(receiver).onServiceFound(
+                argThat(info -> info.getServiceName().equals(SERVICE_NAME)));
+
+        mdnsListener.onServiceNameRemoved(mdnsServiceInfo, SERVICE_REMOVED_BY_GOODBYE_RECEIVED);
+        waitForIdle();
+        verify(receiver).onServiceLost(
+                argThat(info -> info.getServiceName().equals(SERVICE_NAME)));
+
+        final NsdServiceInfo selectedService = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE + ".");
+        selectedService.setNetwork(TEST_NETWORK);
+        selectedService.setInterfaceIndex(TEST_INTERFACE_INDEX);
+        connector.notifyServiceSelected(selectedService);
+        waitForIdle();
+
+        final InOrder inOrder = inOrder(discListener);
+        inOrder.verify(discListener, timeout(TIMEOUT_MS)).onDiscoveryStarted(SERVICE_TYPE);
+        inOrder.verify(discListener, timeout(TIMEOUT_MS)).onServiceFound(argThat(info ->
+                info.getServiceName().equals(SERVICE_NAME)
+                        && Objects.equals(info.getNetwork(), TEST_NETWORK)
+                        && info.getInterfaceIndex() == 0));
+        inOrder.verify(discListener, timeout(TIMEOUT_MS)).onDiscoveryStopped(SERVICE_TYPE);
+        verify(mPermissionManager, never()).finishDataDelivery(ACCESS_LOCAL_NETWORK,
+                getAttributionSource());
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testDiscovery_MissingLocalNetworkPermission_NoPickerIfCompatDisabled()
+            throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        doReturn(false).when(mDeps).isPickerAutoUpgradeEnabled(anyInt());
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_SOFT_DENIED).when(
+                mPermissionManager).checkPermissionForStartDataDelivery(
+                ACCESS_LOCAL_NETWORK, attributionSource, null);
+
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, discListener);
+        waitForIdle();
+
+        verify(discListener, timeout(TIMEOUT_MS)).onStartDiscoveryFailed(SERVICE_TYPE,
+                FAILURE_PERMISSION_DENIED);
+        verify(mContext, never()).startActivityAsUser(any(), any());
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDiscovery_usingPicker_sendsDiscoveryFilters() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+
+        final PatternMatcher serviceNameFilter =
+                new PatternMatcher("test", PATTERN_LITERAL);
+        final PatternMatcher attrFilter1 = new PatternMatcher("prefix", PATTERN_PREFIX);
+        final PatternMatcher attrFilter2 = new PatternMatcher("suffix", PATTERN_SUFFIX);
+        final DiscoveryRequest request = new DiscoveryRequest.Builder(SERVICE_TYPE)
+                .setNetwork(TEST_NETWORK)
+                .setFlags(FLAG_SHOW_PICKER)
+                .setServiceNameFilter(serviceNameFilter)
+                .setAttributeFilters(Map.of(
+                        "attrkey1", attrFilter1,
+                        "attrkey2", attrFilter2
+                ))
+                .setDisplayNameAttribute("displayattr")
+                .build();
+        startDiscoveryWithPicker(client, request);
+
+        final ArgumentCaptor<Intent> intentCaptor = ArgumentCaptor.forClass(Intent.class);
+        verify(mContext).startActivityAsUser(intentCaptor.capture(), any());
+        final Intent intent = intentCaptor.getValue();
+        final DiscoveryRequest sentRequest =
+                intent.getParcelableExtra(NsdPickerConnector.EXTRA_REQUEST, DiscoveryRequest.class);
+        assertEquals(serviceNameFilter.toString(), sentRequest.getServiceNameFilter().toString());
+        final Map<String, PatternMatcher> sentAttrFilters = sentRequest.getAttributeFilters();
+        assertEquals(2, sentAttrFilters.size());
+        assertEquals(attrFilter1.toString(), sentAttrFilters.get("attrkey1").toString());
+        assertEquals(attrFilter2.toString(), sentAttrFilters.get("attrkey2").toString());
+        assertEquals("displayattr", sentRequest.getDisplayNameAttribute());
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDiscovery_usingPickerAndFilters_sendsFilteredServicesToPicker()
+            throws Exception {
+        assumeTrue(android.permission.flags.Flags.accessLocalNetworkPermissionEnabled());
+        setMdnsDiscoveryManagerEnabled();
+
+        final NsdManager client = connectClient(mService);
+        startDiscoveryWithPicker(client, new DiscoveryRequest.Builder(SERVICE_TYPE)
+                // Match SERVICE_NAME with case-insensitive comparison
+                .setServiceNameFilter(new PatternMatcher("A_NaMe", PATTERN_LITERAL))
+                .setNetwork(TEST_NETWORK)
+                .build());
+
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE + ".local"),
+                listenerCaptor.capture(), any());
+        final MdnsListener mdnsListener = listenerCaptor.getValue();
+
+        final NsdPickerConnector connector = verifyPickerStarted();
+        final NsdServiceReceiver receiver = setMockPickerReceiver(connector);
+
+        final MdnsServiceInfo matchingInfo = makeTestServiceInfo();
+        final MdnsServiceInfo otherInfo = new MdnsServiceInfo(
+                "other_service_name",
+                SERVICE_TYPE_WITH_LOCAL_TLD.split("\\."),
+                List.of(), /* subtypes */
+                new String[] {"android", "local"}, /* hostName */
+                PORT,
+                List.of(IPV4_ADDRESS),
+                List.of(IPV6_ADDRESS),
+                List.of() /* textEntries */,
+                TEST_INTERFACE_INDEX,
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                0L /* creationCapabilitiesBits */);
+
+        mdnsListener.onServiceNameDiscovered(otherInfo, false /* isServiceFromCache */);
+        mdnsListener.onServiceNameDiscovered(matchingInfo, false /* isServiceFromCache */);
+        waitForIdle();
+        verify(receiver).onServiceFound(argThat(info ->
+                info.getServiceName().equals(matchingInfo.getServiceInstanceName())));
+        verify(receiver, never()).onServiceFound(argThat(info ->
+                info.getServiceName().equals(otherInfo.getServiceInstanceName())));
+
+        mdnsListener.onServiceNameRemoved(otherInfo, SERVICE_REMOVED_BY_GOODBYE_RECEIVED);
+        mdnsListener.onServiceNameRemoved(matchingInfo, SERVICE_REMOVED_BY_GOODBYE_RECEIVED);
+        waitForIdle();
+        verify(receiver).onServiceLost(argThat(info ->
+                info.getServiceName().equals(matchingInfo.getServiceInstanceName())));
+        verify(receiver, never()).onServiceLost(argThat(info ->
+                info.getServiceName().equals(otherInfo.getServiceInstanceName())));
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDiscovery_usingPickerAndDisplayNameAttribute_receivesFullServiceInfo()
+            throws Exception {
+        assumeTrue(android.permission.flags.Flags.accessLocalNetworkPermissionEnabled());
+        setMdnsDiscoveryManagerEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final DiscoveryRequest request = new DiscoveryRequest.Builder(SERVICE_TYPE)
+                .setNetwork(TEST_NETWORK)
+                .setFlags(FLAG_SHOW_PICKER)
+                .setDisplayNameAttribute("displayattr")
+                .build();
+        final DiscoveryListener listener = startDiscoveryWithPicker(client, request);
+
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE + ".local"),
+                listenerCaptor.capture(), argThat(MdnsSearchOptions::resolveAllServices));
+        final MdnsListener mdnsListener = listenerCaptor.getValue();
+
+        final NsdPickerConnector connector = verifyPickerStarted();
+        final NsdServiceReceiver receiver = setMockPickerReceiver(connector);
+
+        final byte[] displayName = "Display Name".getBytes(UTF_8);
+        final MdnsServiceInfo mdnsServiceInfo = new MdnsServiceInfo(
+                SERVICE_NAME,
+                SERVICE_TYPE_WITH_LOCAL_TLD.split("\\."),
+                List.of(), /* subtypes */
+                new String[]{"android", "local"}, /* hostName */
+                PORT,
+                List.of() /* ipv4Addresses */,
+                List.of(IPV6_ADDRESS),
+                List.of(new TextEntry("displayattr", displayName)),
+                TEST_INTERFACE_INDEX,
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                0L /* creationCapabilitiesBits */);
+
+        mdnsListener.onServiceNameDiscovered(mdnsServiceInfo, false /* isServiceFromCache */);
+        mdnsListener.onServiceFound(mdnsServiceInfo, false /* isServiceFromCache */);
+        mdnsListener.onServiceRemoved(mdnsServiceInfo, SERVICE_REMOVED_BY_GOODBYE_RECEIVED);
+        mdnsListener.onServiceNameRemoved(mdnsServiceInfo, SERVICE_REMOVED_BY_GOODBYE_RECEIVED);
+        mdnsListener.onServiceNameDiscovered(mdnsServiceInfo, false /* isServiceFromCache */);
+        mdnsListener.onServiceFound(mdnsServiceInfo, false /* isServiceFromCache */);
+        waitForIdle();
+
+        final InOrder inOrder = inOrder(receiver);
+        final ArgumentCaptor<NsdServiceInfo> serviceInfoCaptor =
+                ArgumentCaptor.forClass(NsdServiceInfo.class);
+        inOrder.verify(receiver).onServiceFound(serviceInfoCaptor.capture());
+        inOrder.verify(receiver).onServiceLost(serviceInfoCaptor.capture());
+        inOrder.verify(receiver).onServiceFound(serviceInfoCaptor.capture());
+        verifyNoMoreInteractions(receiver);
+
+        for (NsdServiceInfo info : serviceInfoCaptor.getAllValues()) {
+            assertEquals(SERVICE_NAME, info.getServiceName());
+            assertEquals(PORT, info.getPort());
+            assertEquals(1, info.getAttributes().size());
+            assertArrayEquals(displayName, info.getAttributes().get("displayattr"));
+            assertEquals(List.of(parseNumericAddress(IPV6_ADDRESS)), info.getHostAddresses());
+        }
+
+        connector.notifyServiceSelected(serviceInfoCaptor.getValue());
+        waitForIdle();
+        // Discovery callbacks do not have the full service info
+        verify(listener).onServiceFound(argThat(info ->
+                info.getServiceName().equals(SERVICE_NAME)
+                        && info.getNetwork().equals(TEST_NETWORK)
+                        && info.getInterfaceIndex() == 0
+                        && info.getPort() == 0
+                        && info.getAttributes().isEmpty()
+                        && info.getHostAddresses().isEmpty()
+        ));
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testPickerCancelled_onUnregister() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+
+        final DiscoveryListener discListener = startDiscoveryWithPicker(client);
+        final NsdPickerConnector connector = verifyPickerStarted();
+        final NsdServiceReceiver receiver = setMockPickerReceiver(connector);
+
+        client.stopServiceDiscovery(discListener);
+        waitForIdle();
+        verify(receiver).onCancelled();
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testPickerCancelled_onClientDeath() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+        final INsdManagerCallback cb = getCallback();
+        final IBinder.DeathRecipient deathRecipient = verifyLinkToDeath(cb);
+
+        startDiscoveryWithPicker(client);
+        final NsdPickerConnector connector = verifyPickerStarted();
+        final NsdServiceReceiver receiver = setMockPickerReceiver(connector);
+
+        deathRecipient.binderDied();
+        waitForIdle();
+        verify(receiver).onCancelled();
+    }
+
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testDiscovery_pickerConnectsLate_callbacksAndMetricsRecorded() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener listener = startDiscoveryWithPicker(client);
+        final NsdPickerConnector connector = verifyPickerStarted();
+
+        // Find and lose a service before the picker receiver is set
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE + ".local"),
+                listenerCaptor.capture(), any());
+        final MdnsListener mdnsListener = listenerCaptor.getValue();
+        final MdnsServiceInfo mdnsServiceInfo = makeTestServiceInfo();
+        mdnsListener.onServiceNameDiscovered(mdnsServiceInfo, false /* isServiceFromCache */);
+        mdnsListener.onServiceNameRemoved(mdnsServiceInfo, SERVICE_REMOVED_BY_GOODBYE_RECEIVED);
+        waitForIdle();
+
+        // Find it again after the picker receiver is set
+        final NsdServiceReceiver receiver = setMockPickerReceiver(connector);
+        mdnsListener.onServiceNameDiscovered(mdnsServiceInfo, false /* isServiceFromCache */);
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        client.stopServiceDiscovery(listener);
+        waitForIdle();
+
+        // Ensure callbacks and metrics for all events are received
+        final InOrder inOrder = inOrder(receiver, mMetrics);
+        inOrder.verify(receiver).onServiceFound(any());
+        inOrder.verify(receiver).onServiceLost(any());
+        inOrder.verify(receiver).onServiceFound(any());
+        inOrder.verify(mMetrics).reportServiceDiscoveryStop(eq(false) /* isLegacy */,
+                eq(mdnsListener.mTransactionId), eq(10L) /* durationMs */,
+                eq(2) /* foundCallbackCount */, eq(1) /* lostCallbackCount */,
+                eq(1) /* servicesCount */, eq(0) /* sentQueryCount */,
+                eq(false) /* isServiceFromCache */, eq(0) /* cachedServiceExpiredCount */);
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testPickerDiscovery_serviceFoundAfterDiscoveryStop_ignored() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener listener = startDiscoveryWithPicker(client);
+        final NsdPickerConnector connector = verifyPickerStarted();
+        final NsdServiceReceiver receiver = setMockPickerReceiver(connector);
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE + ".local"),
+                listenerCaptor.capture(), any());
+        final MdnsListener mdnsListener = listenerCaptor.getValue();
+
+        client.stopServiceDiscovery(listener);
+        waitForIdle();
+        final MdnsServiceInfo mdnsServiceInfo = makeTestServiceInfo();
+        mdnsListener.onServiceNameDiscovered(mdnsServiceInfo, false /* isServiceFromCache */);
+        mdnsListener.onServiceNameRemoved(mdnsServiceInfo, SERVICE_REMOVED_BY_GOODBYE_RECEIVED);
+        waitForIdle();
+
+        verify(receiver, never()).onServiceFound(any());
+        verify(receiver, never()).onServiceLost(any());
+        verify(mMetrics).reportServiceDiscoveryStop(false /* isLegacy */,
+                mdnsListener.mTransactionId, 0L /* durationMs */,
+                0 /* foundCallbackCount */, 0 /* lostCallbackCount */,
+                0 /* servicesCount */, 0 /* sentQueryCount */,
+                false /* isServiceFromCache */, 0 /* cachedServiceExpiredCount */);
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testDiscoveryWithMdnsDiscoveryManager_HasLocalNetworkPermission_Succeeds() {
+        setMdnsDiscoveryManagerEnabled();
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_GRANTED).when(
+                mPermissionManager).checkPermissionForStartDataDelivery(
+                ACCESS_LOCAL_NETWORK, attributionSource, null);
+
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        // Verify the discovery start / stop.
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, TEST_NETWORK, r -> r.run(), discListener);
+        waitForIdle();
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD),
+                listenerCaptor.capture(), argThat(options ->
+                        TEST_NETWORK.equals(options.getNetwork())));
+        final MdnsListener listener = listenerCaptor.getValue();
+
+        // Discover service
+        final MdnsServiceInfo foundInfo = makeTestServiceInfo();
+        listener.onServiceNameDiscovered(foundInfo, true /* isServiceFromCache */);
+
+        // Remove service
+        final MdnsServiceInfo removedInfo = new MdnsServiceInfo(
+                SERVICE_NAME, /* serviceInstanceName */
+                SERVICE_TYPE_WITH_LOCAL_TLD.split("\\."), /* serviceType */
+                null, /* subtypes */
+                null, /* hostName */
+                0, /* port */
+                List.of(), /* ipv4Address */
+                List.of(), /* ipv6Address */
+                null, /* textEntries */
+                1234, /* interfaceIndex */
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                0L /* cachedCapabilitiesBits */);
+        listener.onServiceNameRemoved(removedInfo, SERVICE_REMOVED_BY_GOODBYE_RECEIVED);
+        client.stopServiceDiscovery(discListener);
+        waitForIdle();
+
+        verify(mPermissionManager, times(1)).finishDataDelivery(ACCESS_LOCAL_NETWORK,
+                attributionSource);
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    public void testDiscoveryWithMdnsDiscoveryManager_UsesSubtypes() {
+        final String typeWithSubtype = SERVICE_TYPE + ",_subtype";
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo regInfo = new NsdServiceInfo("Instance", typeWithSubtype);
+        regInfo.setHostAddresses(List.of(parseNumericAddress("192.0.2.123")));
+        regInfo.setPort(12345);
+        regInfo.setNetwork(TEST_NETWORK);
+
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+        verify(mAdvertiser).addOrUpdateService(anyInt(), argThat(s ->
+                "Instance".equals(s.getServiceName())
+                        && SERVICE_TYPE.equals(s.getServiceType())
+                        && s.getSubtypes().equals(Set.of("_subtype"))), any(), anyInt());
+
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        client.discoverServices(typeWithSubtype, PROTOCOL, TEST_NETWORK, Runnable::run,
+                discListener);
+        waitForIdle();
+        final ArgumentCaptor<MdnsSearchOptions> optionsCaptor =
+                ArgumentCaptor.forClass(MdnsSearchOptions.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE + ".local"), any(),
+                optionsCaptor.capture());
+        assertEquals(Collections.singletonList("subtype"), optionsCaptor.getValue().getSubtypes());
+    }
+
+    @Test
+    public void testDiscovery_withServiceNameFilter_filtersOutServices() {
+        setMdnsDiscoveryManagerEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        client.discoverServices(
+                new DiscoveryRequest.Builder(SERVICE_TYPE)
+                        .setNetwork(TEST_NETWORK)
+                        .setServiceNameFilter(new PatternMatcher(SERVICE_NAME, PATTERN_LITERAL))
+                        .build(),
+                Runnable::run, discListener);
+        waitForIdle();
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD),
+                listenerCaptor.capture(), argThat(options ->
+                        TEST_NETWORK.equals(options.getNetwork())));
+        verify(discListener, timeout(TIMEOUT_MS)).onDiscoveryStarted(SERVICE_TYPE);
+
+        final MdnsListener listener = listenerCaptor.getValue();
+        final MdnsServiceInfo matchingInfo = makeTestServiceInfo();
+        final MdnsServiceInfo otherInfo = new MdnsServiceInfo(
+                "other_service_name",
+                SERVICE_TYPE_WITH_LOCAL_TLD.split("\\."),
+                List.of(), /* subtypes */
+                new String[] {"android", "local"}, /* hostName */
+                PORT,
+                List.of(IPV4_ADDRESS),
+                List.of(IPV6_ADDRESS),
+                List.of() /* textEntries */,
+                TEST_INTERFACE_INDEX,
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                0L /* creationCapabilitiesBits */);
+
+        listener.onServiceNameDiscovered(otherInfo, true /* isServiceFromCache */);
+        listener.onServiceNameDiscovered(matchingInfo, true /* isServiceFromCache */);
+        verify(discListener, timeout(TIMEOUT_MS)).onServiceFound(argThat(info ->
+                info.getServiceName().equals(matchingInfo.getServiceInstanceName())));
+        verify(discListener, never()).onServiceFound(argThat(info ->
+                info.getServiceName().equals(otherInfo.getServiceInstanceName())));
+
+        // Verify onServiceNameRemoved callback
+        listener.onServiceNameRemoved(otherInfo, SERVICE_REMOVED_BY_TTL_EXPIRED);
+        listener.onServiceNameRemoved(matchingInfo, SERVICE_REMOVED_BY_TTL_EXPIRED);
+        verify(discListener, timeout(TIMEOUT_MS)).onServiceLost(argThat(info ->
+                info.getServiceName().equals(matchingInfo.getServiceInstanceName())));
+        verify(discListener, never()).onServiceLost(argThat(info ->
+                info.getServiceName().equals(otherInfo.getServiceInstanceName())));
+    }
+
+    private DiscoveryListener startDiscoveryReceivingApprovedAndNotApprovedServices(
+            long discoveryFlags) throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        mAccessRepository.unloadPackage(Process.myUid(), mPackageName);
+        final NsdManager client = connectClient(mService);
+
+        // Approve a service via the picker
+        startDiscoveryWithPicker(client);
+        final NsdPickerConnector connector = verifyPickerStarted();
+        final NsdServiceInfo approvedService = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE + ".");
+        approvedService.setNetwork(TEST_NETWORK);
+        connector.notifyServiceSelected(approvedService);
+
+        // Start discovery with provided flags
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        client.discoverServices(
+                new DiscoveryRequest.Builder(SERVICE_TYPE)
+                        .setNetwork(TEST_NETWORK)
+                        .setFlags(discoveryFlags)
+                        .build(),
+                Runnable::run, discListener);
+        waitForIdle();
+
+        // A first listener was already registered for allowlisting using the picker
+        verify(mDiscoveryManager, times(2)).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD),
+                listenerCaptor.capture(), any());
+        final MdnsListener listener = listenerCaptor.getAllValues().get(1);
+        final MdnsServiceInfo invalidInfo = makeTestServiceInfo("invalid", "_nolocalsuffix._tcp");
+        final MdnsServiceInfo approvedInfo = makeTestServiceInfo(
+                SERVICE_NAME, SERVICE_TYPE_WITH_LOCAL_TLD);
+        final MdnsServiceInfo otherInfo = makeTestServiceInfo(
+                OTHER_SERVICE_NAME, SERVICE_TYPE_WITH_LOCAL_TLD);
+
+        listener.onServiceNameDiscovered(invalidInfo, true /* isServiceFromCache */);
+        listener.onServiceNameDiscovered(otherInfo, true /* isServiceFromCache */);
+        listener.onServiceNameDiscovered(approvedInfo, true /* isServiceFromCache */);
+        waitForIdle();
+
+        return discListener;
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testDiscovery_withUserApprovedOnly_approvedServiceCallbacksOnly()
+            throws Exception {
+        final DiscoveryListener listener = startDiscoveryReceivingApprovedAndNotApprovedServices(
+                FLAG_USER_APPROVED_ONLY);
+
+        verify(listener, timeout(TIMEOUT_MS)).onServiceFound(argThat(info ->
+                info.getServiceName().equals(SERVICE_NAME)));
+        verify(listener, never()).onServiceFound(argThat(info ->
+                !info.getServiceName().equals(SERVICE_NAME)));
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testResolutionWithMdnsDiscoveryManager() throws UnknownHostException {
+        setMdnsDiscoveryManagerEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        final String serviceType = "_nsd._service._tcp";
+        final String constructedServiceType = "_service._tcp.local";
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, serviceType);
+        request.setNetwork(TEST_NETWORK);
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+        verify(mSocketProvider).startMonitoringSockets();
+        final ArgumentCaptor<MdnsSearchOptions> optionsCaptor =
+                ArgumentCaptor.forClass(MdnsSearchOptions.class);
+        verify(mDiscoveryManager).registerListener(eq(constructedServiceType),
+                listenerCaptor.capture(),
+                optionsCaptor.capture());
+        assertEquals(TEST_NETWORK, optionsCaptor.getValue().getNetwork());
+        // Subtypes are not used for resolution, only for discovery
+        assertEquals(Collections.emptyList(), optionsCaptor.getValue().getSubtypes());
+
+        final MdnsListener listener = listenerCaptor.getValue();
+        final MdnsServiceInfo mdnsServiceInfo = new MdnsServiceInfo(
+                SERVICE_NAME,
+                constructedServiceType.split("\\."),
+                List.of(), /* subtypes */
+                new String[]{"android", "local"}, /* hostName */
+                PORT,
+                List.of(IPV4_ADDRESS),
+                List.of("2001:db8::1", "2001:db8::2"),
+                List.of(TextEntry.fromBytes(new byte[]{
+                        'k', 'e', 'y', '=', (byte) 0xFF, (byte) 0xFE})) /* textEntries */,
+                1234,
+                TEST_NETWORK,
+                Instant.ofEpochSecond(1000_000L) /* expirationTime */,
+                0L /* cachedCapabilitiesBits */);
+
+        // Verify onServiceFound callback
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        listener.onServiceFound(mdnsServiceInfo, true /* isServiceFromCache */);
+        final ArgumentCaptor<NsdServiceInfo> infoCaptor =
+                ArgumentCaptor.forClass(NsdServiceInfo.class);
+        verify(resolveListener, timeout(TIMEOUT_MS)).onServiceResolved(infoCaptor.capture());
+        verify(mMetrics).reportServiceResolved(false /* isLegacy */, listener.mTransactionId,
+                10 /* durationMs */, true /* isServiceFromCache */, 0 /* sendQueryCount */);
+
+        final NsdServiceInfo info = infoCaptor.getValue();
+        assertEquals(SERVICE_NAME, info.getServiceName());
+        assertEquals("._service._tcp", info.getServiceType());
+        assertEquals(PORT, info.getPort());
+        assertTrue(info.getAttributes().containsKey("key"));
+        assertEquals(1, info.getAttributes().size());
+        assertArrayEquals(new byte[]{(byte) 0xFF, (byte) 0xFE}, info.getAttributes().get("key"));
+        assertEquals(parseNumericAddress(IPV4_ADDRESS), info.getHost());
+        assertEquals(3, info.getHostAddresses().size());
+        assertTrue(info.getHostAddresses().stream().anyMatch(
+                address -> address.equals(parseNumericAddress("2001:db8::1"))));
+        assertTrue(info.getHostAddresses().stream().anyMatch(
+                address -> address.equals(parseNumericAddress("2001:db8::2"))));
+        assertEquals(TEST_NETWORK, info.getNetwork());
+        assertEquals(Instant.ofEpochSecond(1000_000L), info.getExpirationTime());
+
+        // Verify the listener has been unregistered.
+        verify(mDiscoveryManager, timeout(TIMEOUT_MS))
+                .unregisterListener(eq(constructedServiceType), any());
+        verify(mSocketProvider, timeout(CLEANUP_DELAY_MS + TIMEOUT_MS)).requestStopWhenInactive();
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testResolutionWithMdnsDiscoveryManager_MissingLocalNetworkPermission_Fails()
+            throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_SOFT_DENIED).when(
+                mPermissionManager).checkPermissionForStartDataDelivery(
+                ACCESS_LOCAL_NETWORK, attributionSource, null);
+
+        final NsdManager client = connectClient(mService);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        request.setNetwork(TEST_NETWORK);
+
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+        verify(resolveListener, timeout(TIMEOUT_MS))
+                .onResolveFailed(any(), eq(FAILURE_PERMISSION_DENIED));
+        verify(mPermissionManager, never()).finishDataDelivery(ACCESS_LOCAL_NETWORK,
+                attributionSource);
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testResolutionWithMdnsDiscoveryManager_ChosenViaPicker_Succeeds()
+            throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        mAccessRepository.unloadPackage(Process.myUid(), mPackageName);
+
+        final NsdManager client = connectClient(mService);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        final NsdServiceInfo serviceInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE + ".");
+        serviceInfo.setNetwork(TEST_NETWORK);
+
+        startDiscoveryWithPicker(client);
+        final NsdPickerConnector connector = verifyPickerStarted();
+        connector.notifyServiceSelected(serviceInfo);
+        waitForIdle();
+
+        client.resolveService(serviceInfo, resolveListener);
+        waitForIdle();
+
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD), any(),
+                argThat(options -> SERVICE_NAME.equals(options.getResolveInstanceName())));
+        verify(resolveListener, never()).onResolveFailed(any(), anyInt());
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testResolutionWithMdnsDiscoveryManager_HasLocalNetworkPermission_Succeeds()
+            throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_GRANTED).when(
+                mPermissionManager).checkPermissionForStartDataDelivery(
+                ACCESS_LOCAL_NETWORK, attributionSource, null);
+
+        final NsdManager client = connectClient(mService);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        request.setNetwork(TEST_NETWORK);
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+        final ArgumentCaptor<MdnsSearchOptions> optionsCaptor =
+                ArgumentCaptor.forClass(MdnsSearchOptions.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD),
+                listenerCaptor.capture(),
+                optionsCaptor.capture());
+
+        final MdnsListener listener = listenerCaptor.getValue();
+        final MdnsServiceInfo mdnsServiceInfo = makeTestServiceInfo();
+
+        // Verify onServiceFound callback
+        listener.onServiceFound(mdnsServiceInfo, true /* isServiceFromCache */);
+
+        // The listener should be unregistered and finishDataDelivery() called
+        verify(mDiscoveryManager, timeout(TIMEOUT_MS))
+                .unregisterListener(eq(SERVICE_TYPE_WITH_LOCAL_TLD), any());
+        verify(mPermissionManager, times(1)).finishDataDelivery(ACCESS_LOCAL_NETWORK,
+                attributionSource);
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testMdnsAdvertiserFeatureFlagging() {
+        // Create NsdService w/o feature enabled.
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo.setHost(parseNumericAddress("192.0.2.123"));
+        regInfo.setPort(12345);
+        final RegistrationListener regListenerWithoutFeature = mock(RegistrationListener.class);
+        client.registerService(regInfo, PROTOCOL, regListenerWithoutFeature);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> legacyIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mMockMDnsM).registerService(legacyIdCaptor.capture(), any(), any(), anyInt(),
+                any(), anyInt());
+        verifyNoMoreInteractions(mAdvertiser);
+
+        setMdnsAdvertiserEnabled();
+        final RegistrationListener regListenerWithFeature = mock(RegistrationListener.class);
+        client.registerService(regInfo, PROTOCOL, regListenerWithFeature);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> serviceIdCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mAdvertiser).addOrUpdateService(serviceIdCaptor.capture(),
+                argThat(info -> matches(info, regInfo)), any(), anyInt());
+
+        client.unregisterService(regListenerWithoutFeature);
+        waitForIdle();
+        verify(mMockMDnsM).stopOperation(legacyIdCaptor.getValue());
+        verify(mAdvertiser, never()).removeService(anyInt());
+
+        doReturn(mock(MdnsAdvertiser.AdvertiserMetrics.class))
+                .when(mAdvertiser).getAdvertiserMetrics(anyInt());
+        client.unregisterService(regListenerWithFeature);
+        waitForIdle();
+        verify(mAdvertiser).removeService(serviceIdCaptor.getValue());
+    }
+
+    @Test
+    @DisableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testTypeSpecificFeatureFlagging() {
+        doReturn("_type1._tcp:flag1,_type2._tcp:flag2").when(mDeps).getTypeAllowlistFlags();
+        doReturn(true).when(mDeps).isFeatureEnabled(any(),
+                eq("mdns_discovery_manager_allowlist_flag1_version"));
+        doReturn(true).when(mDeps).isFeatureEnabled(any(),
+                eq("mdns_advertiser_allowlist_flag2_version"));
+
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo service1 = new NsdServiceInfo(SERVICE_NAME, "_type1._tcp");
+        service1.setHostAddresses(List.of(parseNumericAddress("2001:db8::123")));
+        service1.setPort(1234);
+        final NsdServiceInfo service2 = new NsdServiceInfo(SERVICE_NAME, "_type2._tcp");
+        service1.setHostAddresses(List.of(parseNumericAddress("2001:db8::123")));
+        service2.setPort(1234);
+
+        client.discoverServices(service1.getServiceType(),
+                NsdManager.PROTOCOL_DNS_SD, mock(DiscoveryListener.class));
+        client.discoverServices(service2.getServiceType(),
+                NsdManager.PROTOCOL_DNS_SD, mock(DiscoveryListener.class));
+        waitForIdle();
+
+        // The DiscoveryManager is enabled for _type1 but not _type2
+        verify(mDiscoveryManager).registerListener(eq("_type1._tcp.local"), any(), any());
+        verify(mDiscoveryManager, never()).registerListener(
+                eq("_type2._tcp.local"), any(), any());
+
+        client.resolveService(service1, mock(ResolveListener.class));
+        client.resolveService(service2, mock(ResolveListener.class));
+        waitForIdle();
+
+        // Same behavior for resolve
+        verify(mDiscoveryManager, times(2)).registerListener(
+                eq("_type1._tcp.local"), any(), any());
+        verify(mDiscoveryManager, never()).registerListener(
+                eq("_type2._tcp.local"), any(), any());
+
+        client.registerService(service1, NsdManager.PROTOCOL_DNS_SD,
+                mock(RegistrationListener.class));
+        client.registerService(service2, NsdManager.PROTOCOL_DNS_SD,
+                mock(RegistrationListener.class));
+        waitForIdle();
+
+        // The advertiser is enabled for _type2 but not _type1
+        verify(mAdvertiser, never()).addOrUpdateService(anyInt(),
+                argThat(info -> matches(info, service1)), any(), anyInt());
+        verify(mAdvertiser).addOrUpdateService(anyInt(), argThat(info -> matches(info, service2)),
+                any(), anyInt());
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testAdvertiseWithMdnsAdvertiser() {
+        setMdnsAdvertiserEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final ArgumentCaptor<MdnsAdvertiser.AdvertiserCallback> cbCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertiser.AdvertiserCallback.class);
+        verify(mDeps).makeMdnsAdvertiser(
+                any(), any(), cbCaptor.capture(), any(), any(), any(), any());
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo.setHost(parseNumericAddress("192.0.2.123"));
+        regInfo.setPort(12345);
+        regInfo.setAttribute("testattr", "testvalue");
+        regInfo.setNetwork(TEST_NETWORK);
+
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+        verify(mSocketProvider).startMonitoringSockets();
+        final ArgumentCaptor<Integer> idCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mAdvertiser).addOrUpdateService(idCaptor.capture(), argThat(info ->
+                matches(info, regInfo)), any(), anyInt());
+
+        // Verify onServiceRegistered callback
+        final MdnsAdvertiser.AdvertiserCallback cb = cbCaptor.getValue();
+        final int regId = idCaptor.getValue();
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        cb.onRegisterServiceSucceeded(regId, regInfo);
+
+        verify(regListener, timeout(TIMEOUT_MS)).onServiceRegistered(argThat(info -> matches(info,
+                new NsdServiceInfo(regInfo.getServiceName(), null))));
+        verify(mMetrics).reportServiceRegistrationSucceeded(
+                false /* isLegacy */, regId, 10L /* durationMs */);
+
+        final MdnsAdvertiser.AdvertiserMetrics metrics = new MdnsAdvertiser.AdvertiserMetrics(
+                50 /* repliedRequestCount */, 100 /* sentPacketCount */,
+                3 /* conflictDuringProbingCount */, 2 /* conflictAfterProbingCount */);
+        doReturn(TEST_TIME_MS + 100L).when(mClock).elapsedRealtime();
+        doReturn(metrics).when(mAdvertiser).getAdvertiserMetrics(regId);
+        client.unregisterService(regListener);
+        waitForIdle();
+        verify(mAdvertiser).removeService(idCaptor.getValue());
+        verify(regListener, timeout(TIMEOUT_MS)).onServiceUnregistered(
+                argThat(info -> matches(info, regInfo)));
+        verify(mSocketProvider, timeout(TIMEOUT_MS)).requestStopWhenInactive();
+        verify(mMetrics).reportServiceUnregistration(false /* isLegacy */, regId,
+                100L /* durationMs */, 50 /* repliedRequestCount */, 100 /* sentPacketCount */,
+                3 /* conflictDuringProbingCount */, 2 /* conflictAfterProbingCount */);
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.BAKLAVA)
+    public void testRegisterService_informsMdnsAdvertiserWithEmptyIpAddress() {
+        setMdnsAdvertiserEnabled();
+        doReturn(PERMISSION_DENIED).when(mContext)
+                .checkPermission(NETWORK_SETTINGS,
+                        Process.myPid(), Process.myUid());
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final ArgumentCaptor<MdnsAdvertiser.AdvertiserCallback> cbCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertiser.AdvertiserCallback.class);
+        verify(mDeps).makeMdnsAdvertiser(
+                any(), any(), cbCaptor.capture(), any(), any(), any(), any());
+
+        final ArgumentCaptor<NsdServiceInfo> serviceInfoCaptor =
+                ArgumentCaptor.forClass(NsdServiceInfo.class);
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo.setHost(parseNumericAddress("192.0.2.123"));
+        regInfo.setPort(12345);
+        regInfo.setAttribute("testattr", "testvalue");
+        regInfo.setNetwork(new Network(999));
+        regInfo.setHostname("MyHost");
+
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+        verify(mAdvertiser, times(1))
+                .addOrUpdateService(anyInt(), serviceInfoCaptor.capture(), any(), anyInt());
+        assertNull(serviceInfoCaptor.getValue().getHostname());
+        assertEquals(0, serviceInfoCaptor.getValue().getHostAddresses().size());
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testAdvertiseWithMdnsAdvertiser_FailedWithInvalidServiceType() {
+        setMdnsAdvertiserEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final ArgumentCaptor<MdnsAdvertiser.AdvertiserCallback> cbCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertiser.AdvertiserCallback.class);
+        verify(mDeps).makeMdnsAdvertiser(
+                any(), any(), cbCaptor.capture(), any(), any(), any(), any());
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, "invalid_type");
+        regInfo.setHost(parseNumericAddress("192.0.2.123"));
+        regInfo.setPort(12345);
+        regInfo.setAttribute("testattr", "testvalue");
+        regInfo.setNetwork(TEST_NETWORK);
+
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+        verify(mAdvertiser, never()).addOrUpdateService(anyInt(), any(), any(), anyInt());
+
+        verify(regListener, timeout(TIMEOUT_MS)).onRegistrationFailed(
+                argThat(info -> matches(info, regInfo)), eq(FAILURE_INTERNAL_ERROR));
+        verify(mMetrics).reportServiceRegistrationFailed(
+                false /* isLegacy */, NO_TRANSACTION, 0L /* durationMs */);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testAdvertiseWithMdnsAdvertiser_LongServiceName() {
+        setMdnsAdvertiserEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final ArgumentCaptor<MdnsAdvertiser.AdvertiserCallback> cbCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertiser.AdvertiserCallback.class);
+        verify(mDeps).makeMdnsAdvertiser(
+                any(), any(), cbCaptor.capture(), any(), any(), any(), any());
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo("a".repeat(70), SERVICE_TYPE);
+        regInfo.setHost(parseNumericAddress("192.0.2.123"));
+        regInfo.setPort(12345);
+        regInfo.setAttribute("testattr", "testvalue");
+        regInfo.setNetwork(TEST_NETWORK);
+
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+        final ArgumentCaptor<Integer> idCaptor = ArgumentCaptor.forClass(Integer.class);
+        // Service name is truncated to 63 characters
+        verify(mAdvertiser)
+                .addOrUpdateService(
+                        idCaptor.capture(),
+                        argThat(info -> info.getServiceName().equals("a".repeat(63))),
+                        any(),
+                        anyInt());
+
+        // Verify onServiceRegistered callback
+        final MdnsAdvertiser.AdvertiserCallback cb = cbCaptor.getValue();
+        final int regId = idCaptor.getValue();
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        cb.onRegisterServiceSucceeded(regId, regInfo);
+
+        verify(regListener, timeout(TIMEOUT_MS)).onServiceRegistered(
+                argThat(info -> matches(info, new NsdServiceInfo(regInfo.getServiceName(), null))));
+        verify(mMetrics).reportServiceRegistrationSucceeded(
+                false /* isLegacy */, regId, 10L /* durationMs */);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testAdvertiseCustomTtl_validTtl_success() {
+        runValidTtlAdvertisingTest(30L);
+        runValidTtlAdvertisingTest(10 * 3600L);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testAdvertiseCustomTtl_ttlSmallerThan30SecondsButClientIsSystemServer_success() {
+        when(mDeps.getCallingUid()).thenReturn(Process.SYSTEM_UID);
+
+        runValidTtlAdvertisingTest(29L);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testAdvertiseCustomTtl_ttlLargerThan10HoursButClientIsSystemServer_success() {
+        when(mDeps.getCallingUid()).thenReturn(Process.SYSTEM_UID);
+
+        runValidTtlAdvertisingTest(10 * 3600L + 1);
+        runValidTtlAdvertisingTest(0xffffffffL);
+    }
+
+    private void runValidTtlAdvertisingTest(long validTtlSeconds) {
+        setMdnsAdvertiserEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final ArgumentCaptor<MdnsAdvertiser.AdvertiserCallback> cbCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertiser.AdvertiserCallback.class);
+        verify(mDeps).makeMdnsAdvertiser(
+                any(), any(), cbCaptor.capture(), any(), any(), any(), any());
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo("Service custom TTL", SERVICE_TYPE);
+        regInfo.setPort(1234);
+        final AdvertisingRequest request =
+                new AdvertisingRequest.Builder(regInfo, NsdManager.PROTOCOL_DNS_SD)
+                    .setTtl(Duration.ofSeconds(validTtlSeconds)).build();
+
+        client.registerService(request, Runnable::run, regListener);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> idCaptor = ArgumentCaptor.forClass(Integer.class);
+        final MdnsAdvertisingOptions expectedAdverstingOptions =
+                MdnsAdvertisingOptions.newBuilder().setTtl(request.getTtl()).build();
+        verify(mAdvertiser).addOrUpdateService(idCaptor.capture(), any(),
+                eq(expectedAdverstingOptions), anyInt());
+
+        // Verify onServiceRegistered callback
+        final MdnsAdvertiser.AdvertiserCallback cb = cbCaptor.getValue();
+        final int regId = idCaptor.getValue();
+        cb.onRegisterServiceSucceeded(regId, regInfo);
+
+        verify(regListener, timeout(TIMEOUT_MS)).onServiceRegistered(
+                argThat(info -> matches(info, new NsdServiceInfo(regInfo.getServiceName(), null))));
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testRegisterService_MissingLocalNetworkPermission_Fails() {
+        setMdnsAdvertiserEnabled();
+
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_SOFT_DENIED).when(
+                mPermissionManager).checkPermissionForStartDataDelivery(
+                ACCESS_LOCAL_NETWORK, attributionSource, null);
+
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final ArgumentCaptor<MdnsAdvertiser.AdvertiserCallback> cbCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertiser.AdvertiserCallback.class);
+        verify(mDeps).makeMdnsAdvertiser(
+                any(), any(), cbCaptor.capture(), any(), any(), any(), any());
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo.setHost(parseNumericAddress("192.0.2.123"));
+        regInfo.setPort(12345);
+        regInfo.setAttribute("testattr", "testvalue");
+        regInfo.setNetwork(TEST_NETWORK);
+
+
+        assertThrows(SecurityException.class,
+                () -> client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run,
+                        regListener));
+        verify(mPermissionManager, never()).finishDataDelivery(ACCESS_LOCAL_NETWORK,
+                attributionSource);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testRegisterService_HasLocalNetworkPermission_Succeeds() {
+        setMdnsAdvertiserEnabled();
+
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_GRANTED).when(
+                mPermissionManager).checkPermissionForStartDataDelivery(
+                ACCESS_LOCAL_NETWORK, attributionSource, null);
+
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final ArgumentCaptor<MdnsAdvertiser.AdvertiserCallback> cbCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertiser.AdvertiserCallback.class);
+        verify(mDeps).makeMdnsAdvertiser(
+                any(), any(), cbCaptor.capture(), any(), any(), any(), any());
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo.setHost(parseNumericAddress("192.0.2.123"));
+        regInfo.setPort(12345);
+        regInfo.setAttribute("testattr", "testvalue");
+        regInfo.setNetwork(TEST_NETWORK);
+
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+
+        final ArgumentCaptor<Integer> idCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(mAdvertiser).addOrUpdateService(idCaptor.capture(), argThat(info ->
+                matches(info, regInfo)), any(), anyInt());
+
+        // Verify onServiceRegistered callback
+        final MdnsAdvertiser.AdvertiserCallback cb = cbCaptor.getValue();
+        final int regId = idCaptor.getValue();
+        cb.onRegisterServiceSucceeded(regId, regInfo);
+
+        final MdnsAdvertiser.AdvertiserMetrics metrics = new MdnsAdvertiser.AdvertiserMetrics(
+                50 /* repliedRequestCount */, 100 /* sentPacketCount */,
+                3 /* conflictDuringProbingCount */, 2 /* conflictAfterProbingCount */);
+        doReturn(metrics).when(mAdvertiser).getAdvertiserMetrics(regId);
+        client.unregisterService(regListener);
+        waitForIdle();
+        verify(mAdvertiser).removeService(idCaptor.getValue());
+        verify(mPermissionManager, times(1)).finishDataDelivery(ACCESS_LOCAL_NETWORK,
+                attributionSource);
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testAdvertiseCustomTtl_invalidTtl_FailsWithBadParameters() {
+        setMdnsAdvertiserEnabled();
+        final long invalidTtlSeconds = 29L;
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final ArgumentCaptor<MdnsAdvertiser.AdvertiserCallback> cbCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertiser.AdvertiserCallback.class);
+        verify(mDeps).makeMdnsAdvertiser(
+                any(), any(), cbCaptor.capture(), any(), any(), any(), any());
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo("Service custom TTL", SERVICE_TYPE);
+        regInfo.setPort(1234);
+        final AdvertisingRequest request =
+                new AdvertisingRequest.Builder(regInfo, NsdManager.PROTOCOL_DNS_SD)
+                    .setTtl(Duration.ofSeconds(invalidTtlSeconds)).build();
+        client.registerService(request, Runnable::run, regListener);
+        waitForIdle();
+
+        verify(regListener, timeout(TIMEOUT_MS))
+                .onRegistrationFailed(any(), eq(FAILURE_BAD_PARAMETERS));
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testAdvertiseOffloadOnly_FailsForNonTv() {
+        setMdnsAdvertiserEnabled();
+        doReturn(false).when(mPackageManager).hasSystemFeature(FEATURE_LEANBACK);
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final ArgumentCaptor<MdnsAdvertiser.AdvertiserCallback> cbCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertiser.AdvertiserCallback.class);
+        verify(mDeps).makeMdnsAdvertiser(
+                any(), any(), cbCaptor.capture(), any(), any(), any(), any());
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo("Service custom TTL", SERVICE_TYPE);
+        regInfo.setPort(1234);
+        final AdvertisingRequest request =
+                new AdvertisingRequest.Builder(regInfo, NsdManager.PROTOCOL_DNS_SD)
+                        .setFlags(AdvertisingRequest.FLAG_OFFLOAD_ONLY).build();
+        client.registerService(request, Runnable::run, regListener);
+        waitForIdle();
+
+        verify(regListener, timeout(TIMEOUT_MS))
+                .onRegistrationFailed(any(), eq(FAILURE_BAD_PARAMETERS));
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testAdvertiseOffloadOnly_SupportForTvRunningAndroidB() {
+        assumeTrue(Build.VERSION_CODES.BAKLAVA == Build.VERSION.SDK_INT);
+        setMdnsAdvertiserEnabled();
+        doReturn(true).when(mPackageManager).hasSystemFeature(FEATURE_LEANBACK);
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final ArgumentCaptor<MdnsAdvertiser.AdvertiserCallback> cbCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertiser.AdvertiserCallback.class);
+        verify(mDeps).makeMdnsAdvertiser(
+                any(), any(), cbCaptor.capture(), any(), any(), any(), any());
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo("Service custom TTL", SERVICE_TYPE);
+        regInfo.setPort(1234);
+        final AdvertisingRequest request =
+                new AdvertisingRequest.Builder(regInfo, NsdManager.PROTOCOL_DNS_SD)
+                        .setFlags(AdvertisingRequest.FLAG_OFFLOAD_ONLY).build();
+        client.registerService(request, Runnable::run, regListener);
+        waitForIdle();
+
+        final ArgumentCaptor<MdnsAdvertisingOptions> optionsCaptor =
+                ArgumentCaptor.forClass(MdnsAdvertisingOptions.class);
+        verify(mAdvertiser).addOrUpdateService(anyInt(), any(),
+                optionsCaptor.capture(), anyInt());
+        assertTrue(optionsCaptor.getValue().isOffloadOnly());
+    }
+
+    @Test
+    @DisableCompatChanges(RESTRICT_LOCAL_NETWORK)
+    public void testStopServiceResolutionWithMdnsDiscoveryManager() {
+        setMdnsDiscoveryManagerEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        final String serviceType = "_nsd._service._tcp";
+        final String constructedServiceType = "_service._tcp.local";
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, serviceType);
+        request.setNetwork(TEST_NETWORK);
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+        verify(mSocketProvider).startMonitoringSockets();
+        final ArgumentCaptor<MdnsSearchOptions> optionsCaptor =
+                ArgumentCaptor.forClass(MdnsSearchOptions.class);
+        verify(mDiscoveryManager).registerListener(eq(constructedServiceType),
+                listenerCaptor.capture(),
+                optionsCaptor.capture());
+        assertEquals(TEST_NETWORK, optionsCaptor.getValue().getNetwork());
+        // Subtypes are not used for resolution, only for discovery
+        assertEquals(Collections.emptyList(), optionsCaptor.getValue().getSubtypes());
+
+        final MdnsListener listener = listenerCaptor.getValue();
+        // Callbacks for query sent.
+        listener.onDiscoveryQuerySent(Collections.emptyList(), 1 /* transactionId */);
+
+        doReturn(TEST_TIME_MS + 10L).when(mClock).elapsedRealtime();
+        client.stopServiceResolution(resolveListener);
+        waitForIdle();
+
+        // Verify the listener has been unregistered.
+        verify(mDiscoveryManager, timeout(TIMEOUT_MS))
+                .unregisterListener(eq(constructedServiceType), eq(listener));
+        verify(resolveListener, timeout(TIMEOUT_MS)).onResolutionStopped(argThat(ns ->
+                request.getServiceName().equals(ns.getServiceName())
+                        && request.getServiceType().equals(ns.getServiceType())));
+        verify(mSocketProvider, timeout(CLEANUP_DELAY_MS + TIMEOUT_MS)).requestStopWhenInactive();
+        verify(mMetrics).reportServiceResolutionStop(false /* isLegacy */, listener.mTransactionId,
+                10L /* durationMs */, 1 /* sentQueryCount */);
+    }
+
+    @Test
+    public void testParseTypeAndSubtype() {
+        final String serviceType1 = "test._tcp";
+        final String serviceType2 = "_test._quic";
+        final String serviceType3 = "_test._quic,_test1,_test2";
+        final String serviceType4 = "_123._udp.";
+        final String serviceType5 = "_TEST._999._tcp.";
+        final String serviceType6 = "_998._tcp.,_TEST";
+        final String serviceType7 = "_997._tcp,_TEST";
+        final String serviceType8 = "_997._tcp,_test1,_test2,_test3";
+        final String serviceType9 = "_test4._997._tcp,_test1,_test2,_test3";
+
+        assertNull(parseTypeAndSubtype(serviceType1));
+        assertNull(parseTypeAndSubtype(serviceType2));
+        assertNull(parseTypeAndSubtype(serviceType3));
+        assertEquals(new Pair<>("_123._udp", Collections.emptyList()),
+                parseTypeAndSubtype(serviceType4));
+        assertEquals(new Pair<>("_999._tcp", List.of("_TEST")), parseTypeAndSubtype(serviceType5));
+        assertEquals(new Pair<>("_998._tcp", List.of("_TEST")), parseTypeAndSubtype(serviceType6));
+        assertEquals(new Pair<>("_997._tcp", List.of("_TEST")), parseTypeAndSubtype(serviceType7));
+
+        assertEquals(new Pair<>("_997._tcp", List.of("_test1", "_test2", "_test3")),
+                parseTypeAndSubtype(serviceType8));
+        assertEquals(new Pair<>("_997._tcp", List.of("_test4")),
+                parseTypeAndSubtype(serviceType9));
+    }
+
+    @Test
+    public void TestCheckHostname() {
+        // Valid cases
+        assertTrue(checkHostname(null));
+        assertTrue(checkHostname("a"));
+        assertTrue(checkHostname("1"));
+        assertTrue(checkHostname("a-1234-bbbb-cccc000"));
+        assertTrue(checkHostname("A-1234-BBbb-CCCC000"));
+        assertTrue(checkHostname("1234-bbbb-cccc000"));
+        assertTrue(checkHostname("0123456789abcdef"
+                                + "0123456789abcdef"
+                                + "0123456789abcdef"
+                                + "0123456789abcde" // 63 characters
+                        ));
+
+        // Invalid cases
+        assertFalse(checkHostname("?"));
+        assertFalse(checkHostname("/"));
+        assertFalse(checkHostname("a-"));
+        assertFalse(checkHostname("B-"));
+        assertFalse(checkHostname("-A"));
+        assertFalse(checkHostname("-b"));
+        assertFalse(checkHostname("-1-"));
+        assertFalse(checkHostname("0123456789abcdef"
+                                + "0123456789abcdef"
+                                + "0123456789abcdef"
+                                + "0123456789abcdef" // 64 characters
+                        ));
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    public void testEnablePlatformMdnsBackend() {
+        final NsdManager client = connectClient(mService);
+        final NsdServiceInfo regInfo = new NsdServiceInfo("a".repeat(70), SERVICE_TYPE);
+        regInfo.setHostAddresses(List.of(parseNumericAddress("192.0.2.123")));
+        regInfo.setPort(12345);
+        regInfo.setAttribute("testattr", "testvalue");
+        regInfo.setNetwork(TEST_NETWORK);
+
+        // Verify the registration uses MdnsAdvertiser
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+        verify(mSocketProvider).startMonitoringSockets();
+        verify(mAdvertiser).addOrUpdateService(anyInt(), any(), any(), anyInt());
+
+        // Verify the discovery uses MdnsDiscoveryManager
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, TEST_NETWORK, r -> r.run(), discListener);
+        waitForIdle();
+        verify(mDiscoveryManager).registerListener(anyString(), any(), any());
+
+        // Verify the discovery uses MdnsDiscoveryManager
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        client.resolveService(regInfo, r -> r.run(), resolveListener);
+        waitForIdle();
+        verify(mDiscoveryManager, times(2)).registerListener(anyString(), any(), any());
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    public void testTakeMulticastLockOnBehalfOfClient_ForWifiNetworksOnly() {
+        doReturn("iface").when(mDeps).getSocketInterfaceName(any());
+
+        // Test on one client in the foreground
+        mUidImportanceListener.onUidImportance(123, IMPORTANCE_FOREGROUND);
+        doReturn(123).when(mDeps).getCallingUid();
+        final NsdManager client = connectClient(mService);
+
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo.setHostAddresses(List.of(parseNumericAddress("192.0.2.123")));
+        regInfo.setPort(12345);
+        // File a request for all networks
+        regInfo.setNetwork(null);
+
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+        verify(mSocketProvider).startMonitoringSockets();
+        verify(mAdvertiser).addOrUpdateService(anyInt(), any(), any(), anyInt());
+
+        final Network wifiNetwork1 = new Network(123);
+        final Network wifiNetwork2 = new Network(124);
+        final Network ethernetNetwork = new Network(125);
+
+        final MdnsInterfaceSocket wifiNetworkSocket1 = mock(MdnsInterfaceSocket.class);
+        final MdnsInterfaceSocket wifiNetworkSocket2 = mock(MdnsInterfaceSocket.class);
+        final MdnsInterfaceSocket ethernetNetworkSocket = mock(MdnsInterfaceSocket.class);
+
+        // Nothing happens for networks with no transports, no Wi-Fi transport, or VPN transport
+        mHandler.post(() -> {
+            mSocketRequestMonitor.onSocketRequestFulfilled(
+                    new Network(125), mock(MdnsInterfaceSocket.class), new int[0]);
+            mSocketRequestMonitor.onSocketRequestFulfilled(
+                    ethernetNetwork, ethernetNetworkSocket,
+                    new int[] { TRANSPORT_ETHERNET });
+            mSocketRequestMonitor.onSocketRequestFulfilled(
+                    new Network(127), mock(MdnsInterfaceSocket.class),
+                    new int[] { TRANSPORT_WIFI, TRANSPORT_VPN });
+        });
+        waitForIdle();
+        verify(mWifiManager, never()).createMulticastLock(any());
+
+        // First Wi-Fi network
+        mHandler.post(() -> mSocketRequestMonitor.onSocketRequestFulfilled(
+                wifiNetwork1, wifiNetworkSocket1, new int[] { TRANSPORT_WIFI }));
+        waitForIdle();
+        verify(mWifiManager).createMulticastLock(any());
+        verify(mMulticastLock).acquire();
+
+        // Second Wi-Fi network
+        mHandler.post(() -> mSocketRequestMonitor.onSocketRequestFulfilled(
+                wifiNetwork2, wifiNetworkSocket2, new int[] { TRANSPORT_WIFI }));
+        waitForIdle();
+        verifyNoMoreInteractions(mMulticastLock);
+
+        // One Wi-Fi network becomes unused, nothing happens
+        mHandler.post(() -> mSocketRequestMonitor.onSocketDestroyed(
+                wifiNetwork1, wifiNetworkSocket1));
+        waitForIdle();
+        verifyNoMoreInteractions(mMulticastLock);
+
+        // Ethernet network becomes unused, still nothing
+        mHandler.post(() -> mSocketRequestMonitor.onSocketDestroyed(
+                ethernetNetwork, ethernetNetworkSocket));
+        waitForIdle();
+        verifyNoMoreInteractions(mMulticastLock);
+
+        // The second Wi-Fi network becomes unused, the lock is released
+        mHandler.post(() -> mSocketRequestMonitor.onSocketDestroyed(
+                wifiNetwork2, wifiNetworkSocket2));
+        waitForIdle();
+        verify(mMulticastLock).release();
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    public void testTakeMulticastLockOnBehalfOfClient_ForForegroundAppsOnly() {
+        final int uid1 = 12;
+        final int uid2 = 34;
+        final int uid3 = 56;
+        final int uid4 = 78;
+        final InOrder lockOrder = inOrder(mMulticastLock);
+        // Connect one client without any foreground info
+        doReturn(uid1).when(mDeps).getCallingUid();
+        final NsdManager client1 = connectClient(mService);
+
+        // Connect client2 as visible, but not foreground
+        mUidImportanceListener.onUidImportance(uid2, IMPORTANCE_VISIBLE);
+        waitForIdle();
+        doReturn(uid2).when(mDeps).getCallingUid();
+        final NsdManager client2 = connectClient(mService);
+
+        // Connect client3, client4 as foreground
+        mUidImportanceListener.onUidImportance(uid3, IMPORTANCE_FOREGROUND);
+        waitForIdle();
+        doReturn(uid3).when(mDeps).getCallingUid();
+        final NsdManager client3 = connectClient(mService);
+
+        mUidImportanceListener.onUidImportance(uid4, IMPORTANCE_FOREGROUND);
+        waitForIdle();
+        doReturn(uid4).when(mDeps).getCallingUid();
+        final NsdManager client4 = connectClient(mService);
+
+        // First client advertises on any network
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo.setHostAddresses(List.of(parseNumericAddress("192.0.2.123")));
+        regInfo.setPort(12345);
+        regInfo.setNetwork(null);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        client1.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+
+        final MdnsInterfaceSocket wifiSocket = mock(MdnsInterfaceSocket.class);
+        final Network wifiNetwork = new Network(123);
+
+        final MdnsInterfaceSocket ethSocket = mock(MdnsInterfaceSocket.class);
+        final Network ethNetwork = new Network(234);
+
+        mHandler.post(() -> {
+            mSocketRequestMonitor.onSocketRequestFulfilled(
+                    wifiNetwork, wifiSocket, new int[] { TRANSPORT_WIFI });
+            mSocketRequestMonitor.onSocketRequestFulfilled(
+                    ethNetwork, ethSocket, new int[] { TRANSPORT_ETHERNET });
+        });
+        waitForIdle();
+
+        // No multicast lock since client1 has no foreground info
+        lockOrder.verifyNoMoreInteractions();
+
+        // Second client discovers specifically on the Wi-Fi network
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        client2.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, wifiNetwork,
+                Runnable::run, discListener);
+        waitForIdle();
+        mHandler.post(() -> mSocketRequestMonitor.onSocketRequestFulfilled(
+                wifiNetwork, wifiSocket, new int[] { TRANSPORT_WIFI }));
+        waitForIdle();
+        // No multicast lock since client2 is not visible enough
+        lockOrder.verifyNoMoreInteractions();
+
+        // Third client registers a callback on all networks
+        final NsdServiceInfo cbInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        cbInfo.setNetwork(null);
+        final ServiceInfoCallback infoCb = mock(ServiceInfoCallback.class);
+        client3.registerServiceInfoCallback(cbInfo, Runnable::run, infoCb);
+        waitForIdle();
+        mHandler.post(() -> {
+            mSocketRequestMonitor.onSocketRequestFulfilled(
+                    wifiNetwork, wifiSocket, new int[] { TRANSPORT_WIFI });
+            mSocketRequestMonitor.onSocketRequestFulfilled(
+                    ethNetwork, ethSocket, new int[] { TRANSPORT_ETHERNET });
+        });
+        waitForIdle();
+
+        // Multicast lock is taken for third client
+        lockOrder.verify(mMulticastLock).acquire();
+
+        // Client3 goes to the background
+        mUidImportanceListener.onUidImportance(uid3, IMPORTANCE_CACHED);
+        waitForIdle();
+        lockOrder.verify(mMulticastLock).release();
+
+        // client4 resolves on a different network
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        final NsdServiceInfo resolveInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        resolveInfo.setNetwork(ethNetwork);
+        client4.resolveService(resolveInfo, Runnable::run, resolveListener);
+        waitForIdle();
+        mHandler.post(() -> mSocketRequestMonitor.onSocketRequestFulfilled(
+                ethNetwork, ethSocket, new int[] { TRANSPORT_ETHERNET }));
+        waitForIdle();
+
+        // client4 is foreground, but not Wi-Fi
+        lockOrder.verifyNoMoreInteractions();
+
+        // Second client becomes foreground
+        mUidImportanceListener.onUidImportance(uid2, IMPORTANCE_FOREGROUND);
+        waitForIdle();
+
+        lockOrder.verify(mMulticastLock).acquire();
+
+        // Second client is lost
+        mUidImportanceListener.onUidImportance(uid2, IMPORTANCE_GONE);
+        waitForIdle();
+
+        lockOrder.verify(mMulticastLock).release();
+    }
+
+    @Test
+    public void testNullINsdManagerCallback() {
+        final NsdService service = new NsdService(
+                mContext, mThread.getLooper(), CLEANUP_DELAY_MS, mDeps) {
+            @Override
+            public INsdServiceConnector connect(INsdManagerCallback baseCb,
+                    boolean runNewMdnsBackend, String packageName) {
+                // Pass null INsdManagerCallback
+                return super.connect(null /* cb */, runNewMdnsBackend, packageName);
+            }
+        };
+
+        assertThrows(IllegalArgumentException.class, () -> new NsdManager(mContext, service));
+    }
+
+    @Test
+    public void testInvalidPackageName() {
+        final NsdService service = new NsdService(
+                mContext, mThread.getLooper(), CLEANUP_DELAY_MS, mDeps) {
+            @Override
+            public INsdServiceConnector connect(INsdManagerCallback baseCb,
+                    boolean runNewMdnsBackend, String packageName) {
+                return super.connect(baseCb, runNewMdnsBackend, "some.other.package");
+            }
+        };
+
+        assertThrows(SecurityException.class, () -> new NsdManager(mContext, service));
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testRegisterOffloadEngine_checkPermission_V() {
+        final NsdManager client = connectClient(mService);
+        final OffloadEngine offloadEngine = mock(OffloadEngine.class);
+        doReturn(PERMISSION_DENIED).when(mContext).checkCallingOrSelfPermission(NETWORK_STACK);
+        doReturn(PERMISSION_DENIED).when(mContext).checkCallingOrSelfPermission(
+                PERMISSION_MAINLINE_NETWORK_STACK);
+        doReturn(PERMISSION_DENIED).when(mContext).checkCallingOrSelfPermission(NETWORK_SETTINGS);
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(
+                REGISTER_NSD_OFFLOAD_ENGINE);
+
+        doReturn(PERMISSION_DENIED).when(mContext).checkCallingOrSelfPermission(
+                REGISTER_NSD_OFFLOAD_ENGINE);
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(DEVICE_POWER);
+        assertThrows(SecurityException.class,
+                () -> client.registerOffloadEngine("iface1", OFFLOAD_TYPE_REPLY,
+                        OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run,
+                        offloadEngine));
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(
+                REGISTER_NSD_OFFLOAD_ENGINE);
+        final OffloadEngine offloadEngine2 = mock(OffloadEngine.class);
+        client.registerOffloadEngine("iface2", OFFLOAD_TYPE_REPLY,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run,
+                offloadEngine2);
+        client.unregisterOffloadEngine(offloadEngine2);
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreAfter(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.TIRAMISU)
+    public void testRegisterOffloadEngine_checkPermission_U() {
+        final NsdManager client = connectClient(mService);
+        final OffloadEngine offloadEngine = mock(OffloadEngine.class);
+        doReturn(PERMISSION_DENIED).when(mContext).checkCallingOrSelfPermission(NETWORK_STACK);
+        doReturn(PERMISSION_DENIED).when(mContext).checkCallingOrSelfPermission(
+                PERMISSION_MAINLINE_NETWORK_STACK);
+        doReturn(PERMISSION_DENIED).when(mContext).checkCallingOrSelfPermission(NETWORK_SETTINGS);
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(
+                REGISTER_NSD_OFFLOAD_ENGINE);
+
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(DEVICE_POWER);
+        client.registerOffloadEngine("iface2", OFFLOAD_TYPE_REPLY,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run,
+                offloadEngine);
+        client.unregisterOffloadEngine(offloadEngine);
+    }
+
+    private OffloadEngine registerOffloadEngine(
+            String interfaceName,
+            @OffloadEngine.OffloadType long offloadType
+    ) {
+        final NsdManager client = connectClient(mService);
+        final OffloadEngine offloadEngine = mock(OffloadEngine.class);
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(
+                REGISTER_NSD_OFFLOAD_ENGINE);
+        client.registerOffloadEngine(interfaceName,
+                offloadType,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run,
+                offloadEngine);
+        waitForIdle();
+        return offloadEngine;
+    }
+
+    private void registerOffloadEngine(
+            String interfaceName,
+            OffloadEngine offloadEngine,
+            @OffloadEngine.OffloadType long offloadType
+    ) {
+        final NsdManager client = connectClient(mService);
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(
+                REGISTER_NSD_OFFLOAD_ENGINE);
+        client.registerOffloadEngine(interfaceName,
+                offloadType,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run,
+                offloadEngine);
+        waitForIdle();
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @RequiresFlagsDisabled(FLAG_NSD_MDNS_SCAN_OFFLOAD)
+    public void testRegisterOffloadEngine_sendAllOffloadServiceInfos() {
+        final String interfaceName = "iface";
+        long offloadTypeUsedInOffloadEngineRegistration =
+                OFFLOAD_TYPE_REPLY | OFFLOAD_TYPE_FILTER_REPLIES;
+        final OffloadServiceInfo advertingInfo = new OffloadServiceInfo(
+                new OffloadServiceInfo.Key("_testService", "_testType"), List.of("_sub1", "_sub2"),
+                "Android.local", new byte[] { 0x1, 0x2, 0x3 }, 1 /* priority */,
+                OFFLOAD_TYPE_REPLY);
+        final OffloadServiceInfo advertingInfoExpected = advertingInfo.withOffloadType(
+                OFFLOAD_TYPE_REPLY
+        );
+
+        doReturn(List.of(new MdnsAdvertiser.OffloadServiceInfoWrapper(123, advertingInfo)))
+                .when(mAdvertiser).notifyOffloadStart(interfaceName);
+        final DiscoveryOffloadInfo filerRepliesInfo = new DiscoveryOffloadInfo(
+                "_testService", "_testType._tcp.local", List.of("_sub1", "_sub2"), "Android.local");
+        final OffloadServiceInfo discoveryInfoExpected =
+                createOffloadServiceInfoFromDiscoveryOffload(
+                        filerRepliesInfo,
+                        DiscoveryOffloadInfo.OFFLOAD_TYPE
+                );
+
+        doReturn(List.of(filerRepliesInfo)).when(mDiscoveryManager)
+                .notifyOffloadStart(eq(interfaceName));
+        final OffloadEngine offloadEngine = registerOffloadEngine(
+                interfaceName,
+                offloadTypeUsedInOffloadEngineRegistration
+        );
+        // Verify that the OffloadServiceInfo retrieves from the advertiser and discoveryManager and
+        // then sends it to the OffloadEngine.
+        verify(mAdvertiser).notifyOffloadStart(interfaceName);
+        verify(mDiscoveryManager).notifyOffloadStart(eq(interfaceName));
+        verify(offloadEngine).onOffloadServiceUpdated(advertingInfoExpected);
+        verify(offloadEngine).onOffloadServiceUpdated(discoveryInfoExpected);
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    @RequiresFlagsEnabled(FLAG_NSD_MDNS_SCAN_OFFLOAD)
+    public void testRegisterOffloadEngine_onOffloadServiceUpdatedIsNotInvoked_AdvertisingInfo() {
+        final String interfaceName = "iface";
+        final OffloadServiceInfo advertisingInfo = new OffloadServiceInfo(
+                new OffloadServiceInfo.Key("_testService", "_testType"),
+                List.of("_sub1", "_sub2"),
+                "Android.local",
+                new byte[] { 0x1, 0x2, 0x3 },
+                1 /* priority */,
+                OFFLOAD_TYPE_REPLY
+        );
+        doReturn(List.of(new MdnsAdvertiser.OffloadServiceInfoWrapper(123, advertisingInfo)))
+                .when(mAdvertiser).notifyOffloadStart(interfaceName);
+
+        final OffloadEngine offloadEngine = registerOffloadEngine(
+                interfaceName,
+                OFFLOAD_TYPE_QUERY
+        );
+
+        verify(mAdvertiser).notifyOffloadStart(interfaceName);
+        verify(offloadEngine, never()).onOffloadServiceUpdated(any());
+    }
+
+    @Test
+    public void testRegisterOffloadEngine_onOffloadServiceUpdatedIsNotInvoked_DiscoveryInfo() {
+        final String interfaceName = "iface";
+        final DiscoveryOffloadInfo discoveryOffloadInfo = new DiscoveryOffloadInfo(
+                "_testService",
+                "_testType._tcp.local",
+                List.of("_sub1", "_sub2"),
+                "Android.local"
+        );
+        doReturn(List.of(discoveryOffloadInfo)).when(mDiscoveryManager)
+                .notifyOffloadStart(eq(interfaceName));
+
+        final OffloadEngine offloadEngine = registerOffloadEngine(
+                interfaceName,
+                OFFLOAD_TYPE_REPLY
+        );
+
+        verify(mDiscoveryManager, never()).notifyOffloadStart(any());
+        verify(offloadEngine, never()).onOffloadServiceUpdated(any());
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testRegisterOffloadSession_sendAllOffloadServiceInfos() {
+        final String interfaceName = "iface";
+        final DiscoveryOffloadInfo discoveryOffloadInfo = new DiscoveryOffloadInfo(
+                "_testService", "_testType._tcp.local", List.of("_sub1", "_sub2"), "Android.local");
+        long offloadType = OFFLOAD_TYPE_QUERY | OFFLOAD_TYPE_REPLY;
+        long expectedOffloadType = DiscoveryOffloadInfo.OFFLOAD_TYPE;
+        if (nsdMdnsScanOffload()) {
+            expectedOffloadType = offloadType & DiscoveryOffloadInfo.OFFLOAD_TYPE;
+        }
+        final OffloadServiceInfo discoveryInfo =
+                createOffloadServiceInfoFromDiscoveryOffload(
+                        discoveryOffloadInfo,
+                        expectedOffloadType
+                );
+        doReturn(List.of(discoveryOffloadInfo)).when(mDiscoveryManager)
+                .notifyOffloadStart(eq(interfaceName));
+        final OffloadEngine offloadEngine = registerOffloadEngine(interfaceName, offloadType);
+        // Verify that the OffloadServiceInfo retrieves from the advertiser and discoveryManager and
+        // then sends it to the OffloadEngine.
+        verify(mAdvertiser).notifyOffloadStart(interfaceName);
+        verify(mDiscoveryManager).notifyOffloadStart(eq(interfaceName));
+        verify(offloadEngine).onOffloadServiceUpdated(discoveryInfo);
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testInjectProxyOffloadEngineResponse()
+            throws ExecutionException, InterruptedException, TimeoutException {
+        NsdServiceInfo serviceInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE + ".");
+        boolean isServiceLost = false;
+        String interfaceName = "lo";
+        final CompletableFuture<OffloadSession> sessionFuture = new CompletableFuture<>();
+
+
+        OffloadEngine offloadEngine = new OffloadEngine() {
+            @Override
+            public void onOffloadServiceUpdated(@NonNull OffloadServiceInfo info) {
+
+            }
+
+            @Override
+            public void onOffloadServiceRemoved(@NonNull OffloadServiceInfo info) {
+
+            }
+
+            @Override
+            public void onOffloadSessionCreated(@NonNull OffloadSession offloadSession) {
+                sessionFuture.complete(offloadSession);
+            }
+        };
+        registerOffloadEngine(
+                interfaceName,
+                offloadEngine,
+                OFFLOAD_TYPE_QUERY
+        );
+
+        OffloadSession offloadSession = sessionFuture.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        offloadSession.notifyServiceFound(serviceInfo);
+
+        ArgumentCaptor<NsdServiceInfo> serviceInfoCaptor =
+                ArgumentCaptor.forClass(NsdServiceInfo.class);
+        ArgumentCaptor<Boolean> isServiceLostCaptor = ArgumentCaptor.forClass(Boolean.class);
+        ArgumentCaptor<String> interfaceNameCaptor = ArgumentCaptor.forClass(String.class);
+
+        verify(mDiscoveryManager, timeout(TIMEOUT_MS)).handleProxyOffloadEngineResponse(
+                serviceInfoCaptor.capture(),
+                isServiceLostCaptor.capture(),
+                interfaceNameCaptor.capture()
+        );
+        assertEquals(SERVICE_NAME, serviceInfoCaptor.getValue().getServiceName());
+        assertEquals(isServiceLost, isServiceLostCaptor.getValue());
+        assertEquals("lo", interfaceNameCaptor.getValue());
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testNotifyServiceLost_WithAndWithoutDot_InvokesDiscoveryManager()
+            throws ExecutionException, InterruptedException, TimeoutException {
+        final String interfaceName = "lo";
+        final CompletableFuture<OffloadSession> sessionFuture = new CompletableFuture<>();
+        final OffloadEngine offloadEngine = new OffloadEngine() {
+            @Override
+            public void onOffloadServiceUpdated(@NonNull OffloadServiceInfo info) {}
+            @Override
+            public void onOffloadServiceRemoved(@NonNull OffloadServiceInfo info) {}
+            @Override
+            public void onOffloadSessionCreated(@NonNull OffloadSession offloadSession) {
+                sessionFuture.complete(offloadSession);
+            }
+        };
+
+        registerOffloadEngine(interfaceName, offloadEngine, OFFLOAD_TYPE_QUERY);
+        final OffloadSession offloadSession = sessionFuture.get(TIMEOUT_MS, TimeUnit.MILLISECONDS);
+
+        // Case 1: Service type ends with a dot (covers DiscoveryListener#onServiceFound/Lost)
+        final NsdServiceInfo infoWithDot = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE + ".");
+        offloadSession.notifyServiceLost(infoWithDot);
+
+        // Case 2: Service type does not end with a dot (covers ServiceInfoCallback#onServiceLost)
+        final NsdServiceInfo infoWithoutDot = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        offloadSession.notifyServiceLost(infoWithoutDot);
+
+        // Verify handleProxyOffloadEngineResponse is called for both cases
+        final ArgumentCaptor<NsdServiceInfo> infoCaptor =
+                ArgumentCaptor.forClass(NsdServiceInfo.class);
+        verify(mDiscoveryManager, timeout(TIMEOUT_MS).times(2))
+                .handleProxyOffloadEngineResponse(
+                        infoCaptor.capture(),
+                        eq(true) /* isServiceLost */,
+                        eq(interfaceName));
+
+        final List<NsdServiceInfo> capturedInfos = infoCaptor.getAllValues();
+        assertEquals(2, capturedInfos.size());
+
+        for (NsdServiceInfo capturedInfo : capturedInfos) {
+            final String type = capturedInfo.getServiceType();
+            assertFalse("Service type should not have a trailing dot: " + type,
+                    type.endsWith("."));
+            assertEquals(SERVICE_TYPE, type);
+        }
+    }
+
+    private void verifyOffloadServiceUpdatedAndRemoved(String interfaceName,
+            OffloadServiceInfo info, OffloadCallback cb, OffloadEngine offloadEngine) {
+        // onOffloadStartOrUpdate callback triggered. The OffloadServiceInfo update should be sent
+        // to the OffloadEngine.
+        cb.onOffloadStartOrUpdate(interfaceName, info);
+        waitForIdle();
+        verify(offloadEngine).onOffloadServiceUpdated(info);
+        // onOffloadStop callback triggered. The OffloadServiceInfo removal should be sent to the
+        // OffloadEngine.
+        cb.onOffloadStop(interfaceName, info);
+        waitForIdle();
+        verify(offloadEngine).onOffloadServiceRemoved(info);
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testRegisterOffloadEngine_OffloadServiceUpdatedAndRemoved_Advertiser() {
+        final String interfaceName = "iface";
+        final OffloadServiceInfo info = new OffloadServiceInfo(
+                new OffloadServiceInfo.Key("_testService", "_testType"), List.of("_sub1", "_sub2"),
+                "Android.local", new byte[] { 0x1, 0x2, 0x3 }, 1 /* priority */,
+                OFFLOAD_TYPE_REPLY);
+        doReturn(Collections.emptyList()).when(mAdvertiser)
+                .notifyOffloadStart(anyString());
+        final OffloadEngine offloadEngine = registerOffloadEngine(
+                interfaceName,
+                OFFLOAD_TYPE_REPLY | OFFLOAD_TYPE_FILTER_REPLIES
+        );
+        // Verify that the OffloadServiceInfo retrieves from the advertiser and that no info is
+        // sent to the OffloadEngine.
+        verify(mAdvertiser).notifyOffloadStart(interfaceName);
+        verify(offloadEngine, never()).onOffloadServiceUpdated(any());
+        verifyOffloadServiceUpdatedAndRemoved(
+                interfaceName, info, mOffloadCallback, offloadEngine);
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testRegisterOffloadEngine_OffloadServiceUpdatedAndRemoved_DiscoveryManager() {
+        final String interfaceName = "iface";
+        final OffloadServiceInfo info = new OffloadServiceInfo(
+                new OffloadServiceInfo.Key("", "_testType"), List.of("_sub1", "_sub2"),
+                "Android.local", new byte[]{0x1, 0x2, 0x3}, 1 /* priority */,
+                OFFLOAD_TYPE_FILTER_REPLIES);
+        doReturn(Collections.emptyList()).when(mDiscoveryManager)
+                .notifyOffloadStart(eq(interfaceName));
+        final OffloadEngine offloadEngine = registerOffloadEngine(
+                interfaceName, OFFLOAD_TYPE_REPLY | OFFLOAD_TYPE_FILTER_REPLIES
+        );
+        // Verify that the OffloadServiceInfo retrieves from the DiscoveryManager and that no info
+        // is sent to the OffloadEngine.
+        verify(mDiscoveryManager).notifyOffloadStart(eq(interfaceName));
+        verify(offloadEngine, never()).onOffloadServiceUpdated(any());
+
+        verifyOffloadServiceUpdatedAndRemoved(
+                interfaceName, info, mOffloadCallback, offloadEngine);
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testTakeMulticastLock_BypassedByOffloadEngine() {
+        final InOrder lockOrder = inOrder(mMulticastLock, mWifiManager);
+        final String interfaceName = "iface";
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(
+                REGISTER_NSD_OFFLOAD_ENGINE);
+        doReturn(interfaceName).when(mDeps).getSocketInterfaceName(any());
+
+        // A foreground client makes a request.
+        mUidImportanceListener.onUidImportance(123, IMPORTANCE_FOREGROUND);
+        doReturn(123).when(mDeps).getCallingUid();
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo.setPort(12345);
+        // File a request for all networks
+        regInfo.setNetwork(null);
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+
+        // Register an offload engine that can bypass the lock.
+        final OffloadEngine offloadEngine = mock(OffloadEngine.class);
+        client.registerOffloadEngine(interfaceName,
+                OFFLOAD_TYPE_REPLY | OFFLOAD_TYPE_FILTER_REPLIES,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run, offloadEngine);
+        waitForIdle();
+
+        // When a Wi-Fi network is used, the lock is NOT taken due to the offload engine.
+        final Network wifiNetwork = new Network(456);
+        final MdnsInterfaceSocket wifiSocket = mock(MdnsInterfaceSocket.class);
+        mHandler.post(() -> mSocketRequestMonitor.onSocketRequestFulfilled(
+                wifiNetwork, wifiSocket, new int[]{TRANSPORT_WIFI}));
+        waitForIdle();
+        lockOrder.verify(mWifiManager, never()).createMulticastLock(any());
+        lockOrder.verify(mMulticastLock, never()).acquire();
+
+        // Unregister the offload engine.
+        client.unregisterOffloadEngine(offloadEngine);
+        waitForIdle();
+
+        // The lock is now taken.
+        lockOrder.verify(mWifiManager).createMulticastLock(any());
+        lockOrder.verify(mMulticastLock).acquire();
+
+        // Re-register the offload engine.
+        client.registerOffloadEngine(interfaceName,
+                OFFLOAD_TYPE_REPLY | OFFLOAD_TYPE_FILTER_REPLIES,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run, offloadEngine);
+        waitForIdle();
+
+        // The lock is released.
+        lockOrder.verify(mMulticastLock).release();
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testTakeMulticastLock_NotBypassedWithPartialOffloadTypes() {
+        final InOrder lockOrder = inOrder(mMulticastLock, mWifiManager);
+        final String interfaceName = "iface";
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(
+                REGISTER_NSD_OFFLOAD_ENGINE);
+        doReturn(interfaceName).when(mDeps).getSocketInterfaceName(any());
+
+        // A foreground client makes a request.
+        mUidImportanceListener.onUidImportance(123, IMPORTANCE_FOREGROUND);
+        doReturn(123).when(mDeps).getCallingUid();
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo.setPort(12345);
+        // File a request for all networks
+        regInfo.setNetwork(null);
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+
+        // When a Wi-Fi network is used, the lock is taken.
+        final Network wifiNetwork = new Network(456);
+        final MdnsInterfaceSocket wifiSocket = mock(MdnsInterfaceSocket.class);
+        mHandler.post(() -> mSocketRequestMonitor.onSocketRequestFulfilled(
+                wifiNetwork, wifiSocket, new int[]{TRANSPORT_WIFI}));
+        waitForIdle();
+        lockOrder.verify(mWifiManager).createMulticastLock(any());
+        lockOrder.verify(mMulticastLock).acquire();
+
+        // Register an offload engine with only one of the required types.
+        final OffloadEngine offloadEngineReply = mock(OffloadEngine.class);
+        client.registerOffloadEngine(interfaceName, OFFLOAD_TYPE_REPLY,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run, offloadEngineReply);
+        waitForIdle();
+
+        // The lock is still held.
+        lockOrder.verify(mMulticastLock, never()).release();
+
+        // Register another engine with the other required type.
+        final OffloadEngine offloadEngineFilter = mock(OffloadEngine.class);
+        client.registerOffloadEngine(interfaceName, OFFLOAD_TYPE_FILTER_REPLIES,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run, offloadEngineFilter);
+        waitForIdle();
+
+        // The lock is still held as no single engine has both types.
+        lockOrder.verify(mMulticastLock, never()).release();
+
+        final OffloadEngine offloadEngineQuery = mock(OffloadEngine.class);
+        client.registerOffloadEngine(interfaceName, OFFLOAD_TYPE_QUERY,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run, offloadEngineQuery);
+        waitForIdle();
+        lockOrder.verify(mMulticastLock, never()).release();
+
+        // Register an engine with both types.
+        final OffloadEngine offloadEngineBoth = mock(OffloadEngine.class);
+        client.registerOffloadEngine(interfaceName,
+                OFFLOAD_TYPE_REPLY | OFFLOAD_TYPE_FILTER_REPLIES,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run, offloadEngineBoth);
+        waitForIdle();
+
+        // The lock is now released.
+        lockOrder.verify(mMulticastLock).release();
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testTakeMulticastLock_BypassedByOffloadEngine_NewCombinations() {
+        final InOrder lockOrder = inOrder(mMulticastLock, mWifiManager);
+        final String interfaceName = "iface";
+
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(
+                REGISTER_NSD_OFFLOAD_ENGINE);
+        doReturn(interfaceName).when(mDeps).getSocketInterfaceName(any());
+
+        // A foreground client makes a request.
+        mUidImportanceListener.onUidImportance(123, IMPORTANCE_FOREGROUND);
+        doReturn(123).when(mDeps).getCallingUid();
+        final NsdManager client = connectClient(mService);
+        final RegistrationListener regListener = mock(RegistrationListener.class);
+        final NsdServiceInfo regInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo.setPort(12345);
+        // File a request for all networks
+        regInfo.setNetwork(null);
+        client.registerService(regInfo, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener);
+        waitForIdle();
+
+        // Register an offload engine that can bypass the lock.
+        final OffloadEngine offloadEngine1 = mock(OffloadEngine.class);
+        client.registerOffloadEngine(interfaceName,
+                OFFLOAD_TYPE_REPLY | OFFLOAD_TYPE_QUERY, OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK,
+                Runnable::run, offloadEngine1);
+        waitForIdle();
+
+        // When a Wi-Fi network is used, the lock is NOT taken due to the offload engine.
+        final Network wifiNetwork = new Network(456);
+        final MdnsInterfaceSocket wifiSocket = mock(MdnsInterfaceSocket.class);
+        mHandler.post(() -> mSocketRequestMonitor.onSocketRequestFulfilled(
+                wifiNetwork, wifiSocket, new int[]{TRANSPORT_WIFI}));
+        waitForIdle();
+        lockOrder.verify(mWifiManager, never()).createMulticastLock(any());
+        lockOrder.verify(mMulticastLock, never()).acquire();
+
+        // Unregister the offload engine.
+        client.unregisterOffloadEngine(offloadEngine1);
+        waitForIdle();
+
+        // The lock is now taken.
+        lockOrder.verify(mWifiManager).createMulticastLock(any());
+        lockOrder.verify(mMulticastLock).acquire();
+
+        // Register another offload engine with another combination.
+        final OffloadEngine offloadEngine2 = mock(OffloadEngine.class);
+        client.registerOffloadEngine(interfaceName,
+                OFFLOAD_TYPE_FILTER_REPLIES | OFFLOAD_TYPE_FILTER_QUERIES,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run, offloadEngine2);
+        waitForIdle();
+
+        // The lock is released.
+        lockOrder.verify(mMulticastLock).release();
+
+        // Unregister the offload engine.
+        client.unregisterOffloadEngine(offloadEngine2);
+        waitForIdle();
+
+        // The lock is taken again.
+        lockOrder.verify(mMulticastLock).acquire();
+
+        // Register another offload engine with another combination.
+        final OffloadEngine offloadEngine3 = mock(OffloadEngine.class);
+        client.registerOffloadEngine(interfaceName,
+                OFFLOAD_TYPE_QUERY | OFFLOAD_TYPE_FILTER_QUERIES,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run, offloadEngine3);
+        waitForIdle();
+
+        // The lock is released.
+        lockOrder.verify(mMulticastLock).release();
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testTakeMulticastLock_ForegroundAppWithOffload_BackgroundAppNoOffload() {
+        final InOrder lockOrder = inOrder(mMulticastLock, mWifiManager);
+        final String ifaceA = "wlan0";
+        final String ifaceB = "wlan1";
+        final Network wifiNetA = new Network(100);
+        final Network wifiNetB = new Network(101);
+
+        doReturn(PERMISSION_GRANTED).when(mContext).checkCallingOrSelfPermission(
+                REGISTER_NSD_OFFLOAD_ENGINE);
+
+        // App 1: Foreground
+        final int uid1 = 123;
+        mUidImportanceListener.onUidImportance(uid1, IMPORTANCE_FOREGROUND);
+        waitForIdle();
+        doReturn(uid1).when(mDeps).getCallingUid();
+        final NsdManager client1 = connectClient(mService);
+
+        // App 2: Background
+        final int uid2 = 456;
+        mUidImportanceListener.onUidImportance(uid2, IMPORTANCE_CACHED);
+        doReturn(uid2).when(mDeps).getCallingUid();
+        final NsdManager client2 = connectClient(mService);
+
+        // App 1 makes request on wifiNetA
+        final RegistrationListener regListener1 = mock(RegistrationListener.class);
+        final NsdServiceInfo regInfo1 = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        regInfo1.setPort(12345);
+        regInfo1.setNetwork(wifiNetA);
+        client1.registerService(regInfo1, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener1);
+        waitForIdle();
+
+        // App 2 makes request on wifiNetB
+        final RegistrationListener regListener2 = mock(RegistrationListener.class);
+        final NsdServiceInfo regInfo2 = new NsdServiceInfo(OTHER_SERVICE_NAME, SERVICE_TYPE);
+        regInfo2.setPort(12346);
+        regInfo2.setNetwork(wifiNetB);
+        client2.registerService(regInfo2, NsdManager.PROTOCOL_DNS_SD, Runnable::run, regListener2);
+        waitForIdle();
+
+        // App 1 registers offload on ifaceA
+        final OffloadEngine offloadEngine1 = mock(OffloadEngine.class);
+        doReturn(uid1).when(mDeps).getCallingUid();
+        client1.registerOffloadEngine(ifaceA,
+                OFFLOAD_TYPE_REPLY | OFFLOAD_TYPE_FILTER_REPLIES,
+                OFFLOAD_CAPABILITY_BYPASS_MULTICAST_LOCK, Runnable::run, offloadEngine1);
+        waitForIdle();
+
+        // Fulfillment
+        final MdnsInterfaceSocket socketA = mock(MdnsInterfaceSocket.class);
+        final MdnsInterfaceSocket socketB = mock(MdnsInterfaceSocket.class);
+        doReturn(ifaceA).when(mDeps).getSocketInterfaceName(socketA);
+        doReturn(ifaceB).when(mDeps).getSocketInterfaceName(socketB);
+
+        mHandler.post(() -> {
+            mSocketRequestMonitor.onSocketRequestFulfilled(
+                    wifiNetA, socketA, new int[]{TRANSPORT_WIFI});
+            mSocketRequestMonitor.onSocketRequestFulfilled(
+                    wifiNetB, socketB, new int[]{TRANSPORT_WIFI});
+        });
+        waitForIdle();
+
+        // No lock should be taken:
+        // App 1 is foreground on ifaceA but has offload.
+        // App 2 is background on ifaceB.
+        lockOrder.verify(mWifiManager, never()).createMulticastLock(any());
+        lockOrder.verify(mMulticastLock, never()).acquire();
+    }
+
+    @Test
+    @EnableCompatChanges(ENABLE_PLATFORM_MDNS_BACKEND)
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+    public void testRegisterOffloadSession_OffloadServiceUpdatedAndRemoved_DiscoveryManager() {
+        final String interfaceName = "iface";
+        final OffloadServiceInfo info = new OffloadServiceInfo(
+                new OffloadServiceInfo.Key("", "_testType"), List.of("_sub1", "_sub2"),
+                "Android.local", new byte[]{0x1, 0x2, 0x3}, 1 /* priority */,
+                OFFLOAD_TYPE_FILTER_REPLIES | OFFLOAD_TYPE_QUERY);
+        doReturn(Collections.emptyList()).when(mDiscoveryManager)
+                .notifyOffloadStart(eq(interfaceName));
+        final OffloadEngine offloadEngine = registerOffloadEngine(
+                interfaceName,
+                OFFLOAD_TYPE_FILTER_REPLIES | OFFLOAD_TYPE_QUERY
+        );
+        // Verify that the OffloadServiceInfo retrieved from the DiscoveryManager and that no info
+        // is sent to the OffloadEngine.
+        verify(mDiscoveryManager).notifyOffloadStart(eq(interfaceName));
+        verify(offloadEngine, never()).onOffloadServiceUpdated(any());
+        verify(offloadEngine, times(1)).onOffloadSessionCreated(any());
+
+        verifyOffloadServiceUpdatedAndRemoved(
+                interfaceName, info, mOffloadCallback, offloadEngine);
+    }
+
+    private NsdPickerConnector verifyPickerStarted() {
+        return verifyPickerStarted(/* startedTimes= */1);
+    }
+
+    private NsdPickerConnector verifyPickerStarted(int startedTimes) {
+        final ArgumentCaptor<Intent> intentCaptor = ArgumentCaptor.forClass(Intent.class);
+        verify(mContext, times(startedTimes)).startActivityAsUser(intentCaptor.capture(), any());
+        final List<Intent> intents = intentCaptor.getAllValues();
+        final Intent lastIntent = intents.get(startedTimes - 1);
+        assertEquals(TEST_APP_NAME, lastIntent.getStringExtra(NsdPickerConnector.EXTRA_APP_NAME));
+        return NsdPickerConnector.Stub.asInterface(
+            lastIntent.getExtras().getBinder(NsdPickerConnector.EXTRA_CONNECTOR));
+    }
+
+    private NsdServiceReceiver setMockPickerReceiver(NsdPickerConnector connector)
+            throws RemoteException {
+        final NsdServiceReceiver receiver = mock(NsdServiceReceiver.class);
+        connector.setServiceReceiver(receiver);
+        waitForIdle();
+        return receiver;
+    }
+
+    private DiscoveryListener startDiscoveryWithPicker(NsdManager client) {
+        return startDiscoveryWithPicker(client, new DiscoveryRequest.Builder(SERVICE_TYPE)
+                .setNetwork(TEST_NETWORK)
+                .build());
+    }
+
+    private DiscoveryListener startDiscoveryWithPicker(NsdManager client,
+            DiscoveryRequest request) {
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_SOFT_DENIED).when(mPermissionManager)
+                .checkPermissionForStartDataDelivery(ACCESS_LOCAL_NETWORK, attributionSource, null);
+
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        client.discoverServices(request, Runnable::run, discListener);
+        waitForIdle();
+        return discListener;
+    }
+
+    private void waitForIdle() {
+        HandlerUtils.waitForIdle(mHandler, TIMEOUT_MS);
+    }
+
+    NsdService makeService() {
+        final NsdService service = new NsdService(
+                mContext, mThread.getLooper(), CLEANUP_DELAY_MS, mDeps) {
+            @Override
+            public INsdServiceConnector connect(INsdManagerCallback baseCb,
+                    boolean runNewMdnsBackend, String packageName) {
+                // Wrap the callback in a transparent mock, to mock asBinder returning a
+                // LinkToDeathRecorder. This will allow recording the binder death recipient
+                // registered on the callback. Use a transparent mock and not a spy as the actual
+                // implementation class is not public and cannot be spied on by Mockito.
+                final INsdManagerCallback cb = mock(INsdManagerCallback.class,
+                        AdditionalAnswers.delegatesTo(baseCb));
+                doReturn(new LinkToDeathRecorder()).when(cb).asBinder();
+                mCreatedCallbacks.add(cb);
+                return super.connect(cb, runNewMdnsBackend, packageName);
+            }
+        };
+        return service;
+    }
+
+    private MdnsServiceInfo makeTestServiceInfo(
+            @NonNull String serviceName, @NonNull String serviceType) {
+        return new MdnsServiceInfo(
+                serviceName,
+                serviceType.split("\\."),
+                List.of(), /* subtypes */
+                new String[]{"android", "local"}, /* hostName */
+                PORT,
+                List.of(IPV4_ADDRESS),
+                List.of(IPV6_ADDRESS),
+                List.of() /* textEntries */,
+                TEST_INTERFACE_INDEX,
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                0L /* creationCapabilitiesBits */);
+    }
+
+    private MdnsServiceInfo makeTestServiceInfo() {
+        return makeTestServiceInfo(SERVICE_NAME, SERVICE_TYPE_WITH_LOCAL_TLD);
+    }
+
+    private INsdManagerCallback getCallback() {
+        return mCreatedCallbacks.remove();
+    }
+
+    NsdManager connectClient(NsdService service) {
+        final NsdManager nsdManager = new NsdManager(mContext, service);
+        // Wait for client registration done.
+        waitForIdle();
+        return nsdManager;
+    }
+
+    void verifyDelayMaybeStopDaemon(long cleanupDelayMs) throws Exception {
+        waitForIdle();
+        // Stop daemon shouldn't be called immediately.
+        verify(mMockMDnsM, never()).unregisterEventListener(any());
+        verify(mMockMDnsM, never()).stopDaemon();
+
+        // Clean up the daemon after CLEANUP_DELAY_MS.
+        verify(mMockMDnsM, timeout(cleanupDelayMs + TIMEOUT_MS)).unregisterEventListener(any());
+        verify(mMockMDnsM, timeout(cleanupDelayMs + TIMEOUT_MS)).stopDaemon();
+    }
+
+    /**
+     * Return true if two service info are the same.
+     *
+     * Useful for argument matchers as {@link NsdServiceInfo} does not implement equals.
+     */
+    private boolean matches(NsdServiceInfo a, NsdServiceInfo b) {
+        return Objects.equals(a.getServiceName(), b.getServiceName())
+                && Objects.equals(a.getServiceType(), b.getServiceType())
+                && Objects.equals(a.getHost(), b.getHost())
+                && Objects.equals(a.getNetwork(), b.getNetwork())
+                && Objects.equals(a.getAttributes(), b.getAttributes());
+    }
+
+    private AttributionSource getAttributionSource() {
+        final int testUid = android.os.Process.myUid();
+        final int testPid = android.os.Process.myPid();
+        return new AttributionSource.Builder(testUid).setPid(testPid).build();
+    }
+
+    @FeatureFlag(name = Flags.FLAG_NSD_USE_NETWORK_CALLBACK_FOR_LOCAL_NETWORKS, enabled = false)
+    @Test
+    public void testBuildNsdServiceInfoFromMdnsEvent_localNetwork_flagDisabled() {
+        doTestBuildNsdServiceInfoFromMdnsEvent_localNetwork(false /* expectNetwork */);
+    }
+
+    @FeatureFlag(name = com.android.tethering.mainline.beta.Flags
+            .FLAG_TETHERING_AND_P2P_GO_LOCAL_AGENT, enabled = true)
+    @FeatureFlag(name = Flags.FLAG_NSD_USE_NETWORK_CALLBACK_FOR_LOCAL_NETWORKS, enabled = true)
+    @EnableCompatChanges(ENABLE_MATCH_NON_THREAD_LOCAL_NETWORKS)
+    @EnableCompatChangesForSystem(changeId = ENABLE_MATCH_NON_THREAD_LOCAL_NETWORKS)
+    @Test
+    public void testBuildNsdServiceInfoFromMdnsEvent_localNetwork_flagEnabled() {
+        doTestBuildNsdServiceInfoFromMdnsEvent_localNetwork(true /* expectNetwork */);
+    }
+
+    @FeatureFlag(name = com.android.tethering.mainline.beta.Flags
+            .FLAG_TETHERING_AND_P2P_GO_LOCAL_AGENT, enabled = false)
+    @FeatureFlag(name = Flags.FLAG_NSD_USE_NETWORK_CALLBACK_FOR_LOCAL_NETWORKS, enabled = true)
+    @EnableCompatChangesForSystem(changeId = ENABLE_MATCH_NON_THREAD_LOCAL_NETWORKS)
+    @Test
+    public void testBuildNsdServiceInfoFromMdnsEvent_localNetwork_localAgentDisabled() {
+        doTestBuildNsdServiceInfoFromMdnsEvent_localNetwork(false /* expectNetwork */);
+    }
+
+    @FeatureFlag(name = com.android.tethering.mainline.beta.Flags
+            .FLAG_TETHERING_AND_P2P_GO_LOCAL_AGENT, enabled = true)
+    @FeatureFlag(name = Flags.FLAG_NSD_USE_NETWORK_CALLBACK_FOR_LOCAL_NETWORKS, enabled = true)
+    @Test
+    public void testBuildNsdServiceInfoFromMdnsEvent_localNetwork_compatChangeDisabled() {
+        doTestBuildNsdServiceInfoFromMdnsEvent_localNetwork(false /* expectNetwork */);
+    }
+
+    private void doTestBuildNsdServiceInfoFromMdnsEvent_localNetwork(boolean expectNetwork) {
+        setMdnsDiscoveryManagerEnabled();
+
+        final NsdManager client = connectClient(mService);
+        final DiscoveryListener discListener = mock(DiscoveryListener.class);
+        final String serviceTypeWithLocalDomain = SERVICE_TYPE + ".local";
+
+        client.discoverServices(SERVICE_TYPE, PROTOCOL, TEST_NETWORK, r -> r.run(), discListener);
+        waitForIdle();
+
+        final ArgumentCaptor<MdnsListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsListener.class);
+        verify(mDiscoveryManager).registerListener(eq(serviceTypeWithLocalDomain),
+                listenerCaptor.capture(), any());
+
+        final MdnsListener listener = listenerCaptor.getValue();
+        final long caps = 1L << NET_CAPABILITY_LOCAL_NETWORK;
+        final int ifaceIndex = 1234;
+        final MdnsServiceInfo localInfo = new MdnsServiceInfo(
+                SERVICE_NAME, /* serviceInstanceName */
+                serviceTypeWithLocalDomain.split("\\."), /* serviceType */
+                List.of(), /* subtypes */
+                new String[]{"android", "local"}, /* hostName */
+                12345, /* port */
+                List.of(), /* ipv4Addresses */
+                List.of(), /* ipv6Addresses */
+                List.of(), /* textEntries */
+                ifaceIndex, /* interfaceIndex */
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                caps);
+
+        listener.onServiceNameDiscovered(localInfo, false);
+
+        if (expectNetwork) {
+            verify(discListener, timeout(TIMEOUT_MS)).onServiceFound(argThat(info ->
+                    TEST_NETWORK.equals(info.getNetwork()) && info.getInterfaceIndex() == 0));
+        } else {
+            verify(discListener, timeout(TIMEOUT_MS)).onServiceFound(argThat(info ->
+                    info.getNetwork() == null && info.getInterfaceIndex() == ifaceIndex));
+        }
+    }
+
+    @Test
+    public void testServiceAccessRepository_UnloadOnDisconnect() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        connectClient(mService);
+        final INsdManagerCallback cb = getCallback();
+        final IBinder.DeathRecipient deathRecipient = verifyLinkToDeath(cb);
+        mHandler.post(() ->
+                mAccessRepository.addAllowedService(Process.myUid(), mPackageName, SERVICE_NAME,
+                        SERVICE_TYPE));
+        deathRecipient.binderDied();
+        waitForIdle();
+
+        assertFalse(HandlerUtils.visibleOnHandlerThread(mHandler, () ->
+                mAccessRepository.isServiceAllowed(Process.myUid(), mPackageName, SERVICE_NAME,
+                        SERVICE_TYPE)));
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testCheckPermissionForService() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        mAccessRepository.unloadPackage(Process.myUid(), mPackageName);
+        final NsdManager client = connectClient(mService);
+        final IntConsumer resultReceiver = mock(IntConsumer.class);
+
+        client.checkPermissionForService(SERVICE_NAME, SERVICE_TYPE, Runnable::run, resultReceiver);
+        verify(resultReceiver, timeout(TIMEOUT_MS)).accept(NsdManager.SERVICE_PERMISSION_DENIED);
+
+        startDiscoveryWithPicker(client);
+        final NsdPickerConnector connector = verifyPickerStarted();
+        final NsdServiceInfo serviceInfo = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE + ".");
+        serviceInfo.setNetwork(TEST_NETWORK);
+        connector.notifyServiceSelected(serviceInfo);
+        waitForIdle();
+
+        client.checkPermissionForService(SERVICE_NAME, SERVICE_TYPE, Runnable::run, resultReceiver);
+        verify(resultReceiver, timeout(TIMEOUT_MS)).accept(NsdManager.SERVICE_PERMISSION_GRANTED);
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    @RequiresFlagsEnabled(FLAG_ACCESS_LOCAL_NETWORK_PERMISSION_ENABLED)
+    public void testLocalNetAccessAllowlist_resolveService_addsToAllowlist() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_SOFT_DENIED).when(mPermissionManager)
+                .checkPermissionForStartDataDelivery(ACCESS_LOCAL_NETWORK, attributionSource, null);
+        mAccessRepository.addAllowedService(
+                Process.myUid(), mPackageName, SERVICE_NAME, SERVICE_TYPE);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ResolveListener resolveListener = mock(ResolveListener.class);
+        client.resolveService(request, resolveListener);
+        waitForIdle();
+
+        final ArgumentCaptor<MdnsServiceBrowserListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsServiceBrowserListener.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE + ".local"),
+                listenerCaptor.capture(), any());
+        final MdnsListener listener = (MdnsListener) listenerCaptor.getValue();
+
+        final MdnsServiceInfo mdnsServiceInfo = makeTestServiceInfo();
+        listener.onServiceFound(mdnsServiceInfo, false /* isServiceFromCache */);
+        waitForIdle();
+
+        final InOrder inOrder = inOrder(mConnectivityManager, resolveListener);
+        final Set<InetAddress> expectedAddrs =
+                Set.of(parseNumericAddress(IPV4_ADDRESS), parseNumericAddress(IPV6_ADDRESS));
+        inOrder.verify(mConnectivityManager).allowLocalNetAccess(eq(Process.myUid()),
+                eq(TEST_INTERFACE_INDEX),
+                argThat(addrs -> new ArraySet<>(addrs).equals(expectedAddrs)));
+        inOrder.verify(resolveListener, timeout(TIMEOUT_MS)).onServiceResolved(any());
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testLocalNetAccessAllowlist_serviceInfoCallback_addsToAllowlist() {
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+        final AttributionSource attributionSource = getAttributionSource();
+        doReturn(PermissionManager.PERMISSION_SOFT_DENIED).when(mPermissionManager)
+                .checkPermissionForStartDataDelivery(ACCESS_LOCAL_NETWORK, attributionSource, null);
+        mAccessRepository.addAllowedService(
+                Process.myUid(), mPackageName, SERVICE_NAME, SERVICE_TYPE);
+        final NsdServiceInfo request = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE);
+        final ServiceInfoCallback serviceInfoCallback = mock(ServiceInfoCallback.class);
+        client.registerServiceInfoCallback(request, Runnable::run, serviceInfoCallback);
+        waitForIdle();
+
+        final ArgumentCaptor<MdnsServiceBrowserListener> listenerCaptor =
+                ArgumentCaptor.forClass(MdnsServiceBrowserListener.class);
+        verify(mDiscoveryManager).registerListener(eq(SERVICE_TYPE + ".local"),
+                listenerCaptor.capture(), any());
+        final MdnsListener listener = (MdnsListener) listenerCaptor.getValue();
+
+        final MdnsServiceInfo mdnsServiceInfo = makeTestServiceInfo();
+        listener.onServiceFound(mdnsServiceInfo, false /* isServiceFromCache */);
+        waitForIdle();
+
+        final Set<InetAddress> expectedAddrs =
+                Set.of(parseNumericAddress(IPV4_ADDRESS), parseNumericAddress(IPV6_ADDRESS));
+        final InOrder inOrder = inOrder(mConnectivityManager, serviceInfoCallback);
+        inOrder.verify(mConnectivityManager).allowLocalNetAccess(eq(Process.myUid()),
+                eq(TEST_INTERFACE_INDEX),
+                argThat(addrs -> new ArraySet<>(addrs).equals(expectedAddrs)));
+        inOrder.verify(serviceInfoCallback, timeout(TIMEOUT_MS)).onServiceUpdated(any());
+
+        // Update service
+        final String newV4Addr = "192.0.2.1";
+        final String newV6Addr = "2001:db8::1";
+        final MdnsServiceInfo updatedServiceInfo = new MdnsServiceInfo(
+                SERVICE_NAME,
+                SERVICE_TYPE_WITH_LOCAL_TLD.split("\\."),
+                List.of(), /* subtypes */
+                new String[]{"android", "local"}, /* hostName */
+                PORT,
+                List.of(newV4Addr),
+                List.of(newV6Addr),
+                List.of() /* textEntries */,
+                TEST_INTERFACE_INDEX,
+                TEST_NETWORK,
+                Instant.MAX /* expirationTime */,
+                0L /* creationCapabilitiesBits */);
+        listener.onServiceUpdated(updatedServiceInfo);
+        waitForIdle();
+
+        final Set<InetAddress> expectedNewAddrs =
+                Set.of(parseNumericAddress(newV4Addr), parseNumericAddress(newV6Addr));
+        inOrder.verify(mConnectivityManager).allowLocalNetAccess(eq(Process.myUid()),
+                eq(TEST_INTERFACE_INDEX),
+                argThat(addrs -> new ArraySet<>(addrs).equals(expectedNewAddrs)));
+        inOrder.verify(serviceInfoCallback, timeout(TIMEOUT_MS)).onServiceUpdated(any());
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testLocalNetAccessAllowlist_servicePicker_addsToAllowlist() throws Exception {
+        setMdnsDiscoveryManagerEnabled();
+        final NsdManager client = connectClient(mService);
+
+        final ServiceInfoCallback listener = mock(ServiceInfoCallback.class);
+        client.registerServiceInfoCallback(new DiscoveryRequest.Builder(SERVICE_TYPE)
+                .setNetwork(TEST_NETWORK)
+                .setFlags(FLAG_SHOW_PICKER)
+                .build(), Runnable::run, listener);
+
+        waitForIdle();
+        final NsdPickerConnector connector = verifyPickerStarted();
+        final NsdServiceInfo selectedService = new NsdServiceInfo(SERVICE_NAME, SERVICE_TYPE + ".");
+        selectedService.setHostAddresses(List.of(parseNumericAddress(IPV6_ADDRESS)));
+        selectedService.setPort(PORT);
+        selectedService.setNetwork(TEST_NETWORK);
+        selectedService.setInterfaceIndex(TEST_INTERFACE_INDEX);
+        connector.notifyServiceSelected(selectedService);
+        waitForIdle();
+
+        final Set<InetAddress> expectedAddrs =
+                Set.of(parseNumericAddress(IPV6_ADDRESS));
+        verify(mConnectivityManager).allowLocalNetAccess(eq(Process.myUid()),
+                eq(TEST_INTERFACE_INDEX),
+                argThat(addrs -> new ArraySet<>(addrs).equals(expectedAddrs)));
+    }
+
+    @Test
+    @DevSdkIgnoreRule.IgnoreUpTo(Build.VERSION_CODES.VANILLA_ICE_CREAM)
+    public void testCheckPermissionForService_Persisted() throws Exception {
+        final int uid = Process.myUid();
+        final ArraySet<ServiceAccessRepository.Service> persisted = new ArraySet<>();
+        persisted.add(new ServiceAccessRepository.Service(SERVICE_NAME, SERVICE_TYPE, false));
+        doReturn(persisted).when(mServiceAccessDb).getAllowedServices(uid, mPackageName);
+
+        final NsdManager client = connectClient(mService);
+        final CompletableFuture<Integer> result = new CompletableFuture<>();
+        client.checkPermissionForService(SERVICE_NAME, SERVICE_TYPE, Runnable::run,
+                result::complete);
+
+        assertEquals(NsdManager.SERVICE_PERMISSION_GRANTED,
+                (int) result.get(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+    }
+}

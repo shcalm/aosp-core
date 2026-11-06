@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "is_using_unidirectional_video_service"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "assist_settings_privacy_improvements_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

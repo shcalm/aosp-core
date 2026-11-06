@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "mouse_scrolling_acceleration"
+  state: ENABLED
+  permission: READ_ONLY
+}

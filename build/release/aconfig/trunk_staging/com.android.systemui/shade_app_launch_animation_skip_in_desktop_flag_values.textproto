@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "shade_app_launch_animation_skip_in_desktop"
+  state: ENABLED
+  permission: READ_WRITE
+}

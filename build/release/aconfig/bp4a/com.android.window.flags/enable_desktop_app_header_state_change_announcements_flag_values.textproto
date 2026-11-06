@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_desktop_app_header_state_change_announcements"
+  state: ENABLED
+  permission: READ_ONLY
+}

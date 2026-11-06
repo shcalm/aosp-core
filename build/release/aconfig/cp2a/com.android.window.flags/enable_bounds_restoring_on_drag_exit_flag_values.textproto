@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_bounds_restoring_on_drag_exit"
+  state: ENABLED
+  permission: READ_ONLY
+}

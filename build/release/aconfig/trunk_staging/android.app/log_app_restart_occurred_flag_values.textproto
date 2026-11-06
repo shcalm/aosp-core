@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "log_app_restart_occurred"
+  state: ENABLED
+  permission: READ_WRITE
+}

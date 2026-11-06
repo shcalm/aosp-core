@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "re_check_fence"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "move_safety_source_refresh_to_background"
+  state: ENABLED
+  permission: READ_WRITE
+}

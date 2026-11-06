@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "only_reset_magnification_if_needed_when_destroy_handler"
+  state: ENABLED
+  permission: READ_ONLY
+}

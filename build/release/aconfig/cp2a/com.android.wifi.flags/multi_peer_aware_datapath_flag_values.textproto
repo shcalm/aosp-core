@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "multi_peer_aware_datapath"
+  state: ENABLED
+  permission: READ_ONLY
+}

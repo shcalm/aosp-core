@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_eigen_embedding_scoring"
+  state: ENABLED
+  permission: READ_WRITE
+}

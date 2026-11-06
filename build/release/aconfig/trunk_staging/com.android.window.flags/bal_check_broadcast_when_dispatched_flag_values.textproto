@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "bal_check_broadcast_when_dispatched"
+  state: ENABLED
+  permission: READ_WRITE
+}

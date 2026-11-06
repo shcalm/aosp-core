@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "policy_streamlining"
+  state: ENABLED
+  permission: READ_WRITE
+}

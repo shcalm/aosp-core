@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui.accessibility.accessibilitymenu"
+  name: "catalyst_a11y_menu"
+  state: ENABLED
+  permission: READ_ONLY
+}

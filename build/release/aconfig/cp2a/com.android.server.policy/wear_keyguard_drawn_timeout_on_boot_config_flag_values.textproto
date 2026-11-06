@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.policy"
+  name: "wear_keyguard_drawn_timeout_on_boot_config"
+  state: ENABLED
+  permission: READ_ONLY
+}

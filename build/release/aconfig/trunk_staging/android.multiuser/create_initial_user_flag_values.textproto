@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "create_initial_user"
+  state: ENABLED
+  permission: READ_WRITE
+}

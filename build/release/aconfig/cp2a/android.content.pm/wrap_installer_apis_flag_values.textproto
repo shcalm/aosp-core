@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "wrap_installer_apis"
+  state: ENABLED
+  permission: READ_ONLY
+}

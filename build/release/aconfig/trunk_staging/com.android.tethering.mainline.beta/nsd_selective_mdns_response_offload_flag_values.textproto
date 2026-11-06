@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.tethering.mainline.beta"
+  name: "nsd_selective_mdns_response_offload"
+  state: ENABLED
+  permission: READ_WRITE
+}

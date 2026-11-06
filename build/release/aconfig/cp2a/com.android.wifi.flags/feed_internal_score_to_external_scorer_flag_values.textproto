@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "feed_internal_score_to_external_scorer"
+  state: ENABLED
+  permission: READ_ONLY
+}

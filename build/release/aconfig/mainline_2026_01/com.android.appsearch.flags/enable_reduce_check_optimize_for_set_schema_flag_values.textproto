@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_reduce_check_optimize_for_set_schema"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.credentials.flags"
+  name: "metric_bugfixes_continued"
+  state: ENABLED
+  permission: READ_ONLY
+}

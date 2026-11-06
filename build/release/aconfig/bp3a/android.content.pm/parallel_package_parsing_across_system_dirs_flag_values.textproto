@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "parallel_package_parsing_across_system_dirs"
+  state: ENABLED
+  permission: READ_ONLY
+}

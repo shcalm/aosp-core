@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.appfunctions.flags"
+  name: "enable_dynamic_app_functions"
+  state: ENABLED
+  permission: READ_ONLY
+}

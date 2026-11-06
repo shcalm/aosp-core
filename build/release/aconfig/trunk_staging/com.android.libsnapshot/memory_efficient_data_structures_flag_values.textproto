@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.libsnapshot"
+  name: "memory_efficient_data_structures"
+  state: ENABLED
+  permission: READ_WRITE
+}

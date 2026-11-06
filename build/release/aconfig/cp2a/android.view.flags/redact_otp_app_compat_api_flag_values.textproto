@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.flags"
+  name: "redact_otp_app_compat_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "use_state_for_action_up_injection"
+  state: ENABLED
+  permission: READ_ONLY
+}

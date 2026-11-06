@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "white_balance_controller_ddc_config"
+  state: ENABLED
+  permission: READ_WRITE
+}

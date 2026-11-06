@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "use_systemui_views_for_system_toolbar"
+  state: ENABLED
+  permission: READ_WRITE
+}

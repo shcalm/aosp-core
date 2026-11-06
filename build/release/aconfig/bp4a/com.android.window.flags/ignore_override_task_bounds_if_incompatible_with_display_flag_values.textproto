@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "ignore_override_task_bounds_if_incompatible_with_display"
+  state: ENABLED
+  permission: READ_ONLY
+}

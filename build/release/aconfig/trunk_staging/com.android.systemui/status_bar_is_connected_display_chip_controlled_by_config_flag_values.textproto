@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_is_connected_display_chip_controlled_by_config"
+  state: ENABLED
+  permission: READ_WRITE
+}

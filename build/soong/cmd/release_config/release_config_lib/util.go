@@ -1,0 +1,355 @@
+// Copyright 2024 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package release_config_lib
+
+import (
+	"cmp"
+	"encoding/json"
+	"fmt"
+	"hash/fnv"
+	"io/fs"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
+	"slices"
+	"strings"
+	"sync"
+
+	"github.com/google/blueprint/pathtools"
+	"google.golang.org/protobuf/encoding/prototext"
+	"google.golang.org/protobuf/proto"
+)
+
+var (
+	disableWarnings          bool
+	containerRegexp, _       = regexp.Compile("^[a-z][a-z0-9]*([._][a-z][a-z0-9]*)*$")
+	releaseConfigRegexp, _   = regexp.Compile("^[a-z][a-z0-9]*([._][a-z0-9]*)*$")
+	productReleaseConfigMaps *string
+)
+
+type StringList []string
+
+func (l *StringList) Set(v string) error {
+	*l = append(*l, v)
+	return nil
+}
+
+func (l *StringList) String() string {
+	return fmt.Sprintf("%v", *l)
+}
+
+// Read the stringlist from a file containing one or more lines which contain
+// space separated values to add to the StringList.
+// Processing of a line stops if a "#" is found.
+func (l *StringList) ReadFromFile(fileName string) error {
+	// Do not include this file as part of the hash.  Reading the StringList from
+	// a file is a shorthand for command line arguments, which are not part of the
+	// hash.
+	data, err := os.ReadFile(fileName)
+	if err != nil {
+		return err
+	}
+	for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
+		// Allow # comments on lines in the file.
+		line = strings.SplitN(line, "#", 2)[0]
+		for _, m := range strings.Fields(line) {
+			l.Set(m)
+		}
+	}
+	return nil
+}
+
+// Write a marshalled message to a file.
+//
+// Marshal the message based on the extension of the path we are writing it to.
+//
+// Args:
+//
+//	path string: the path of the file to write to.  Directories are not created.
+//	  Supported extensions are: ".json", ".pb", and ".textproto".
+//	message proto.Message: the message to write.
+//
+// Returns:
+//
+//	error: any error encountered.
+func WriteMessage(path string, message proto.Message) (err error) {
+	format := filepath.Ext(path)
+	if len(format) > 1 {
+		// Strip any leading dot.
+		format = format[1:]
+	}
+	return WriteFormattedMessage(path, format, message)
+}
+
+// Write a marshalled message to a file.
+//
+// Marshal the message using the given format.
+//
+// Args:
+//
+//	path string: the path of the file to write to.  Directories are not created.
+//	  Supported extensions are: ".json", ".pb", and ".textproto".
+//	format string: one of "json", "pb", or "textproto".
+//	message proto.Message: the message to write.
+//
+// Returns:
+//
+//	error: any error encountered.
+func WriteFormattedMessage(path, format string, message proto.Message) (err error) {
+	var data []byte
+	if _, err := os.Stat(filepath.Dir(path)); err != nil {
+		if err = os.MkdirAll(filepath.Dir(path), 0775); err != nil {
+			return err
+		}
+	}
+	switch format {
+	case "json":
+		data, err = json.MarshalIndent(message, "", "  ")
+	case "pb", "binaryproto", "protobuf":
+		data, err = proto.MarshalOptions{Deterministic: true}.Marshal(message)
+	case "textproto":
+		data, err = prototext.MarshalOptions{Multiline: true}.Marshal(message)
+	default:
+		return fmt.Errorf("Unknown message format for %s", path)
+	}
+	if err != nil {
+		return err
+	}
+	return pathtools.WriteFileIfChanged(path, data, 0644)
+}
+
+type fileHash struct {
+	Path string
+	Hash []byte
+}
+
+var filesUsedChan chan *fileHash
+var filesWg sync.WaitGroup
+var fileHashes []*fileHash
+
+func startFileRecord() {
+	fileHashes = nil
+	filesUsedChan = make(chan *fileHash, 40)
+	filesWg.Add(1)
+	go func() {
+		defer filesWg.Done()
+		for u := range filesUsedChan {
+			fileHashes = append(fileHashes, u)
+		}
+	}()
+}
+
+func finishFileRecord() []byte {
+	close(filesUsedChan)
+	filesWg.Wait()
+
+	slices.SortFunc(fileHashes, func(a, b *fileHash) int {
+		if a.Path == b.Path {
+			panic(fmt.Errorf("duplicate path %s", a.Path))
+		}
+		return cmp.Compare(a.Path, b.Path)
+	})
+
+	h := fnv.New128()
+	for _, fh := range fileHashes {
+		h.Write([]byte(fh.Path))
+		h.Write(fh.Hash)
+	}
+	return h.Sum([]byte{})
+}
+
+func ReadTrackedFile(path string) ([]byte, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if filesUsedChan != nil {
+		h := fnv.New128()
+		h.Write(data)
+		filesUsedChan <- &fileHash{
+			Path: path,
+			Hash: h.Sum([]byte{}),
+		}
+	}
+	return data, err
+}
+
+// Read a message from a file.
+//
+// The message is unmarshalled based on the extension of the file read.
+//
+// Args:
+//
+//	path string: the path of the file to read.
+//	message proto.Message: the message to unmarshal the message into.
+//
+// Returns:
+//
+//	error: any error encountered.
+func LoadMessage(path string, message proto.Message) error {
+	data, err := ReadTrackedFile(path)
+	if err != nil {
+		return err
+	}
+	switch filepath.Ext(path) {
+	case ".json":
+		return json.Unmarshal(data, message)
+	case ".pb", ".protobuf", ".binaryproto":
+		return proto.Unmarshal(data, message)
+	case ".textproto":
+		return prototext.Unmarshal(data, message)
+	}
+	return fmt.Errorf("Unknown message format for %s", path)
+}
+
+// Call Func for any textproto files found in {root}/{subdir}.
+func WalkTextprotoFiles(root string, subdir string, Func fs.WalkDirFunc) error {
+	return walkTextprotoFiles(root, subdir, Func, false)
+}
+func WalkTextprotoFilesCheckName(root string, subdir string, Func fs.WalkDirFunc) error {
+	return walkTextprotoFiles(root, subdir, Func, true)
+}
+func walkTextprotoFiles(root string, subdir string, Func fs.WalkDirFunc, checkname bool) error {
+	path := filepath.Join(root, subdir)
+	if _, err := os.Stat(path); err != nil {
+		// Missing subdirs are not an error.
+		return nil
+	}
+	return filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.Type().IsRegular() {
+			if strings.HasSuffix(d.Name(), ".textproto") {
+				return Func(path, d, err)
+			} else if checkname && strings.HasPrefix(d.Name(), "RELEASE_") {
+				return fmt.Errorf("%s lacks .textproto suffix", path)
+			}
+		}
+		return nil
+	})
+}
+
+// Turn off all warning output
+func DisableWarnings() {
+	disableWarnings = true
+}
+
+// warnf will log to stdout if warnings are enabled. In make code,
+// stdout is redirected to a file, so the warnings will not be shown
+// in the terminal.
+func warnf(format string, args ...any) (n int, err error) {
+	if !disableWarnings {
+		return fmt.Printf(format, args...)
+	}
+	return 0, nil
+}
+
+// SortedKeys returns the keys of the given map in the ascending order.
+func SortedKeys[T cmp.Ordered, V any](m map[T]V) []T {
+	if len(m) == 0 {
+		return nil
+	}
+	ret := make([]T, 0, len(m))
+	for k := range m {
+		ret = append(ret, k)
+	}
+	slices.Sort(ret)
+	return ret
+}
+
+func validContainer(container string) bool {
+	return containerRegexp.MatchString(container)
+}
+
+func validReleaseConfigName(name string) bool {
+	return releaseConfigRegexp.MatchString(name)
+}
+
+// Returns the default value for release config artifacts.
+func GetDefaultOutDir() string {
+	outEnv := os.Getenv("OUT_DIR")
+	if outEnv == "" {
+		outEnv = "out"
+	}
+	return filepath.Join(outEnv, "soong", "release-config")
+}
+
+// Find the top of the workspace.
+//
+// This mirrors the logic in build/envsetup.sh's gettop().
+func GetTopDir() (topDir string, err error) {
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	topFile := "build/make/core/envsetup.mk"
+	for topDir = workingDir; topDir != "/"; topDir = filepath.Dir(topDir) {
+		if _, err = os.Stat(filepath.Join(topDir, topFile)); err == nil {
+			return filepath.Rel(workingDir, topDir)
+		}
+	}
+	return "", fmt.Errorf("Unable to locate top of workspace")
+}
+
+// Return the default list of map files to use.
+func GetDefaultMapPaths(queryMaps bool) (defaultMapPaths StringList, err error) {
+	var defaultLocations StringList
+	workingDir, err := os.Getwd()
+	if err != nil {
+		return
+	}
+	defer func() {
+		os.Chdir(workingDir)
+	}()
+	topDir, err := GetTopDir()
+	os.Chdir(topDir)
+
+	defaultLocations = StringList{
+		"build/release/release_config_map.textproto",
+		"vendor/google_shared/build/release/release_config_map.textproto",
+		"vendor/google/release/release_config_map.textproto",
+	}
+	for _, path := range defaultLocations {
+		if _, missing := os.Stat(path); missing == nil {
+			defaultMapPaths = append(defaultMapPaths, path)
+		}
+	}
+
+	var prodMaps string
+	if productReleaseConfigMaps != nil {
+		prodMaps = *productReleaseConfigMaps
+	} else if queryMaps {
+		getBuildVar := exec.Command("build/soong/soong_ui.bash", "--dumpvar-mode", "PRODUCT_RELEASE_CONFIG_MAPS")
+		var stdout strings.Builder
+		getBuildVar.Stdin = strings.NewReader("")
+		getBuildVar.Stdout = &stdout
+		getBuildVar.Stderr = os.Stderr
+		err = getBuildVar.Run()
+		if err != nil {
+			return
+		}
+		prodMaps = stdout.String()
+	} else {
+		prodMaps = os.Getenv("PRODUCT_RELEASE_CONFIG_MAPS")
+	}
+	prodMaps = strings.TrimSpace(prodMaps)
+	productReleaseConfigMaps = &prodMaps
+	if len(prodMaps) > 0 {
+		defaultMapPaths = append(defaultMapPaths, strings.Fields(prodMaps)...)
+	}
+	return
+}

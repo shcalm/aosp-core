@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues
+    format="6"
+    by="lint 8.4.0-alpha08"
+    type="baseline"
+    client=""
+    dependencies="true"
+    name=""
+    variant="all"
+    version="8.4.0-alpha08">
+    <issue
+        id="NewApi"
+        message="Call requires API level 34 (current min is 30): `android.telephony.CarrierConfigManager#getConfigForSubId`"
+        errorLine1="            config = ccm.getConfigForSubId(subId, keys);"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Connectivity/framework/src/android/net/ConnectivitySettingsManager.java"
+            line="81"
+            column="26"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 35 (current min is 30): `android.telecom.Call.Details#getId`"
+        errorLine1="        final String callId = call.getDetails().getId();"
+        errorLine2="                                                ~~~~~">
+        <location
+            file="packages/modules/Connectivity/framework/src/android/net/ConnectivityCallListenerService.java"
+            line="122"
+            column="49"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 35 (current min is 30): `android.telecom.Call.Details#getId`"
+        errorLine1="        final String callId = details.getId();"
+        errorLine2="                                      ~~~~~">
+        <location
+            file="packages/modules/Connectivity/framework/src/android/net/ConnectivityCallListenerService.java"
+            line="207"
+            column="39"/>
+    </issue>
+
+</issues>

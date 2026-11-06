@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.swcodec.flags"
+  name: "iamf_software_decoder"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "enable_size_override_for_external_displays"
+  state: ENABLED
+  permission: READ_ONLY
+}

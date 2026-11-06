@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "restore_user_aspect_ratio_settings_using_service"
+  state: ENABLED
+  permission: READ_ONLY
+}

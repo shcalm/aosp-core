@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "ringtone_vibration_utils_api"
+  state: ENABLED
+  permission: READ_WRITE
+}

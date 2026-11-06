@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "support_low_battery_alert"
+  state: ENABLED
+  permission: READ_WRITE
+}

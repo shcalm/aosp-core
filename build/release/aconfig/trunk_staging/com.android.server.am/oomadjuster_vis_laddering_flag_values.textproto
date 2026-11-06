@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "oomadjuster_vis_laddering"
+  state: ENABLED
+  permission: READ_ONLY
+}

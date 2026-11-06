@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "adpf_25q2_metrics"
+  state: ENABLED
+  permission: READ_WRITE
+}

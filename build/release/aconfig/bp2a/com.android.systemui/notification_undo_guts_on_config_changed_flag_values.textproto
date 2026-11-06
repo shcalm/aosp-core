@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "notification_undo_guts_on_config_changed"
+  state: ENABLED
+  permission: READ_ONLY
+}

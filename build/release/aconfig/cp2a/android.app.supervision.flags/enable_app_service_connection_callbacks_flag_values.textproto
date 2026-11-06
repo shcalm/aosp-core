@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "enable_app_service_connection_callbacks"
+  state: ENABLED
+  permission: READ_ONLY
+}

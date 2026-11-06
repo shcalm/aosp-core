@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "ensure_acl_connection_is_removed_from_pending_list"
+  state: ENABLED
+  permission: READ_ONLY
+}

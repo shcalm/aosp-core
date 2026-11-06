@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "enable_lock_task_feature_quick_settings"
+  state: ENABLED
+  permission: READ_ONLY
+}

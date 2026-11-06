@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "sdp_ccb_clean_up_after_l2cap_disc"
+  state: ENABLED
+  permission: READ_ONLY
+}

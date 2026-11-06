@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "user_visible_on_user_starting"
+  state: ENABLED
+  permission: READ_WRITE
+}

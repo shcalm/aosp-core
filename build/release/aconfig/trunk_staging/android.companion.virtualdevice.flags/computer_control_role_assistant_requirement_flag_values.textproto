@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "computer_control_role_assistant_requirement"
+  state: ENABLED
+  permission: READ_WRITE
+}

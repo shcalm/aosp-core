@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "allow_alarms_with_relaxed_quota"
+  state: ENABLED
+  permission: READ_ONLY
+}

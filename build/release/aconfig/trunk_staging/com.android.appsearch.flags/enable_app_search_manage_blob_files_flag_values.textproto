@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_app_search_manage_blob_files"
+  state: ENABLED
+  permission: READ_WRITE
+}

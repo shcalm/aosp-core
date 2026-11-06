@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "enable_magnification_magnify_nav_bar_and_ime"
+  state: ENABLED
+  permission: READ_ONLY
+}

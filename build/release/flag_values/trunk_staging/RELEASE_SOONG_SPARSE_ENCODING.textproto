@@ -1,0 +1,4 @@
+name: "RELEASE_SOONG_SPARSE_ENCODING"
+value {
+  bool_value: true
+}

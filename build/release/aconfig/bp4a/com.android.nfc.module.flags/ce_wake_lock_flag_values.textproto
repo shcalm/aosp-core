@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.module.flags"
+  name: "ce_wake_lock"
+  state: ENABLED
+  permission: READ_ONLY
+}

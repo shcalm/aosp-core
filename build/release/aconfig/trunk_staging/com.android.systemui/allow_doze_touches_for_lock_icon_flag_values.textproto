@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "allow_doze_touches_for_lock_icon"
+  state: ENABLED
+  permission: READ_WRITE
+}

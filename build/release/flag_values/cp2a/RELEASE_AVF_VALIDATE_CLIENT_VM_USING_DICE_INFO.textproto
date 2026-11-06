@@ -1,0 +1,4 @@
+name: "RELEASE_AVF_VALIDATE_CLIENT_VM_USING_DICE_INFO"
+value {
+  bool_value: true
+}

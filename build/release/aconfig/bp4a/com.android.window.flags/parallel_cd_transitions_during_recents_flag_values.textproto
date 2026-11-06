@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "parallel_cd_transitions_during_recents"
+  state: ENABLED
+  permission: READ_ONLY
+}

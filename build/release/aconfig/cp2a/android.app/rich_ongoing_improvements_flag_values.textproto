@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "rich_ongoing_improvements"
+  state: ENABLED
+  permission: READ_ONLY
+}

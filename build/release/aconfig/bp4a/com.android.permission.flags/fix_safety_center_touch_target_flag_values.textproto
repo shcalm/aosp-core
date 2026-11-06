@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.permission.flags"
+  name: "fix_safety_center_touch_target"
+  state: ENABLED
+  permission: READ_ONLY
+}

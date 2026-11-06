@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "dream_transition_fixes"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "write_ahead_logging_db"
+  state: ENABLED
+  permission: READ_WRITE
+}

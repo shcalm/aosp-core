@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_separate_read_write_executors"
+  state: ENABLED
+  permission: READ_WRITE
+}

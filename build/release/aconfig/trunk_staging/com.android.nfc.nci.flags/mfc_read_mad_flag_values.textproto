@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.nci.flags"
+  name: "mfc_read_mad"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "touch_explorer_use_virtual_device_id"
+  state: ENABLED
+  permission: READ_ONLY
+}

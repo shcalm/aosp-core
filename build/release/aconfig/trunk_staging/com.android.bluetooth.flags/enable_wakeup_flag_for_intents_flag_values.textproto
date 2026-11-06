@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "enable_wakeup_flag_for_intents"
+  state: ENABLED
+  permission: READ_WRITE
+}

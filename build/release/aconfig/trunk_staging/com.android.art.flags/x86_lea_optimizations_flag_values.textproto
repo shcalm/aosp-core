@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.flags"
+  name: "x86_lea_optimizations"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "keyguard_remove_default_display_usage"
+  state: ENABLED
+  permission: READ_WRITE
+}

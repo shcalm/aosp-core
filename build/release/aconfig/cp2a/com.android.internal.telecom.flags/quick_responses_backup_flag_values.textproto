@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telecom.flags"
+  name: "quick_responses_backup"
+  state: ENABLED
+  permission: READ_ONLY
+}

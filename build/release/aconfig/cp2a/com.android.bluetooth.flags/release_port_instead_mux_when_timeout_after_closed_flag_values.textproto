@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "release_port_instead_mux_when_timeout_after_closed"
+  state: ENABLED
+  permission: READ_ONLY
+}

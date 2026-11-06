@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "do_not_dump_devices_from_adapter_properties"
+  state: ENABLED
+  permission: READ_ONLY
+}

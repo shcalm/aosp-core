@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "enable_long_method_tracing_on_anr_timer"
+  state: ENABLED
+  permission: READ_ONLY
+}

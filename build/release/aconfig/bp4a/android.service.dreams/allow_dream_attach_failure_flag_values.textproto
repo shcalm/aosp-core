@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.dreams"
+  name: "allow_dream_attach_failure"
+  state: ENABLED
+  permission: READ_ONLY
+}

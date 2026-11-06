@@ -1,0 +1,6 @@
+flag_value {
+  package: "suspend_service.flags"
+  name: "enable_pm_fs_abort"
+  state: ENABLED
+  permission: READ_WRITE
+}

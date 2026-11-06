@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "task_view_repository"
+  state: ENABLED
+  permission: READ_WRITE
+}

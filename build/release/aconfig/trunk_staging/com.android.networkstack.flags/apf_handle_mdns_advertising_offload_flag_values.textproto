@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.networkstack.flags"
+  name: "apf_handle_mdns_advertising_offload"
+  state: ENABLED
+  permission: READ_WRITE
+}

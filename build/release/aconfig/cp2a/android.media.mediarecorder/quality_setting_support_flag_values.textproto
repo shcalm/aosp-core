@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.mediarecorder"
+  name: "quality_setting_support"
+  state: ENABLED
+  permission: READ_ONLY
+}

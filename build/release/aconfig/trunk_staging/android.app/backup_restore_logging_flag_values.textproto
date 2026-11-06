@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "backup_restore_logging"
+  state: ENABLED
+  permission: READ_WRITE
+}

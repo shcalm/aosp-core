@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "always_move_task_to_back_on_back_pressed_feature_flag"
+  state: ENABLED
+  permission: READ_ONLY
+}

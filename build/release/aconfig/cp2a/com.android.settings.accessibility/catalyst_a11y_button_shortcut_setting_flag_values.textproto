@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "catalyst_a11y_button_shortcut_setting"
+  state: ENABLED
+  permission: READ_ONLY
+}

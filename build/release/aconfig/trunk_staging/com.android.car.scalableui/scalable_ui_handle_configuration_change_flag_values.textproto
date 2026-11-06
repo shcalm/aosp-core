@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.car.scalableui"
+  name: "scalable_ui_handle_configuration_change"
+  state: ENABLED
+  permission: READ_WRITE
+}

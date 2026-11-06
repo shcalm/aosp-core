@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "one_way_set_task_description"
+  state: ENABLED
+  permission: READ_WRITE
+}

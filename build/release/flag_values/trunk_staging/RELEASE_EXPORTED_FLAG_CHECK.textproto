@@ -1,0 +1,4 @@
+name: "RELEASE_EXPORTED_FLAG_CHECK"
+value {
+  bool_value: true
+}

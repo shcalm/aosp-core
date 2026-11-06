@@ -1,0 +1,8 @@
+name: "RELEASE_PACKAGE_LIBSQLITE3"
+namespace: "system_performance"
+description: "The sqlite release."
+value: {
+  string_value: "3440300"
+}
+workflow: PREBUILT
+containers: "system"

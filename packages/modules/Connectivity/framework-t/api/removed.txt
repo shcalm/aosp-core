@@ -1,0 +1,10 @@
+// Signature format: 6.0
+// - style=java
+package android.net {
+
+  public class TrafficStats {
+    method @Deprecated public static void setThreadStatsUidSelf();
+  }
+
+}
+

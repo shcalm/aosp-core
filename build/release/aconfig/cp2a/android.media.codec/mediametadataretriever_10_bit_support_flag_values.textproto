@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.codec"
+  name: "mediametadataretriever_10_bit_support"
+  state: ENABLED
+  permission: READ_ONLY
+}

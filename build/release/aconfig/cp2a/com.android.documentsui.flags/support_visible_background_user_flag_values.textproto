@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.documentsui.flags"
+  name: "support_visible_background_user"
+  state: ENABLED
+  permission: READ_ONLY
+}

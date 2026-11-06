@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libgui.flags"
+  name: "cursor_plane_compatibility"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,8 @@
+name: "RELEASE_SETTINGS_ENABLE_OPTIMIZE"
+namespace: "system_performance"
+description: "Enables aggressive R8 optimization for Settings app targets."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

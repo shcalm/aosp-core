@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "enable_autoclick_panel_bug_fixes"
+  state: ENABLED
+  permission: READ_WRITE
+}

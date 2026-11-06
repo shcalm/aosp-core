@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.utils"
+  name: "long_method_trace"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.mainline.flags"
+  name: "deprecate_mediaparser_sample_flag_decode_only"
+  state: ENABLED
+  permission: READ_WRITE
+}

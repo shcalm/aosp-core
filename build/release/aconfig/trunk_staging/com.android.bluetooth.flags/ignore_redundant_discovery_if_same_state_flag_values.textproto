@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "ignore_redundant_discovery_if_same_state"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.intentresolver"
+  name: "include_link_sticky_checkbox"
+  state: ENABLED
+  permission: READ_WRITE
+}

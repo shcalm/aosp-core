@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "not_recreate_agent_when_immutable_capabilities_changed"
+  state: ENABLED
+  permission: READ_WRITE
+}

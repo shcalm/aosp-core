@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.net.flags"
+  name: "tethering_request_virtual"
+  state: ENABLED
+  permission: READ_ONLY
+}

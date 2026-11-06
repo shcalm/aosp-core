@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "string_rebuild_persistent_masterseed"
+  state: ENABLED
+  permission: READ_ONLY
+}

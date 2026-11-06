@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "extended_apps_shortcut_category"
+  state: ENABLED
+  permission: READ_WRITE
+}

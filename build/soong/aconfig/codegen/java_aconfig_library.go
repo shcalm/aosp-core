@@ -1,0 +1,183 @@
+// Copyright 2023 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package codegen
+
+import (
+	"android/soong/android"
+	"android/soong/java"
+	"strconv"
+
+	"github.com/google/blueprint"
+	"github.com/google/blueprint/proptools"
+)
+
+type declarationsTagType struct {
+	blueprint.BaseDependencyTag
+}
+
+var declarationsTag = declarationsTagType{}
+
+var aconfigSupportedModes = []string{"production", "test", "exported", "force-read-only"}
+
+type JavaAconfigDeclarationsLibraryProperties struct {
+	// name of the aconfig_declarations module to generate a library for
+	Aconfig_declarations string
+
+	// default mode is "production", the other accepted modes are:
+	// "test": to generate test mode version of the library
+	// "exported": to generate exported mode version of the library
+	// "force-read-only": to generate force-read-only mode version of the library
+	// an error will be thrown if the mode is not supported
+	Mode *string
+
+	// Whether to preserve the internal aconfig flags impl interface codegen for this library.
+	// If true, the generated library will include the full legacy interface for the flags impl.
+	// If false or not set, the generated library internals may be optimized in ways that don't
+	// export the entire set of flags impl APIs.
+	// Defaults to false.
+	Preserve_legacy_impl_interface *bool
+}
+
+type JavaAconfigDeclarationsLibraryCallbacks struct {
+	properties JavaAconfigDeclarationsLibraryProperties
+}
+
+func JavaDeclarationsLibraryFactory() android.Module {
+	callbacks := &JavaAconfigDeclarationsLibraryCallbacks{}
+	return java.GeneratedJavaLibraryModuleFactory("java_aconfig_library", callbacks, &callbacks.properties)
+}
+
+func (callbacks *JavaAconfigDeclarationsLibraryCallbacks) DepsMutator(module *java.GeneratedJavaLibraryModule, ctx android.BottomUpMutatorContext) {
+	declarations := callbacks.properties.Aconfig_declarations
+	if len(declarations) == 0 {
+		// TODO: Add test for this case
+		ctx.PropertyErrorf("aconfig_declarations", "aconfig_declarations property required")
+	} else {
+		ctx.AddDependency(ctx.Module(), declarationsTag, declarations)
+	}
+
+	// "libcore_aconfig_flags_lib" module has a circular dependency because the shared libraries
+	// are built on core_current and the module is used to flag the APIs in the core_current.
+	// http://b/316554963#comment2 has the details of the circular dependency chain.
+	// If a java_aconfig_library uses "none" sdk_version, it should include and build these
+	// annotation files as the shared library themselves.
+	var addLibraries bool = module.Library.Module.SdkVersion(ctx).Kind != android.SdkNone
+	if addLibraries {
+		// Add aconfig-annotations-lib as a dependency for the optimization / code stripping annotations
+		module.AddSharedLibrary("aconfig-annotations-lib")
+		// TODO(b/303773055): Remove the annotation after access issue is resolved.
+		module.AddSharedLibrary("unsupportedappusage")
+		module.AddSharedLibrary("aconfig_storage_stub")
+	}
+}
+
+func (callbacks *JavaAconfigDeclarationsLibraryCallbacks) GenerateSourceJarBuildActions(module *java.GeneratedJavaLibraryModule, ctx android.ModuleContext) (android.Path, android.Path) {
+	// Get the values that came from the global RELEASE_ACONFIG_VALUE_SETS flag
+	srcJarPath := android.PathForModuleGen(ctx, ctx.ModuleName()+".srcjar")
+	declarationsModule := callbacks.getDeclarationsModule(ctx)
+	if declarationsModule == nil {
+		return srcJarPath, android.PathForModuleOut(ctx, "missing_declarations")
+	}
+
+	declarations, _ := android.OtherModuleProvider(ctx, declarationsModule, android.AconfigDeclarationsProviderKey)
+
+	// Generate the action to build the srcjar
+
+	mode := proptools.StringDefault(callbacks.properties.Mode, "production")
+	if !isModeSupported(mode) {
+		ctx.PropertyErrorf("mode", "%q is not a supported mode", mode)
+	}
+
+	if mode == "exported" && !declarations.Exportable {
+		// if mode is exported, the corresponding aconfig_declaration must mark its
+		// exportable property true
+		ctx.PropertyErrorf("mode", "exported mode requires its aconfig_declaration has exportable prop true")
+	}
+
+	// Note that currently `preserve_legacy_impl_interface: false` is a no-op and will respect the
+	// release build flag value allowing for interface removal.
+	allow_impl_interface_removal := ctx.Config().GetBuildFlagBool("RELEASE_ACONFIG_DEFAULT_ALLOW_JAVA_IMPL_INTERFACE_REMOVAL")
+	if proptools.BoolDefault(callbacks.properties.Preserve_legacy_impl_interface, false) {
+		allow_impl_interface_removal = false
+	}
+
+	ctx.Build(pctx, android.BuildParams{
+		Rule:        javaRule,
+		Input:       declarations.IntermediateCacheOutputPath,
+		Output:      srcJarPath,
+		Description: "aconfig.srcjar",
+		Args: map[string]string{
+			"mode":                         mode,
+			"allow_impl_interface_removal": strconv.FormatBool(allow_impl_interface_removal),
+		},
+	})
+
+	if ctx.Config().ReleaseJarjarFlagsInFramework() || declarations.Exportable {
+		// Mark our generated code as possibly needing jarjar repackaging
+		// The repackaging only happens when the corresponding aconfig_declaration
+		// has property exportable true
+		module.AddJarJarRenameRule(declarations.Package+".Flags", "")
+		module.AddJarJarRenameRule(declarations.Package+".FeatureFlags", "")
+		module.AddJarJarRenameRule(declarations.Package+".FeatureFlagsImpl", "")
+		module.AddJarJarRenameRule(declarations.Package+".CustomFeatureFlags", "")
+		module.AddJarJarRenameRule(declarations.Package+".FakeFeatureFlagsImpl", "")
+	}
+
+	android.SetProvider(ctx, android.CodegenInfoProvider, android.CodegenInfo{
+		AconfigDeclarations:          []string{declarationsModule.Name()},
+		IntermediateCacheOutputPaths: android.Paths{declarations.IntermediateCacheOutputPath},
+		Srcjars:                      android.Paths{srcJarPath},
+		ModeInfos: map[string]android.ModeInfo{
+			ctx.ModuleName(): {
+				Container: declarations.Container,
+				Mode:      mode,
+			}},
+	})
+
+	return srcJarPath, declarations.IntermediateCacheOutputPath
+}
+
+func (callbacks *JavaAconfigDeclarationsLibraryCallbacks) getDeclarationsModule(ctx android.BaseModuleContext) *android.ModuleProxy {
+	declarationsModules := ctx.GetDirectDepsProxyWithTag(declarationsTag)
+	if len(declarationsModules) != 1 {
+		if ctx.Config().AllowMissingDependencies() {
+			ctx.AddMissingDependencies([]string{"exactly_one_aconfig_declarations_required"})
+			return nil
+		} else {
+			panic("Exactly one aconfig_declarations property required")
+		}
+	}
+	return &declarationsModules[0]
+}
+
+func isModeSupported(mode string) bool {
+	return android.InList(mode, aconfigSupportedModes)
+}
+
+func (callbacks *JavaAconfigDeclarationsLibraryCallbacks) IDEInfo(module *java.GeneratedJavaLibraryModule, ctx android.BaseModuleContext, dpInfo *android.IdeInfo) {
+	declarationsModule := callbacks.getDeclarationsModule(ctx)
+	if declarationsModule == nil {
+		return
+	}
+
+	declarations, _ := android.OtherModuleProvider(ctx, declarationsModule, android.AconfigDeclarationsProviderKey)
+	if dpInfo.Aconfig == nil {
+		dpInfo.Aconfig = &android.AconfigIdeInfo{}
+	}
+	dpInfo.Aconfig.Srcs = append(dpInfo.Aconfig.Srcs, declarations.Srcs.Strings()...)
+	dpInfo.Aconfig.Mode = proptools.String(callbacks.properties.Mode)
+	dpInfo.Aconfig.Package = declarations.Package
+	dpInfo.Aconfig.Container = declarations.Container
+}

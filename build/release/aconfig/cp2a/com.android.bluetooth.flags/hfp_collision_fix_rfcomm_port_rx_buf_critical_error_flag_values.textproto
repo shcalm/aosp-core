@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hfp_collision_fix_rfcomm_port_rx_buf_critical_error"
+  state: ENABLED
+  permission: READ_ONLY
+}

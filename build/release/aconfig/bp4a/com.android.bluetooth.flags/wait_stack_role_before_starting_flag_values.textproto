@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "wait_stack_role_before_starting"
+  state: ENABLED
+  permission: READ_ONLY
+}

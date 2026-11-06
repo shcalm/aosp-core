@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "polish_close_wallpaper_includes_open_change"
+  state: ENABLED
+  permission: READ_WRITE
+}

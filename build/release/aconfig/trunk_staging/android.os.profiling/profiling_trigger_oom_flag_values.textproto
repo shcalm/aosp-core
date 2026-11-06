@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.profiling"
+  name: "profiling_trigger_oom"
+  state: ENABLED
+  permission: READ_WRITE
+}

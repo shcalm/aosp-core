@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_modals_fullscreen_with_platform_signature"
+  state: ENABLED
+  permission: READ_ONLY
+}

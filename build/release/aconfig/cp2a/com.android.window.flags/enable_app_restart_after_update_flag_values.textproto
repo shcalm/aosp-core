@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_app_restart_after_update"
+  state: ENABLED
+  permission: READ_ONLY
+}

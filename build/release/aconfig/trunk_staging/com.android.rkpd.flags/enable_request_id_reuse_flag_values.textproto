@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.rkpd.flags"
+  name: "enable_request_id_reuse"
+  state: ENABLED
+  permission: READ_WRITE
+}

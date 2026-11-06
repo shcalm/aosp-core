@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "lockscreen_timeout_shortlink"
+  state: ENABLED
+  permission: READ_ONLY
+}

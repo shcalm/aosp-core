@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "resolve_trampoline_destination_packages"
+  state: ENABLED
+  permission: READ_ONLY
+}

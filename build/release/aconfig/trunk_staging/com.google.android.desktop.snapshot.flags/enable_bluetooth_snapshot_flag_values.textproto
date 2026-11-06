@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.google.android.desktop.snapshot.flags"
+  name: "enable_bluetooth_snapshot"
+  state: ENABLED
+  permission: READ_WRITE
+}

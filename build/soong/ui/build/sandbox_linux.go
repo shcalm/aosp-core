@@ -1,0 +1,366 @@
+// Copyright 2017 Google Inc. All rights reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package build
+
+import (
+	"bytes"
+	"encoding/json"
+	"os"
+	"os/exec"
+	"os/user"
+	"path/filepath"
+	"strings"
+	"sync"
+)
+
+type Sandbox struct {
+	Enabled bool
+
+	AllowBuildBrokenUsesNetwork bool
+}
+
+var (
+	noSandbox    = Sandbox{}
+	basicSandbox = Sandbox{
+		Enabled: true,
+	}
+
+	dumpvarsSandbox = basicSandbox
+	katiSandbox     = basicSandbox
+	soongSandbox    = basicSandbox
+	ninjaSandbox    = Sandbox{
+		Enabled: true,
+
+		AllowBuildBrokenUsesNetwork: true,
+	}
+)
+
+const (
+	nsjailPath = "prebuilts/build-tools/linux-x86/bin/nsjail"
+	abfsSrcDir = "/src"
+)
+
+var sandboxConfig struct {
+	once sync.Once
+
+	working bool
+	group   string
+	srcDir  string
+	outDir  string
+	distDir string
+}
+
+func (c *Cmd) envForSandbox(env *Environment) []string {
+	if !c.config.UseABFS() {
+		return env.Environ()
+	}
+
+	replaced := env.Copy().Environ()
+	for i, val := range replaced {
+		replaced[i] = strings.ReplaceAll(val, sandboxConfig.srcDir, abfsSrcDir)
+	}
+
+	return replaced
+}
+
+func (c *Cmd) sandboxSupported() bool {
+	if !c.Sandbox.Enabled {
+		return false
+	}
+
+	sandboxConfig.once.Do(func() {
+		sandboxConfig.group = "nogroup"
+		if _, err := user.LookupGroup(sandboxConfig.group); err != nil {
+			sandboxConfig.group = "nobody"
+		}
+
+		// These directories will be bind mounted
+		// so we need full non-symlink paths
+		sandboxConfig.srcDir = absPath(c.ctx, ".")
+		if derefPath, err := filepath.EvalSymlinks(sandboxConfig.srcDir); err == nil {
+			sandboxConfig.srcDir = absPath(c.ctx, derefPath)
+		}
+		sandboxConfig.outDir = absPath(c.ctx, c.config.OutDir())
+		if derefPath, err := filepath.EvalSymlinks(sandboxConfig.outDir); err == nil {
+			sandboxConfig.outDir = absPath(c.ctx, derefPath)
+		}
+		sandboxConfig.distDir = absPath(c.ctx, c.config.DistDir())
+		if derefPath, err := filepath.EvalSymlinks(sandboxConfig.distDir); err == nil {
+			sandboxConfig.distDir = absPath(c.ctx, derefPath)
+		}
+
+		var sandboxArgs []string
+		sandboxArgs = append(sandboxArgs,
+			"-H", "android-build",
+			"-e",
+			"-u", "nobody",
+			"-g", sandboxConfig.group,
+		)
+		sandboxArgs = append(sandboxArgs,
+			c.readMountArgs()...,
+		)
+		sandboxArgs = append(sandboxArgs,
+			// Mount tmp before srcDir
+			// srcDir is /tmp/.* in integration tests, which is a child dir of /tmp
+			// nsjail throws an error if a child dir is mounted before its parent
+			"-B", "/tmp",
+			c.config.sandboxConfig.SrcDirMountFlag(), c.srcDirArg(),
+			"-B", c.outDirArg(),
+		)
+
+		if _, err := os.Stat(sandboxConfig.distDir); !os.IsNotExist(err) {
+			//Mount dist dir as read-write if it already exists
+			sandboxArgs = append(sandboxArgs, "-B",
+				sandboxConfig.distDir)
+		}
+
+		sandboxArgs = append(sandboxArgs,
+			"--disable_clone_newcgroup",
+			"--",
+			"/bin/bash", "-c", `if [ $(hostname) == "android-build" ]; then echo "Android" "Success"; else echo Failure; fi`)
+
+		cmd := exec.CommandContext(c.ctx.Context, nsjailPath, sandboxArgs...)
+
+		cmd.Env = c.envForSandbox(c.config.Environment())
+
+		c.ctx.Verboseln(cmd.Args)
+		data, err := cmd.CombinedOutput()
+		if err == nil && bytes.Contains(data, []byte("Android Success")) {
+			sandboxConfig.working = true
+			return
+		}
+
+		c.ctx.Println("Build sandboxing disabled due to nsjail error.")
+
+		for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {
+			c.ctx.Verboseln(line)
+		}
+
+		if err == nil {
+			c.ctx.Verboseln("nsjail exited successfully, but without the correct output")
+		} else if e, ok := err.(*exec.ExitError); ok {
+			c.ctx.Verbosef("nsjail failed with %v", e.ProcessState.String())
+		} else {
+			c.ctx.Verbosef("nsjail failed with %v", err)
+		}
+	})
+
+	return sandboxConfig.working
+}
+
+// Assumes input path is absolute, clean, and if applicable, an evaluated
+// symlink. If path is not a subdirectory of src dir or relative path
+// cannot be determined, return the input untouched.
+func (c *Cmd) relFromSrcDir(path string) string {
+	if !strings.HasPrefix(path, sandboxConfig.srcDir) {
+		return path
+	}
+
+	rel, err := filepath.Rel(sandboxConfig.srcDir, path)
+	if err != nil {
+		return path
+	}
+
+	return rel
+}
+
+func (c *Cmd) dirArg(path string) string {
+	if !c.config.UseABFS() {
+		return path
+	}
+
+	rel := c.relFromSrcDir(path)
+
+	return path + ":" + filepath.Join(abfsSrcDir, rel)
+}
+
+func (c *Cmd) srcDirArg() string {
+	return c.dirArg(sandboxConfig.srcDir)
+}
+
+func (c *Cmd) outDirArg() string {
+	return c.dirArg(sandboxConfig.outDir)
+}
+
+func (c *Cmd) distDirArg() string {
+	return c.dirArg(sandboxConfig.distDir)
+}
+
+// When configured to use ABFS, we need to allow the creation of the /src
+// directory. Therefore, we cannot mount the root "/" directory as read-only.
+// Instead, we individually mount the children of "/" as RO.
+func (c *Cmd) readMountArgs() []string {
+	if !c.config.UseABFS() {
+		// For now, just map everything. Make most things readonly.
+		return []string{"-R", "/"}
+	}
+
+	entries, err := os.ReadDir("/")
+	if err != nil {
+		// If we can't read "/", just use the default non-ABFS behavior.
+		return []string{"-R", "/"}
+	}
+
+	args := make([]string, 0, 2*len(entries))
+	for _, ent := range entries {
+		args = append(args, "-R", "/"+ent.Name())
+	}
+
+	return args
+}
+
+func (c *Cmd) workDir() string {
+	if !c.config.UseABFS() {
+		wd, _ := os.Getwd()
+		return wd
+	}
+
+	return abfsSrcDir
+}
+
+func abfsCacheFromMount() (string, error) {
+	wd, _ := os.Getwd()
+	type Config struct {
+		CacheDir string
+	}
+	type MountDetails struct {
+		Config Config
+	}
+	var m MountDetails
+	file, err := os.Open(filepath.Join(wd, ".repo/mount-details"))
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+	d := json.NewDecoder(file)
+	if err := d.Decode(&m); err != nil {
+		return "", err
+	}
+
+	return m.Config.CacheDir, nil
+}
+
+func (c *Cmd) wrapSandbox() {
+	wd := c.workDir()
+
+	var sandboxArgs []string
+	sandboxArgs = append(sandboxArgs,
+		// The executable to run
+		"-x", c.Path,
+
+		// Set the hostname to something consistent
+		"-H", "android-build",
+
+		// Use the current working dir
+		"--cwd", wd,
+
+		// No time limit
+		"-t", "0",
+
+		// Keep all environment variables, we already filter them out
+		// in soong_ui
+		"-e",
+
+		// Mount /proc read-write, necessary to run a nested nsjail or minijail0
+		"--proc_rw",
+
+		// Use a consistent user & group.
+		// Note that these are mapped back to the real UID/GID when
+		// doing filesystem operations, so they're rather arbitrary.
+		"-u", "nobody",
+		"-g", sandboxConfig.group,
+
+		// Set high values, as nsjail uses low defaults.
+		"--rlimit_as", "soft",
+		"--rlimit_core", "soft",
+		"--rlimit_cpu", "soft",
+		"--rlimit_fsize", "soft",
+		"--rlimit_nofile", "soft",
+
+		// nsjail defaults to a niceness of 19, the minimum priority.  Raise it to 5 so that UI tasks are still
+		// a higher priority, but the build is a higher priority than the other background tasks that are set to 10.
+		"--nice_level", "5",
+	)
+
+	sandboxArgs = append(sandboxArgs,
+		c.readMountArgs()...,
+	)
+
+	sandboxArgs = append(sandboxArgs,
+		// Mount a writable tmp dir
+		"-B", "/tmp",
+
+		// Mount source
+		c.config.sandboxConfig.SrcDirMountFlag(), c.srcDirArg(),
+
+		//Mount out dir as read-write
+		"-B", c.outDirArg(),
+
+		// Disable newcgroup for now, since it may require newer kernels
+		// TODO: try out cgroups
+		"--disable_clone_newcgroup",
+
+		// Only log important warnings / errors
+		"-q",
+	)
+	if c.config.UseABFS() {
+		cacheDir, err := abfsCacheFromMount()
+		if err != nil {
+			c.ctx.Fatalln(err)
+		}
+		sandboxArgs = append(sandboxArgs, "-B", cacheDir)
+	}
+
+	// Mount srcDir RW allowlists as Read-Write
+	if len(c.config.sandboxConfig.SrcDirRWAllowlist()) > 0 && !c.config.sandboxConfig.SrcDirIsRO() {
+		errMsg := `Product source tree has been set as ReadWrite, RW allowlist not necessary.
+			To recover, either
+			1. Set BUILD_BROKEN_SRC_DIR_IS_WRITABLE=false #or
+			2. Unset BUILD_BROKEN_SRC_DIR_RW_ALLOWLIST`
+		c.ctx.Fatalln(errMsg)
+	}
+	for _, srcDirChild := range c.config.sandboxConfig.SrcDirRWAllowlist() {
+		sandboxArgs = append(sandboxArgs, "-B", srcDirChild)
+	}
+
+	if _, err := os.Stat(sandboxConfig.distDir); !os.IsNotExist(err) {
+		//Mount dist dir as read-write if it already exists
+		sandboxArgs = append(sandboxArgs, "-B", c.distDirArg())
+	}
+
+	if c.Sandbox.AllowBuildBrokenUsesNetwork {
+		if c.config.BuildBrokenUsesNetwork() {
+			c.ctx.Printf("AllowBuildBrokenUsesNetwork: %v", c.Sandbox.AllowBuildBrokenUsesNetwork)
+			c.ctx.Printf("BuildBrokenUsesNetwork: %v", c.config.BuildBrokenUsesNetwork())
+			sandboxArgs = append(sandboxArgs, "-N")
+		}
+	} else if dlv, _ := c.config.Environment().Get("SOONG_DELVE"); dlv != "" {
+		// The debugger is enabled and soong_build will pause until a remote delve process connects, allow
+		// network connections.
+		sandboxArgs = append(sandboxArgs, "-N")
+	}
+
+	// Stop nsjail from parsing arguments
+	sandboxArgs = append(sandboxArgs, "--")
+
+	c.Args = append(sandboxArgs, c.Args[1:]...)
+	c.Path = nsjailPath
+
+	env := Environment(c.Env)
+	if _, hasUser := env.Get("USER"); hasUser {
+		env.Set("USER", "nobody")
+	}
+	c.Env = c.envForSandbox(&env)
+}

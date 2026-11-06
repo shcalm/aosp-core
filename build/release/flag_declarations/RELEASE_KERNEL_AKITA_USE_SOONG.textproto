@@ -1,0 +1,8 @@
+name: "RELEASE_KERNEL_AKITA_USE_SOONG"
+namespace: "pixel_kernel"
+description: "If true, then the kernel elements are built in soong instead of make."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "vendor"

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.contentsafety.flags"
+  name: "enable_contentsafety"
+  state: ENABLED
+  permission: READ_ONLY
+}

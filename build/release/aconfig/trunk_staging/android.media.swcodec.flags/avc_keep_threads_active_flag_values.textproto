@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.swcodec.flags"
+  name: "avc_keep_threads_active"
+  state: ENABLED
+  permission: READ_WRITE
+}

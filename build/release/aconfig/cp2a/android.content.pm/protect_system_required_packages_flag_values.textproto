@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "protect_system_required_packages"
+  state: ENABLED
+  permission: READ_ONLY
+}

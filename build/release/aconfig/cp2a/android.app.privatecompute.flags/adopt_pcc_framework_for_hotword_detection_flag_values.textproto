@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.privatecompute.flags"
+  name: "adopt_pcc_framework_for_hotword_detection"
+  state: ENABLED
+  permission: READ_ONLY
+}

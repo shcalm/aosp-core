@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "prevent_storage_access_without_gd_running"
+  state: ENABLED
+  permission: READ_WRITE
+}

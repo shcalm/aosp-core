@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telecom.flags"
+  name: "get_main_user_for_block_checker"
+  state: ENABLED
+  permission: READ_ONLY
+}

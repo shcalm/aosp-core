@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.blockednumber.flags"
+  name: "ignore_invalid_emergency_numbers"
+  state: ENABLED
+  permission: READ_ONLY
+}

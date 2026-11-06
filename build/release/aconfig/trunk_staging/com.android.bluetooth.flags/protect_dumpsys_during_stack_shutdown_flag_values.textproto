@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "protect_dumpsys_during_stack_shutdown"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.accessibility"
+  name: "remove_all_shortcuts_when_force_stop_always_on_service"
+  state: ENABLED
+  permission: READ_WRITE
+}

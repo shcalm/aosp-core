@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.serial.flags"
+  name: "enable_wired_serial_api"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "merge_predictive_back_transaction_together"
+  state: ENABLED
+  permission: READ_WRITE
+}

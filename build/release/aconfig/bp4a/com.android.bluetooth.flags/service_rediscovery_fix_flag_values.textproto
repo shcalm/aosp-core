@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "service_rediscovery_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

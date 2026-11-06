@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "respect_system_default_min_size"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "fix_set_display_state_after_device_change"
+  state: ENABLED
+  permission: READ_WRITE
+}

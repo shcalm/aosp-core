@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "log_cached_posts"
+  state: ENABLED
+  permission: READ_ONLY
+}

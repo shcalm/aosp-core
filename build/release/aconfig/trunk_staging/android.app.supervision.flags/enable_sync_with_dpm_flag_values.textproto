@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.supervision.flags"
+  name: "enable_sync_with_dpm"
+  state: ENABLED
+  permission: READ_WRITE
+}

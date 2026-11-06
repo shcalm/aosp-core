@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "bugfix_layer_caching_color_inversion_flickering"
+  state: ENABLED
+  permission: READ_ONLY
+}

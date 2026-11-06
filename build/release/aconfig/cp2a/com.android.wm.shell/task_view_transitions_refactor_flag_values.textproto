@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "task_view_transitions_refactor"
+  state: ENABLED
+  permission: READ_ONLY
+}

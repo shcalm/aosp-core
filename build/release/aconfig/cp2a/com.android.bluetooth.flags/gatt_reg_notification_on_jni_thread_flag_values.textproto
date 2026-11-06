@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "gatt_reg_notification_on_jni_thread"
+  state: ENABLED
+  permission: READ_ONLY
+}

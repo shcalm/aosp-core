@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "external_camera_default_policy"
+  state: ENABLED
+  permission: READ_WRITE
+}

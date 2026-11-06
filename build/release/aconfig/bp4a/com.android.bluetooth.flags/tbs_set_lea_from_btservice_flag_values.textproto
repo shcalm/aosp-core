@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "tbs_set_lea_from_btservice"
+  state: ENABLED
+  permission: READ_ONLY
+}

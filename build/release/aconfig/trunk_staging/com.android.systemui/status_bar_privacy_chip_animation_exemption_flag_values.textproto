@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_privacy_chip_animation_exemption"
+  state: ENABLED
+  permission: READ_WRITE
+}

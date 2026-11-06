@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_bubbles_stashing_on_home"
+  state: ENABLED
+  permission: READ_ONLY
+}

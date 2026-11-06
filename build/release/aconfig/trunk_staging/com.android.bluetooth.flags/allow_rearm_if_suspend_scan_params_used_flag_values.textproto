@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "allow_rearm_if_suspend_scan_params_used"
+  state: ENABLED
+  permission: READ_WRITE
+}

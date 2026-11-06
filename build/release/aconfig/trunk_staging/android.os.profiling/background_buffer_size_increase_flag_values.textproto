@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.profiling"
+  name: "background_buffer_size_increase"
+  state: ENABLED
+  permission: READ_WRITE
+}

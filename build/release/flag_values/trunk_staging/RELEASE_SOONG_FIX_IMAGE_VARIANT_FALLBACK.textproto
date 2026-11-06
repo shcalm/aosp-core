@@ -1,0 +1,4 @@
+name: "RELEASE_SOONG_FIX_IMAGE_VARIANT_FALLBACK"
+value {
+  bool_value: true
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "identity_to_pseudo_addr"
+  state: ENABLED
+  permission: READ_ONLY
+}

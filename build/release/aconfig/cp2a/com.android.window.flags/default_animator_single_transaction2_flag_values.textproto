@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "default_animator_single_transaction2"
+  state: ENABLED
+  permission: READ_ONLY
+}

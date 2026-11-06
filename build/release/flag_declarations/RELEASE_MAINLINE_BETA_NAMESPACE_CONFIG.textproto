@@ -1,0 +1,11 @@
+name: "RELEASE_MAINLINE_BETA_NAMESPACE_CONFIG"
+namespace: "core_experiments_team_internal"
+description: "Mainline beta namespace configuration"
+workflow: PREBUILT
+value: {
+  string_value: "build/tools/aconfig/aconfig/config/mainline_beta_namespaces.json"
+}
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

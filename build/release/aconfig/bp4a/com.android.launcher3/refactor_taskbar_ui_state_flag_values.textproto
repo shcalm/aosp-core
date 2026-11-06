@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "refactor_taskbar_ui_state"
+  state: ENABLED
+  permission: READ_ONLY
+}

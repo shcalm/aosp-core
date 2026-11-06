@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "backup_activated_for_all_users"
+  state: ENABLED
+  permission: READ_ONLY
+}

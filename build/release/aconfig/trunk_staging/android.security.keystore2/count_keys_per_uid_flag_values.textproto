@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security.keystore2"
+  name: "count_keys_per_uid"
+  state: ENABLED
+  permission: READ_ONLY
+}

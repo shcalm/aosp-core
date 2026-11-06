@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "security_mode_3_pairing"
+  state: ENABLED
+  permission: READ_ONLY
+}

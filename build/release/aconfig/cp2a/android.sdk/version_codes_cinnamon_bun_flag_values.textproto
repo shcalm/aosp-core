@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.sdk"
+  name: "version_codes_cinnamon_bun"
+  state: ENABLED
+  permission: READ_ONLY
+}

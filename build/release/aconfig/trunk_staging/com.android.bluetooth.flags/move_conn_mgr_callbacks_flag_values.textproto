@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "move_conn_mgr_callbacks"
+  state: ENABLED
+  permission: READ_WRITE
+}

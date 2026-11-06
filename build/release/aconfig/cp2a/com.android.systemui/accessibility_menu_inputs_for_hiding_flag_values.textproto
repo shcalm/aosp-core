@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "accessibility_menu_inputs_for_hiding"
+  state: ENABLED
+  permission: READ_ONLY
+}

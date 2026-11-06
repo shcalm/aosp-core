@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "idempotent_direct_connect_add"
+  state: ENABLED
+  permission: READ_ONLY
+}

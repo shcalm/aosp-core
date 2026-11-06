@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "promote_existence_changed_state_to_parent"
+  state: ENABLED
+  permission: READ_ONLY
+}

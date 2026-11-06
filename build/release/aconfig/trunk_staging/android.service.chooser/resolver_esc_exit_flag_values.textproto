@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.chooser"
+  name: "resolver_esc_exit"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "encapsulate_cur_proc_state"
+  state: ENABLED
+  permission: READ_WRITE
+}

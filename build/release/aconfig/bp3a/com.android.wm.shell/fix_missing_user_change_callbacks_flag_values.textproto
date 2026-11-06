@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_missing_user_change_callbacks"
+  state: ENABLED
+  permission: READ_ONLY
+}

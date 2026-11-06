@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "enable_quick_settings_panel_shortcut"
+  state: ENABLED
+  permission: READ_WRITE
+}

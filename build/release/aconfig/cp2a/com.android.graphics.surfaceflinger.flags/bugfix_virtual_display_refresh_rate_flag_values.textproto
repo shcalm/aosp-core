@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "bugfix_virtual_display_refresh_rate"
+  state: ENABLED
+  permission: READ_ONLY
+}

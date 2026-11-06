@@ -1,0 +1,8 @@
+name: "RELEASE_KERNEL_HUSKY_DIR"
+namespace: "pixel_kernel"
+description: ""
+value: {
+  string_value: ""
+}
+workflow: PREBUILT
+containers: "vendor"

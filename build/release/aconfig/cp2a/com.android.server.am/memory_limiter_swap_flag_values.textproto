@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "memory_limiter_swap"
+  state: ENABLED
+  permission: READ_ONLY
+}

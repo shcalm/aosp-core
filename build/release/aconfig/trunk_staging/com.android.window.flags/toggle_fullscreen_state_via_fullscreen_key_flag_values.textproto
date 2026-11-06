@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "toggle_fullscreen_state_via_fullscreen_key"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security.keystore2"
+  name: "atoms_v2"
+  state: ENABLED
+  permission: READ_ONLY
+}

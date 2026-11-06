@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "tv_global_actions_focus"
+  state: ENABLED
+  permission: READ_ONLY
+}

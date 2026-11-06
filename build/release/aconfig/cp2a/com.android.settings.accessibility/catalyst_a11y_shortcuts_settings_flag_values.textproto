@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "catalyst_a11y_shortcuts_settings"
+  state: ENABLED
+  permission: READ_ONLY
+}

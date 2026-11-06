@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "handle_non_touchscreen_events_in_drag_detector"
+  state: ENABLED
+  permission: READ_WRITE
+}

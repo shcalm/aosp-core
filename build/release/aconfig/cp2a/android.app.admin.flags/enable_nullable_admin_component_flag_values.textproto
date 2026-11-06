@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.admin.flags"
+  name: "enable_nullable_admin_component"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "floating_menu_more_options"
+  state: ENABLED
+  permission: READ_ONLY
+}

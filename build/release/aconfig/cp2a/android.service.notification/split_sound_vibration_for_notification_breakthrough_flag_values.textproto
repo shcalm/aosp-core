@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.notification"
+  name: "split_sound_vibration_for_notification_breakthrough"
+  state: ENABLED
+  permission: READ_ONLY
+}

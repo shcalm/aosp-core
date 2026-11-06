@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "fallback_to_focused_display"
+  state: ENABLED
+  permission: READ_ONLY
+}

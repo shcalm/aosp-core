@@ -1,0 +1,2904 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues
+    format="6"
+    by="lint 8.13.0-alpha04"
+    type="baseline"
+    client=""
+    dependencies="true"
+    name=""
+    variant="all"
+    version="8.13.0-alpha04">
+    <issue
+        id="GestureBackNavigation"
+        message="If intercepting back events, this should be handled through the registration of callbacks; see https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture"
+        errorLine1="        if (keyCode == KeyEvent.KEYCODE_BACK) {"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppBtEnablingActivity.java"
+            line="103"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="GestureBackNavigation"
+        message="If intercepting back events, this should be handled through the registration of callbacks; see https://developer.android.com/guide/navigation/custom-back/predictive-back-gesture"
+        errorLine1="        if (keyCode == KeyEvent.KEYCODE_BACK) {"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppIncomingFileConfirmActivity.java"
+            line="167"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="ScrollViewSize"
+        message="This LinearLayout should use `android:layout_height=&quot;wrap_content&quot;`"
+        errorLine1="    android:layout_height=&quot;match_parent&quot;"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/layout/auth.xml"
+            line="26"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ScrollViewSize"
+        message="This LinearLayout should use `android:layout_height=&quot;wrap_content&quot;`"
+        errorLine1="        android:layout_height=&quot;match_parent&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/layout/bt_enabling_progress.xml"
+            line="28"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="ScrollViewSize"
+        message="This LinearLayout should use `android:layout_height=&quot;wrap_content&quot;`"
+        errorLine1="        android:layout_height=&quot;match_parent&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/layout/file_transfer.xml"
+            line="26"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="            return String.format("
+        errorLine2="                   ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/mapclient/MapClientContent.java"
+            line="907"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 36.1 (current min is 36): `android.media.AudioDeviceVolumeManager#setDeviceAbsoluteMultiVolumeBehavior`"
+        errorLine1="                .setDeviceAbsoluteMultiVolumeBehavior("
+        errorLine2="                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/hfp/HeadsetService.java"
+            line="283"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level CUR_DEVELOPMENT/10000 (current min is 36): `android.media.BluetoothProfileConnectionInfo#createHfpInfo`"
+        errorLine1="                                BluetoothProfileConnectionInfo.createHfpInfo());"
+        errorLine2="                                                               ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/hfp/HeadsetService.java"
+            line="1120"
+            column="64"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level CUR_DEVELOPMENT/10000 (current min is 36): `android.media.BluetoothProfileConnectionInfo#createHfpInfo`"
+        errorLine1="                                BluetoothProfileConnectionInfo.createHfpInfo());"
+        errorLine2="                                                               ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/hfp/HeadsetService.java"
+            line="1212"
+            column="64"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Class requires API level 36.1 (current min is 36): `android.media.AudioDeviceVolumeManager.OnAudioDeviceVolumeChangedListener`"
+        errorLine1="            implements AudioDeviceVolumeManager.OnAudioDeviceVolumeChangedListener {"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/hfp/HeadsetService.java"
+            line="2268"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level CUR_DEVELOPMENT/10000 (current min is 36): `android.media.AudioManager#isScoManagedByAudio`"
+        errorLine1="            boolean isScoManagedByAudio = mAudioManager.isScoManagedByAudio();"
+        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/hfp/HeadsetSystemInterface.java"
+            line="391"
+            column="57"/>
+    </issue>
+
+    <issue
+        id="GuardedLogInvocation"
+        message="Do not guard log invocations with if blocks using log enforcement variables or isLoggable(). The Log framework does this check for you. Remove the surrounding if block and call to log completely unguarded"
+        errorLine1="        if (Log.isLoggable(TAG, Log.DEBUG)) {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/a2dp/A2dpStateMachine.java"
+            line="633"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GuardedLogInvocation"
+        message="Do not guard log invocations with if blocks using log enforcement variables or isLoggable(). The Log framework does this check for you. Remove the surrounding if block and call to log completely unguarded"
+        errorLine1="        if (Log.isLoggable(TAG, Log.DEBUG)) {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/a2dp/A2dpStateMachine.java"
+            line="633"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GuardedLogInvocation"
+        message="Do not guard log invocations with if blocks using log enforcement variables or isLoggable(). The Log framework does this check for you. Remove the surrounding if block and call to log completely unguarded"
+        errorLine1="        if (Log.isLoggable(TAG, Log.DEBUG)) {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/a2dp/A2dpStateMachine.java"
+            line="633"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GuardedLogInvocation"
+        message="Do not guard log invocations with if blocks using log enforcement variables or isLoggable(). The Log framework does this check for you. Remove the surrounding if block and call to log completely unguarded"
+        errorLine1="        if (Log.isLoggable(TAG, Log.VERBOSE)) {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/map/BluetoothMapService.java"
+            line="680"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GuardedLogInvocation"
+        message="Do not guard log invocations with if blocks using log enforcement variables or isLoggable(). The Log framework does this check for you. Remove the surrounding if block and call to log completely unguarded"
+        errorLine1="        if (Log.isLoggable(TAG, Log.VERBOSE)) {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/map/BluetoothMapService.java"
+            line="680"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GuardedLogInvocation"
+        message="Do not guard log invocations with if blocks using log enforcement variables or isLoggable(). The Log framework does this check for you. Remove the surrounding if block and call to log completely unguarded"
+        errorLine1="        if (Log.isLoggable(TAG, Log.VERBOSE)) {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/map/BluetoothMapService.java"
+            line="680"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GuardedLogInvocation"
+        message="Do not guard log invocations with if blocks using log enforcement variables or isLoggable(). The Log framework does this check for you. Remove the surrounding if block and call to log completely unguarded"
+        errorLine1="        if (Log.isLoggable(TAG, Log.VERBOSE)) {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/map/BluetoothMapService.java"
+            line="680"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GuardedLogInvocation"
+        message="Do not guard log invocations with if blocks using log enforcement variables or isLoggable(). The Log framework does this check for you. Remove the surrounding if block and call to log completely unguarded"
+        errorLine1="        if (Log.isLoggable(TAG, Log.DEBUG)) {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/map/BluetoothMapbMessage.java"
+            line="900"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GuardedLogInvocation"
+        message="Do not guard log invocations with if blocks using log enforcement variables or isLoggable(). The Log framework does this check for you. Remove the surrounding if block and call to log completely unguarded"
+        errorLine1="        if (Log.isLoggable(TAG, Log.VERBOSE)) {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppProvider.java"
+            line="365"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="GuardedLogInvocation"
+        message="Do not guard log invocations with if blocks using log enforcement variables or isLoggable(). The Log framework does this check for you. Remove the surrounding if block and call to log completely unguarded"
+        errorLine1="            if (Log.isLoggable(TAG, Log.DEBUG)) {"
+        errorLine2="            ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/audio_util/MediaPlayerWrapper.java"
+            line="572"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="        View view = getLayoutInflater().inflate(R.layout.confirm_dialog, null);"
+        errorLine2="                                                                         ~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppBtEnableActivity.java"
+            line="71"
+            column="74"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="        View view = getLayoutInflater().inflate(R.layout.bt_enabling_progress, null);"
+        errorLine2="                                                                               ~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppBtEnablingActivity.java"
+            line="94"
+            column="80"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="        View view = getLayoutInflater().inflate(R.layout.confirm_dialog, null);"
+        errorLine2="                                                                         ~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppBtErrorActivity.java"
+            line="66"
+            column="74"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="        View view = getLayoutInflater().inflate(R.layout.incoming_dialog, null);"
+        errorLine2="                                                                          ~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppIncomingFileConfirmActivity.java"
+            line="128"
+            column="75"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="        mView = getLayoutInflater().inflate(R.layout.file_transfer, null);"
+        errorLine2="                                                                    ~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppTransferActivity.java"
+            line="228"
+            column="69"/>
+    </issue>
+
+    <issue
+        id="InflateParams"
+        message="Avoid passing `null` as the view root (needed to resolve layout parameters on the inflated layout&apos;s root element)"
+        errorLine1="                mView = getLayoutInflater().inflate(R.layout.auth, null);"
+        errorLine2="                                                                   ~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/pbap/BluetoothPbapActivity.java"
+            line="134"
+            column="68"/>
+    </issue>
+
+    <issue
+        id="UnspecifiedRegisterReceiverFlag"
+        message="`mEncryptionStateReceiver` is missing `RECEIVER_EXPORTED` or `RECEIVER_NOT_EXPORTED` flag for unprotected broadcasts registered for android.bluetooth.device.action.ENCRYPTION_CHANGE"
+        errorLine1="            adapterService.registerReceiver("
+        errorLine2="            ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientService.java"
+            line="660"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `AvrcpBipClient.connect` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT, android.permission.BLUETOOTH_PRIVILEGED]} but is only annotated with [none]."
+        errorLine1="    private synchronized void connect() {"
+        errorLine2="                              ~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/avrcpcontroller/AvrcpBipClient.java"
+            line="243"
+            column="31"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BassClientService.unsyncSource` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_SCAN]} but is only annotated with [none]."
+        errorLine1="    private boolean unsyncSource(int syncHandle) {"
+        errorLine2="                    ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientService.java"
+            line="3484"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BassClientService.handleSelectSourceRequest` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_SCAN]} but is only annotated with [none]."
+        errorLine1="    private void handleSelectSourceRequest() {"
+        errorLine2="                 ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientService.java"
+            line="3702"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BassClientStateMachine.processPASyncState` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_SCAN]} but is only annotated with [none]."
+        errorLine1="    private void processPASyncState(BluetoothLeBroadcastReceiveState recvState) {"
+        errorLine2="                 ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="439"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BassClientStateMachine.initiatePaSyncTransfer` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_SCAN]} but is only annotated with [none]."
+        errorLine1="    private void initiatePaSyncTransfer(int syncHandle, int sourceId) {"
+        errorLine2="                 ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="492"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BassClientStateMachine.connectGatt` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    public boolean connectGatt(Boolean autoConnect) {"
+        errorLine2="                   ~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="1120"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattTestableWrapper.discoverServices` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean discoverServices() {"
+        errorLine2="                       ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="2244"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattTestableWrapper.readCharacteristic` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean readCharacteristic(BluetoothGattCharacteristic characteristic) {"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="2249"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattTestableWrapper.writeCharacteristic` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic) {"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="2257"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattTestableWrapper.readDescriptor` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean readDescriptor(BluetoothGattDescriptor descriptor) {"
+        errorLine2="                       ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="2262"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattTestableWrapper.writeDescriptor` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean writeDescriptor(BluetoothGattDescriptor descriptor) {"
+        errorLine2="                       ~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="2267"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattTestableWrapper.requestMtu` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean requestMtu(int mtu) {"
+        errorLine2="                       ~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="2272"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattTestableWrapper.setCharacteristicNotification` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean setCharacteristicNotification("
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="2277"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattTestableWrapper.disconnect` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public void disconnect() {"
+        errorLine2="                    ~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="2283"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattTestableWrapper.close` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public void close() {"
+        errorLine2="                    ~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bass_client/BassClientStateMachine.java"
+            line="2288"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BatteryStateMachine.cleanup` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    public void cleanup() {"
+        errorLine2="                ~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bas/BatteryStateMachine.java"
+            line="111"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BatteryStateMachine.connectGatt` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    boolean connectGatt() {"
+        errorLine2="            ~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bas/BatteryStateMachine.java"
+            line="176"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BatteryStateMachine.disconnectGatt` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    void disconnectGatt() {"
+        errorLine2="         ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bas/BatteryStateMachine.java"
+            line="195"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BatteryStateMachine.discoverServicesGatt` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    void discoverServicesGatt() {"
+        errorLine2="         ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bas/BatteryStateMachine.java"
+            line="201"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `Disconnected.enter` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public void enter() {"
+        errorLine2="                    ~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bas/BatteryStateMachine.java"
+            line="230"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `GattCallback.onServicesDiscovered` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public void onServicesDiscovered(BluetoothGatt gatt, int status) {"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bas/BatteryStateMachine.java"
+            line="455"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `GattCallback.onCharacteristicRead` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public void onCharacteristicRead("
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/bas/BatteryStateMachine.java"
+            line="488"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothMnsObexClient.connect` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT, android.permission.BLUETOOTH_PRIVILEGED]} but is only annotated with [none]."
+        errorLine1="    public void connect() {"
+        errorLine2="                ~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/map/BluetoothMnsObexClient.java"
+            line="293"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothOppManager.enableBluetooth` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    public void enableBluetooth() {"
+        errorLine2="                ~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppManager.java"
+            line="237"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothOppManager.disableBluetooth` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    public void disableBluetooth() {"
+        errorLine2="                ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppManager.java"
+            line="244"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothOppManager.getDeviceName` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    public String getDeviceName(BluetoothDevice device) {"
+        errorLine2="                  ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppManager.java"
+            line="251"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothOppTransfer.startConnectSession` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    private void startConnectSession() {"
+        errorLine2="                 ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppTransfer.java"
+            line="592"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `SocketConnectThread.connectRfcommSocket` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT, android.permission.BLUETOOTH_PRIVILEGED]} but is only annotated with [none]."
+        errorLine1="        private void connectRfcommSocket() {"
+        errorLine2="                     ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppTransfer.java"
+            line="651"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `SocketConnectThread.run` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT, android.permission.BLUETOOTH_PRIVILEGED]} but is only annotated with [none]."
+        errorLine1="        public void run() {"
+        errorLine2="                    ~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppTransfer.java"
+            line="700"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.open` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        boolean open(BluetoothGattServerCallback callback) {"
+        errorLine2="                ~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/le_audio/LeAudioTmapGattServer.java"
+            line="149"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.close` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        void close() {"
+        errorLine2="             ~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/le_audio/LeAudioTmapGattServer.java"
+            line="155"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.addService` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        boolean addService(BluetoothGattService service) {"
+        errorLine2="                ~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/le_audio/LeAudioTmapGattServer.java"
+            line="170"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.sendResponse` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        boolean sendResponse("
+        errorLine2="                ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/le_audio/LeAudioTmapGattServer.java"
+            line="184"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `MasClient.connect` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT, android.permission.BLUETOOTH_PRIVILEGED]} but is only annotated with [none]."
+        errorLine1="    private void connect() {"
+        errorLine2="                 ~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/mapclient/MasClient.java"
+            line="115"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.addService` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean addService(BluetoothGattService service) {"
+        errorLine2="                       ~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/mcp/MediaControlGattService.java"
+            line="1145"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.removeService` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean removeService(BluetoothGattService service) {"
+        errorLine2="                       ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/mcp/MediaControlGattService.java"
+            line="1149"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.close` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public void close() {"
+        errorLine2="                    ~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/mcp/MediaControlGattService.java"
+            line="1153"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.sendResponse` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean sendResponse("
+        errorLine2="                       ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/mcp/MediaControlGattService.java"
+            line="1157"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.notifyCharacteristicChanged` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean notifyCharacteristicChanged("
+        errorLine2="                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/mcp/MediaControlGattService.java"
+            line="1162"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.getConnectedDevices` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public List&lt;BluetoothDevice&gt; getConnectedDevices() {"
+        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/mcp/MediaControlGattService.java"
+            line="1170"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `BluetoothGattServerProxy.isDeviceConnected` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="        public boolean isDeviceConnected(BluetoothDevice device) {"
+        errorLine2="                       ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/mcp/MediaControlGattService.java"
+            line="1174"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `MediaControlGattService.initGattService` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    private boolean initGattService(UUID serviceUuid) {"
+        errorLine2="                    ~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/mcp/MediaControlGattService.java"
+            line="1328"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `ObexServerSockets.create` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    private static ObexServerSockets create("
+        errorLine2="                                     ~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/obex/ObexServerSockets.java"
+            line="115"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `PbapClientObexClientHandler.handleMessage` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT, android.permission.BLUETOOTH_PRIVILEGED]} but is only annotated with [none]."
+        errorLine1="        public void handleMessage(Message msg) {"
+        errorLine2="                    ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/pbapclient/obex/PbapClientObexClient.java"
+            line="373"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="IncorrectRequiresPermissionPropagation"
+        message="Method `SapService.initSocket` is missing a @RequiresPermission annotation or it&apos;s too narrow. It calls APIs that require {allOf=[android.permission.BLUETOOTH_CONNECT]} but is only annotated with [none]."
+        errorLine1="    private boolean initSocket() {"
+        errorLine2="                    ~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/sap/SapService.java"
+            line="175"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="MissingOrMismatchedSendBroadcastRequiresPermission"
+        message="Broadcast action requires {allOf=[android.permission.BLUETOOTH_CONNECT, android.permission.BLUETOOTH_PRIVILEGED]} but call is protected with {allOf=[android.permission.BLUETOOTH_CONNECT]}."
+        errorLine1="        mAdapterService.sendOrderedBroadcast("
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/btservice/RemoteDevices.java"
+            line="2603"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="ExportedReceiver"
+        message="Exported receiver does not require permission"
+        errorLine1="        &lt;receiver android:process=&quot;@string/process&quot; android:name=&quot;com.android.bluetooth.opp.BluetoothOppReceiver&quot; android:exported=&quot;true&quot; android:enabled=&quot;false&quot;&gt;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="./out/soong/.intermediates/packages/modules/Bluetooth/android/app/BluetoothLib/android_common_apex36/manifest_fixer/AndroidManifest.xml"
+            line="40"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ExportedService"
+        message="Exported service does not require permission"
+        errorLine1="        &lt;service android:process=&quot;@string/process&quot; android:name=&quot;com.android.bluetooth.media_audio.sink.BluetoothMediaBrowserService&quot; android:enabled=&quot;true&quot; android:exported=&quot;true&quot; android:label=&quot;@string/bluetooth_media_audio_app_name&quot;&gt;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="./out/soong/.intermediates/packages/modules/Bluetooth/android/app/BluetoothLib/android_common_apex36/manifest_fixer/AndroidManifest.xml"
+            line="17"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ExportedService"
+        message="Exported service does not require permission"
+        errorLine1="        &lt;service android:process=&quot;@string/process&quot; android:name=&quot;com.android.bluetooth.pbapclient.PbapClientAccountAuthenticatorService&quot; android:enabled=&quot;false&quot; android:exported=&quot;true&quot;&gt;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="./out/soong/.intermediates/packages/modules/Bluetooth/android/app/BluetoothLib/android_common_apex36/manifest_fixer/AndroidManifest.xml"
+            line="97"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="ExpiredTargetSdkVersion"
+        message="Google Play requires that apps target API level 33 or higher."
+        errorLine1="    &lt;uses-sdk android:minSdkVersion=&quot;36&quot; android:targetSdkVersion=&quot;16&quot;/&gt;"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="./out/soong/.intermediates/packages/modules/Bluetooth/android/app/BluetoothLib/android_common_apex36/manifest_fixer/AndroidManifest.xml"
+            line="3"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="            mWakeLock.acquire();"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/btservice/AdapterService.java"
+            line="4587"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="            mWakeLock.acquire();"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/map/BluetoothMapService.java"
+            line="246"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="                        mWakeLock.acquire();"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/map/BluetoothMapService.java"
+            line="405"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="            mWakeLock.acquire();"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppObexClientSession.java"
+            line="152"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="            mPartialWakeLock.acquire();"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppObexServerSession.java"
+            line="248"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="                        mWakeLock.acquire();"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/pbap/BluetoothPbapService.java"
+            line="521"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="            mWakeLock.acquire();"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/sap/SapService.java"
+            line="297"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="WakelockTimeout"
+        message="Provide a timeout when requesting a wakelock with `PowerManager.Wakelock.acquire(long timeout)`. This will ensure the OS will cleanup any wakelocks that last longer than you intend, and will save your user&apos;s battery."
+        errorLine1="                                mWakeLock.acquire();"
+        errorLine2="                                ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/sap/SapService.java"
+            line="487"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="This `AsyncTask` class should be static or leaks might occur (anonymous android.os.AsyncTask)"
+        errorLine1="        new AsyncTask&lt;Void, Void, Void&gt;() {"
+        errorLine2="        ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/btservice/AdapterService.java"
+            line="1129"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="Do not place Android context classes in static fields (static reference to `BluetoothOppManager` which has field `mContext` pointing to `Context`); this is a memory leak"
+        errorLine1="    private static BluetoothOppManager sInstance;"
+        errorLine2="            ~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppManager.java"
+            line="80"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="StaticFieldLeak"
+        message="Do not place Android context classes in static fields (static reference to `MediaPlayerWrapper` which has field `mContext` pointing to `Context`); this is a memory leak"
+        errorLine1="    private static MediaPlayerWrapper sInjectedWrapper;"
+        errorLine2="            ~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/audio_util/mockable/MediaPlayerWrapperFactory.java"
+            line="32"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HandlerLeak"
+        message="This `Handler` class should be static or leaks might occur (anonymous android.os.Handler)"
+        errorLine1="            new Handler() {"
+        errorLine2="            ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppBtEnablingActivity.java"
+            line="121"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HandlerLeak"
+        message="This `Handler` class should be static or leaks might occur (anonymous android.os.Handler)"
+        errorLine1="            new Handler() {"
+        errorLine2="            ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppIncomingFileConfirmActivity.java"
+            line="216"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HandlerLeak"
+        message="This `Handler` class should be static or leaks might occur (anonymous android.os.Handler)"
+        errorLine1="            new Handler() {"
+        errorLine2="            ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppNotification.java"
+            line="219"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HandlerLeak"
+        message="This `Handler` class should be static or leaks might occur (anonymous android.os.Handler)"
+        errorLine1="            new Handler() {"
+        errorLine2="            ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppService.java"
+            line="310"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HandlerLeak"
+        message="This `Handler` class should be static or leaks might occur (anonymous android.os.Handler)"
+        errorLine1="            new Handler() {"
+        errorLine2="            ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/pbap/BluetoothPbapActivity.java"
+            line="244"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HandlerLeak"
+        message="This `Handler` class should be static or leaks might occur (anonymous android.os.Handler)"
+        errorLine1="            new Handler() {"
+        errorLine2="            ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/hid/HidHostService.java"
+            line="328"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="HandlerLeak"
+        message="This `Handler` class should be static or leaks might occur (anonymous android.os.Handler)"
+        errorLine1="            new Handler() {"
+        errorLine2="            ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/sap/SapService.java"
+            line="454"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;جارٍ استلام الملف...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ar/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Fayl qəbulu edilir...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-az/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Primanje datoteke...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-b+sr+Latn/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Атрыманне файла...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-be/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Файлът се получава...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-bg/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;S\&apos;està rebent un fitxer...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ca/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Přijímání souboru...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-cs/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Datei wird heruntergeladen...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-de/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Λήψη αρχείου...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-el/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Recibiendo archivo...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-es-rUS/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Faili vastuvõtmine ...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-et/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Recibindo ficheiro...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-gl/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;ફાઇલ પ્રાપ્ત થઈ રહી છે ...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-gu/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Primanje datoteke...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hr/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Fájl fogadása...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hu/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Ֆայլի ստացում...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hy/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;ファイルを受信中...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ja/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;파일을 수신하는 중...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ko/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;ກຳລັງຮັບເອົາໄຟລ໌...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-lo/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Gaunamas failas...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-lt/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Notiek faila saņemšana...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-lv/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Примање датотеки...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-mk/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;फाइल प्राप्त करत आहे...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-mr/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Menerima fail...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ms/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Mottar fil ...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-nb/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;फाइल प्राप्त गर्दै...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ne/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;A receber ficheiro...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-pt-rPT/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Se primește fișierul...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ro/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Получение файла...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ru/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Prebieha prijímanie súboru...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sk/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Prejemanje datoteke ...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sl/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Примање датотеке...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sr/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Tar emot fil ...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sv/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Inapokea faili...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sw/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;กำลังรับไฟล์...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-th/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Dosya alınıyor...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-tr/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Отримання файлу...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-uk/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;正在接收文件...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-zh-rCN/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;download_line5&quot; msgid=&quot;4124272066218470715&quot;&gt;&quot;Yamukela ifayela...&quot;&lt;/string&gt;"
+        errorLine2="                                                              ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-zu/strings.xml"
+            line="54"
+            column="63"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;ፋይል በመላክ ላይ...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-am/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;جارٍ إرسال الملف...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ar/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Fayl göndərilir...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-az/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Slanje datoteke...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-b+sr+Latn/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Адпраўка файла...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-be/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Файлът се изпраща...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-bg/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;ফাইল পাঠানো হচ্ছে...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-bn/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;S\&apos;està enviant el fitxer...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ca/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Odesílání souboru...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-cs/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Datei wird gesendet...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-de/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Αποστολή αρχείου...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-el/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Enviando archivo...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-es-rUS/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Faili saatmine ...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-et/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Envoi de fichier en cours...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-fr/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Enviando ficheiro...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-gl/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Slanje datoteke...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hr/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Fájl küldése...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hu/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Ֆայլն ուղարկվում է...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hy/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;ファイルを送信中...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ja/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;파일을 보내는 중...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ko/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;ກຳລັງສົ່ງໄຟລ໌...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-lo/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Siunčiamas failas...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-lt/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Notiek faila sūtīšana...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-lv/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Испраќање датотека...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-mk/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Menghantar fail...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ms/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Sender filen ...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-nb/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;फाइल पठाउँदै...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ne/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;A enviar ficheiro...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-pt-rPT/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Se trimite fișierul...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ro/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Отправка файла...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ru/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Odosielanie súboru...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sk/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Pošiljanje datoteke ...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sl/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Слање датотеке...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sr/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Skickar fil ...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sv/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Inatuma faili...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sw/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;กำลังส่งไฟล์...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-th/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Nagpapadala ng file...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-tl/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Dosya gönderiliyor...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-tr/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Надсил-ня файлу...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-uk/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;正在发送文件...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-zh-rCN/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;upload_line5&quot; msgid=&quot;3477751464103201364&quot;&gt;&quot;Ithumela ifayela...&quot;&lt;/string&gt;"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-zu/strings.xml"
+            line="68"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Lütfən, gözləyin...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-az/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Чакайце...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-be/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;দয়া করে অপেক্ষা করুন...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-bn/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Čekejte prosím...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-cs/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Vent...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-da/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Bitte warten...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-de/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Περιμένετε...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-el/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Por favor, espera...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-es-rUS/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Por favor, espera...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-es/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Veuillez patienter...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-fr/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Agarda...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-gl/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;કૃપા કરીને રાહ જુઓ...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-gu/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;कृपया इंतज़ार करें...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hi/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Kérjük, várjon...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hu/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Խնդրում ենք սպասել...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hy/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;יש להמתין...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-iw/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;お待ちください...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ja/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;გთხოვთ, მოითმინოთ...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ka/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;សូម​រង់ចាំ...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-km/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;ກະລຸນາລໍຖ້າ...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-lo/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Palaukite...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-lt/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Почекајте...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-mk/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Түр хүлээнэ үү...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-mn/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;कृपया प्रतीक्षा करा...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-mr/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Sila tunggu...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ms/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Vent litt ...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-nb/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;कृपया प्रतीक्षा गर्नुहोस्...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ne/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Een ogenblik geduld...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-nl/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;ਕਿਰਪਾ ਕਰਕੇ ਠਹਿਰੋ...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-pa/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Aguarde...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-pt-rPT/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Aguarde...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-pt/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Așteaptă...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ro/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Подождите...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ru/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;කරුණාකර රැඳී සිටින්න...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-si/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Čakajte...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sk/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Počakajte ...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sl/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Qëndro në pritje...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sq/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;దయచేసి వేచి ఉండండి...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-te/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;โปรดรอสักครู่...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-th/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Lütfen bekleyin...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-tr/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Vui lòng đợi...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-vi/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;请稍候...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-zh-rCN/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_title&quot; msgid=&quot;5262637688863903594&quot;&gt;&quot;Sicela ulinde...&quot;&lt;/string&gt;"
+        errorLine2="                                                                       ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-zu/strings.xml"
+            line="79"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;ብሉቱዝ በማብራት ላይ...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-am/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;جارٍ تفعيل البلوتوث...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ar/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Bluetooth yandırılır...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-az/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Уключэнне Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-be/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Bluetooth се включва...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-bg/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;ব্লুটুথ চালু করা হচ্ছে...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-bn/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;S\&apos;està activant el Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ca/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Aktiverer Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-da/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Bluetooth wird aktiviert...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-de/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Activando Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-es-rUS/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Activando Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-es/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Bluetoothi sisselülitamine ...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-et/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Otetaan Bluetooth käyttöön...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-fi/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Bluetooth bekapcsolása...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hu/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Bluetooth-ը միանում է...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-hy/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Menghidupkan Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-in/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;BluetoothをONにしています...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ja/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;블루투스 켜는 중...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ko/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;ກຳລັງເປີດ Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-lo/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Tiek ieslēgts Bluetooth savienojums...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-lv/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Вклучување Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-mk/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Menghidupkan Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ms/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;ब्लुटुथलाई सक्रिय पार्दै...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ne/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Ativando Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-pt/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Se activează Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ro/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Включение Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-ru/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Prebieha zapínanie rozhrania Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sk/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Inawasha Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-sw/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Bluetooth açılıyor...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-tr/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Увімкнення Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-uk/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;正在打开蓝牙...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-zh-rCN/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;正在開啟藍牙...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-zh-rHK/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;enabling_progress_content&quot; msgid=&quot;685427201206684584&quot;&gt;&quot;Ivula i-Bluetooth...&quot;&lt;/string&gt;"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-zu/strings.xml"
+            line="80"
+            column="73"/>
+    </issue>
+
+    <issue
+        id="TypographyEllipsis"
+        message="Replace &quot;...&quot; with ellipsis character (…, &amp;#8230;) ?"
+        errorLine1="    &lt;string name=&quot;bt_toast_4&quot; msgid=&quot;480365991944956695&quot;&gt;&quot;Datei wird an „&lt;xliff:g id=&quot;RECIPIENT&quot;&gt;%1$s&lt;/xliff:g&gt;“ gesendet...&quot;&lt;/string&gt;"
+        errorLine2="                                                                                                 ~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/values-de/strings.xml"
+            line="83"
+            column="98"/>
+    </issue>
+
+    <issue
+        id="MonochromeLauncherIcon"
+        message="The application adaptive icon is missing a monochrome tag"
+        errorLine1="&lt;adaptive-icon xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;&gt;"
+        errorLine2="^">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/mipmap-anydpi/bt_share.xml"
+            line="16"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="TextFields"
+        message="This text field does not specify an `inputType`"
+        errorLine1="    &lt;EditText"
+        errorLine2="     ~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/layout/auth.xml"
+            line="39"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="LabelFor"
+        message="Missing accessibility label: provide either a view with an `android:labelFor` that references this view or provide an `android:hint`"
+        errorLine1="    &lt;EditText"
+        errorLine2="     ~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/layout/auth.xml"
+            line="39"
+            column="6"/>
+    </issue>
+
+    <issue
+        id="SetTextI18n"
+        message="Do not concatenate text displayed with `setText`. Use resource string with placeholders."
+        errorLine1="                getString(R.string.bt_enable_line1)"
+        errorLine2="                ^">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/opp/BluetoothOppBtEnableActivity.java"
+            line="74"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="RtlSymmetry"
+        message="When you define `paddingStart` you should probably also define `paddingEnd` for right-to-left symmetry"
+        errorLine1="        android:paddingStart=&quot;10dip&quot;"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/res/layout/bluetooth_transfer_item.xml"
+            line="61"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level CUR_DEVELOPMENT/10000 (current min is 36): `android.telephony.SmsManager#sendStoredTextMessage`"
+        errorLine1="                    smsMng.sendStoredTextMessage("
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/map/BluetoothMapContentObserver.java"
+            line="3654"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level CUR_DEVELOPMENT/10000 (current min is 36): `android.telephony.SmsManager#sendStoredMultipartTextMessage`"
+        errorLine1="                    smsMng.sendStoredMultipartTextMessage("
+        errorLine2="                           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/map/BluetoothMapContentObserver.java"
+            line="3666"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level CUR_DEVELOPMENT/10000 (current min is 36): `android.os.Trace#asyncTraceForTrackBegin`"
+        errorLine1="        Trace.asyncTraceForTrackBegin(tag, methodName, cookie);"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/util/BluetoothTrace.java"
+            line="37"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level CUR_DEVELOPMENT/10000 (current min is 36): `android.os.Trace#asyncTraceForTrackEnd`"
+        errorLine1="        Trace.asyncTraceForTrackEnd(tag, cookie);"
+        errorLine2="              ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/util/BluetoothTrace.java"
+            line="51"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level CUR_DEVELOPMENT/10000 (current min is 36): `android.media.AudioManager#handleBluetoothHfpAudioDisconnected`"
+        errorLine1="                        .handleBluetoothHfpAudioDisconnected(device, reason);"
+        errorLine2="                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Bluetooth/android/app/src/com/android/bluetooth/hfp/HeadsetStateMachine.java"
+            line="2494"
+            column="26"/>
+    </issue>
+
+</issues>

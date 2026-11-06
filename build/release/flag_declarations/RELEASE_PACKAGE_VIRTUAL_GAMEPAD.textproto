@@ -1,0 +1,6 @@
+name: "RELEASE_PACKAGE_VIRTUAL_GAMEPAD"
+namespace: "windowing_sdk"
+description: "Release flag of the virtual gamepad apk on foldables."
+workflow: LAUNCH
+containers: "system"
+containers: "system_ext"

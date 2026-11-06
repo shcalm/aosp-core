@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "request_key_capture_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

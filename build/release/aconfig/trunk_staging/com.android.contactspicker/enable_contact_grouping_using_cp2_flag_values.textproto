@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.contactspicker"
+  name: "enable_contact_grouping_using_cp2"
+  state: ENABLED
+  permission: READ_WRITE
+}

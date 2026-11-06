@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "binder_proxy_use_executor_map"
+  state: ENABLED
+  permission: READ_ONLY
+}

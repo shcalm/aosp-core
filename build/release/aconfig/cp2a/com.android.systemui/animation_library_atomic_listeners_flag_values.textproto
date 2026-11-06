@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "animation_library_atomic_listeners"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,8 @@
+name: "RELEASE_USE_SYSTEM_FEATURE_BUILD_FLAGS"
+namespace: "system_performance"
+description: "Enable use of system feature build-time flags and codegen."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

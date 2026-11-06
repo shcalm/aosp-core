@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "enable_dynamic_display_retrieval"
+  state: ENABLED
+  permission: READ_WRITE
+}

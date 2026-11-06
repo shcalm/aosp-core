@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.adb.flags"
+  name: "use_pairing_server_v2"
+  state: ENABLED
+  permission: READ_WRITE
+}

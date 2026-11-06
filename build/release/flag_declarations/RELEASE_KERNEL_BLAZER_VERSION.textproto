@@ -1,0 +1,5 @@
+name: "RELEASE_KERNEL_BLAZER_VERSION"
+namespace: "pixel_kernel"
+description: "Specifies which LTS version of kernel is installed."
+workflow: PREBUILT
+containers: "vendor"

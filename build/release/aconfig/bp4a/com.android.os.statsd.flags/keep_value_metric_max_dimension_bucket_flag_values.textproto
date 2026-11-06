@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.os.statsd.flags"
+  name: "keep_value_metric_max_dimension_bucket"
+  state: ENABLED
+  permission: READ_ONLY
+}

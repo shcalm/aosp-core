@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.graphicsenv.flags"
+  name: "query_persist_graphics_egl"
+  state: ENABLED
+  permission: READ_ONLY
+}

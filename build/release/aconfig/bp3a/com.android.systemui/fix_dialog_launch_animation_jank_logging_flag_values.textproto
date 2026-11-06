@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fix_dialog_launch_animation_jank_logging"
+  state: ENABLED
+  permission: READ_ONLY
+}

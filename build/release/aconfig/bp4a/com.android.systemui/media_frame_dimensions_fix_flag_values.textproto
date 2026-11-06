@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "media_frame_dimensions_fix"
+  state: ENABLED
+  permission: READ_ONLY
+}

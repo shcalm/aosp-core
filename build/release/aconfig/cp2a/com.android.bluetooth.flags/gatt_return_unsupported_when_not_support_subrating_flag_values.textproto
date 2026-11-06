@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "gatt_return_unsupported_when_not_support_subrating"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "enable_inset_focus_rings_in_suw_read_only"
+  state: ENABLED
+  permission: READ_ONLY
+}

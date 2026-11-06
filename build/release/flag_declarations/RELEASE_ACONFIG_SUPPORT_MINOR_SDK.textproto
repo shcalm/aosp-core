@@ -1,0 +1,8 @@
+name: "RELEASE_ACONFIG_SUPPORT_MINOR_SDK"
+namespace: "core_experiments_team_internal"
+description: "Control checking the full SDK level for exported flags guarding finalized APIs."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

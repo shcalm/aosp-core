@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.jank"
+  name: "use_new_jank_classification_for_jps"
+  state: ENABLED
+  permission: READ_ONLY
+}

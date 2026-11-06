@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "set_client_drawn_corner_radii"
+  state: ENABLED
+  permission: READ_ONLY
+}

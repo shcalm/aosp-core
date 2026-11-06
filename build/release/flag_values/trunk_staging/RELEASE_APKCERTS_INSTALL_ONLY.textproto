@@ -1,0 +1,4 @@
+name: "RELEASE_APKCERTS_INSTALL_ONLY"
+value: {
+  bool_value: true
+}

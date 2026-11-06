@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_preserve_leaf_task_if_relaunch"
+  state: ENABLED
+  permission: READ_ONLY
+}

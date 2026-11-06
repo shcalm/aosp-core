@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "mainline_supplicant"
+  state: ENABLED
+  permission: READ_ONLY
+}

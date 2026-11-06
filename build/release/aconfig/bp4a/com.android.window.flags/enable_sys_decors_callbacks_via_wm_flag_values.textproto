@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_sys_decors_callbacks_via_wm"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "nr_ntn"
+  state: ENABLED
+  permission: READ_ONLY
+}

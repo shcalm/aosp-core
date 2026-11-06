@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.os.statsd.flags"
+  name: "trigger_perfetto"
+  state: ENABLED
+  permission: READ_WRITE
+}

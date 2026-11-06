@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "show_noisy_bundled_notifications"
+  state: ENABLED
+  permission: READ_WRITE
+}

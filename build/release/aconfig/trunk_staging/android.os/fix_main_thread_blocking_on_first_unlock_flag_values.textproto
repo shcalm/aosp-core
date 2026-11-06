@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os"
+  name: "fix_main_thread_blocking_on_first_unlock"
+  state: ENABLED
+  permission: READ_WRITE
+}

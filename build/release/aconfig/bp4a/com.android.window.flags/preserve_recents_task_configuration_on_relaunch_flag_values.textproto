@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "preserve_recents_task_configuration_on_relaunch"
+  state: ENABLED
+  permission: READ_ONLY
+}

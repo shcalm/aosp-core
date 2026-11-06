@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "avoid_binder_calls_for_muting_expected_device"
+  state: ENABLED
+  permission: READ_ONLY
+}

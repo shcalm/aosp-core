@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "fix_socket_connection_failed_no_callback"
+  state: ENABLED
+  permission: READ_ONLY
+}

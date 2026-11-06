@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_enhanced_app_to_web_transition"
+  state: ENABLED
+  permission: READ_ONLY
+}

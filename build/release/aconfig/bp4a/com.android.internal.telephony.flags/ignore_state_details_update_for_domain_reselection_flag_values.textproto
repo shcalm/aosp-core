@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "ignore_state_details_update_for_domain_reselection"
+  state: ENABLED
+  permission: READ_ONLY
+}

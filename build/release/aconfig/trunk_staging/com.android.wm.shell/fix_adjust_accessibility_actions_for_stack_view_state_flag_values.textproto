@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "fix_adjust_accessibility_actions_for_stack_view_state"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "fine_power_monitor_permission"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.provider"
+  name: "enable_sync_state"
+  state: ENABLED
+  permission: READ_ONLY
+}

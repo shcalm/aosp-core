@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "bind_model_using_repository"
+  state: ENABLED
+  permission: READ_WRITE
+}

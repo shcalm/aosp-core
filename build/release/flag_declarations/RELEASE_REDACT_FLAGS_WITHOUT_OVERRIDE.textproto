@@ -1,0 +1,11 @@
+name: "RELEASE_REDACT_FLAGS_WITHOUT_OVERRIDE"
+namespace: "build"
+description: "Remove empty build flags w/o overrides from on-device artifacts"
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "fix_add_extra_data_to_accessibility_node_info_delegation"
+  state: ENABLED
+  permission: READ_ONLY
+}

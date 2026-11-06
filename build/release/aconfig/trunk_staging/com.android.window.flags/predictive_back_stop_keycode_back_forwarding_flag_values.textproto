@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "predictive_back_stop_keycode_back_forwarding"
+  state: ENABLED
+  permission: READ_WRITE
+}

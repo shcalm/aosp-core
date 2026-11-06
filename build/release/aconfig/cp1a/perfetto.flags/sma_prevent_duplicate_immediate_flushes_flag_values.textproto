@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "sma_prevent_duplicate_immediate_flushes"
+  state: ENABLED
+  permission: READ_ONLY
+}

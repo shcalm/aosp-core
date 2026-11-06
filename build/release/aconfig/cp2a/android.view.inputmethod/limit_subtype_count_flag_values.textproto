@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "limit_subtype_count"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,1890 @@
+/*
+ * Copyright (C) 2025 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.android.server.wifi.nl80211;
+
+import static android.system.OsConstants.EBUSY;
+import static android.system.OsConstants.ENODEV;
+import static android.system.OsConstants.ENOENT;
+
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_BSS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_EXT_FEATURES;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_FEATURE_FLAGS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_FRAME;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_IFINDEX;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_IFNAME;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_MAC;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_MAX_MATCH_SETS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_MAX_NUM_AKM_SUITES;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_MAX_NUM_SCAN_SSIDS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_MAX_NUM_SCHED_SCAN_PLANS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_MAX_NUM_SCHED_SCAN_SSIDS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_MAX_SCAN_PLAN_INTERVAL;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_MAX_SCAN_PLAN_ITERATIONS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_PROTOCOL_FEATURES;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_REG_TYPE;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_SCAN_FLAGS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_SCAN_FREQUENCIES;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_SCAN_SSIDS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_SCHED_SCAN_INTERVAL;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_SCHED_SCAN_MATCH;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_SCHED_SCAN_PLANS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_SCHED_SCAN_RSSI_ADJUST;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_WIPHY;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_ATTR_WIPHY_BANDS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_2GHZ;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_5GHZ;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_ATTR_FREQS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_ATTR_HT_CAPA;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_ATTR_HT_MCS_SET;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_ATTR_IFTYPE_DATA;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_ATTR_VHT_CAPA;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_ATTR_VHT_MCS_SET;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_EHT_CAP_MAC;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_EHT_CAP_MCS_SET;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_EHT_CAP_PHY;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_EHT_CAP_PPE;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_HE_6GHZ_CAPA;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_HE_CAP_MAC;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_HE_CAP_MCS_SET;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_HE_CAP_PHY;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_HE_CAP_PPE;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_IFTYPES;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BAND_IFTYPE_ATTR_VENDOR_ELEMS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BSS_BSSID;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BSS_CAPABILITY;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BSS_CHAIN_SIGNAL;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BSS_FREQUENCY;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BSS_INFORMATION_ELEMENTS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BSS_SIGNAL_MBM;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BSS_STATUS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BSS_STATUS_ASSOCIATED;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_BSS_TSF;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_FRAME;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_GET_INTERFACE;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_GET_PROTOCOL_FEATURES;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_GET_REG;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_GET_SCAN;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_GET_STATION;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_GET_WIPHY;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_NEW_INTERFACE;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_NEW_SCAN_RESULTS;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_NEW_WIPHY;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_REG_CHANGE;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_START_SCHED_SCAN;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_STOP_SCHED_SCAN;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_CMD_TRIGGER_SCAN;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_FREQUENCY_ATTR_FREQ;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_PROTOCOL_FEATURE_SPLIT_WIPHY_DUMP;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_REGDOM_TYPE_COUNTRY;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_SCAN_FLAG_COLOCATED_6GHZ;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_SCAN_FLAG_HIGH_ACCURACY;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_SCAN_FLAG_LOW_POWER;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_SCAN_FLAG_RANDOM_ADDR;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_SCHED_SCAN_MATCH_ATTR_RSSI;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_SCHED_SCAN_MATCH_ATTR_SSID;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_SCHED_SCAN_PLAN_INTERVAL;
+import static com.android.server.wifi.nl80211.NetlinkConstants.NL80211_SCHED_SCAN_PLAN_ITERATIONS;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyShort;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import android.net.wifi.WifiScanner;
+
+import com.android.net.module.util.netlink.StructNlAttr;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class Nl80211UtilsTest {
+
+    private static final int TEST_WIPHY_INDEX = 4;
+    private static final int TEST_IF_INDEX = 5;
+    private static final String TEST_IF_NAME = "wlan0";
+    private static final byte[] TEST_MAC_ADDR = new byte[]{0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+    private static final byte[] TEST_MAC_ADDR_2 = new byte[]{0x22, 0x22, 0x33, 0x44, 0x55, 0x66};
+    private static final byte[] TEST_SSID = new byte[]{'S', 'S', 'I', 'D'};
+    private static final byte[] TEST_SSID_IE = {0x00, 0x04, 'S', 'S', 'I', 'D'};
+    private static final byte[] TEST_SSID_2 = new byte[]{'S', 'S', 'I', 'D', '2'};
+    private static final byte[] TEST_SSID_IE_2 = {0x00, 0x05, 'S', 'S', 'I', 'D', '2'};
+
+
+    // Test request messages
+    private static final GenericNetlinkMsg TEST_NL80211_REQUEST_GET_PROTOCOL_FEATURES =
+            new GenericNetlinkMsg(NL80211_CMD_GET_PROTOCOL_FEATURES, (short) 0, (short) 0, 0);
+    private static final GenericNetlinkMsg TEST_NL80211_REQUEST_GET_WIPHY =
+            new GenericNetlinkMsg(NL80211_CMD_GET_WIPHY, (short) 0, (short) 0, 0);
+
+    private static final GenericNetlinkMsg TEST_NL80211_REQUEST_GET_INTERFACE =
+            new GenericNetlinkMsg(NL80211_CMD_GET_INTERFACE, (short) 0, (short) 0, 0);
+    private static final GenericNetlinkMsg TEST_NL80211_REQUEST_GET_SCAN =
+            new GenericNetlinkMsg(NL80211_CMD_GET_SCAN, (short) 0, (short) 0, 0);
+    private static final GenericNetlinkMsg TEST_NL80211_REQUEST_GET_REG =
+            new GenericNetlinkMsg(NetlinkConstants.NL80211_CMD_GET_REG, (short) 0, (short) 0, 0);
+    private static final GenericNetlinkMsg TEST_NL80211_REQUEST_GET_STATION =
+            new GenericNetlinkMsg(NetlinkConstants.NL80211_CMD_GET_STATION, (short) 0, (short) 0,
+                    0);
+    private static final GenericNetlinkMsg TEST_NL80211_REQUEST_FRAME =
+            new GenericNetlinkMsg(NetlinkConstants.NL80211_CMD_FRAME, (short) 0, (short) 0,
+                    0);
+
+    @Mock private Nl80211Proxy mNl80211Proxy;
+    private Nl80211Utils mNl80211Utils;
+
+    @Before
+    public void setUp() throws Exception {
+        MockitoAnnotations.initMocks(this);
+        mNl80211Utils = new Nl80211Utils(mNl80211Proxy);
+
+        // Mock createNl80211Request calls
+        when(mNl80211Proxy.createNl80211Request(NL80211_CMD_GET_PROTOCOL_FEATURES))
+                .thenReturn(TEST_NL80211_REQUEST_GET_PROTOCOL_FEATURES);
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_GET_WIPHY), anyShort(), any()))
+                .thenReturn(TEST_NL80211_REQUEST_GET_WIPHY);
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_GET_WIPHY), any()))
+                .thenReturn(TEST_NL80211_REQUEST_GET_WIPHY);
+        when(mNl80211Proxy.createNl80211Request(
+                eq(NL80211_CMD_GET_INTERFACE), anyShort()))
+                .thenReturn(TEST_NL80211_REQUEST_GET_INTERFACE);
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_GET_SCAN), anyShort(), any()))
+                .thenReturn(TEST_NL80211_REQUEST_GET_SCAN);
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_GET_REG)))
+                .thenReturn(TEST_NL80211_REQUEST_GET_REG);
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_GET_STATION)))
+                .thenReturn(TEST_NL80211_REQUEST_GET_STATION);
+
+        setupWiphyIndexResponse();
+        setupInterfaceInfoResponse();
+    }
+
+    private void setupWiphyIndexResponse() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(NL80211_CMD_NEW_WIPHY, (short) 0,
+                (short) 0, 0);
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, TEST_WIPHY_INDEX));
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_WIPHY))
+                .thenReturn(new Nl80211Response(msg));
+    }
+
+    private void setupInterfaceInfoResponse() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(NL80211_CMD_NEW_INTERFACE, (short) 0,
+                (short) 0, 0);
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, TEST_WIPHY_INDEX));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_IFINDEX, TEST_IF_INDEX));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_IFNAME, TEST_IF_NAME));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAC, TEST_MAC_ADDR));
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_INTERFACE))
+                .thenReturn(new Nl80211Response(msg));
+    }
+
+    private void setupProtocolFeaturesResponse(int features) {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(
+                NL80211_CMD_GET_PROTOCOL_FEATURES, (short) 0, (short) 0, 0);
+        msg.addAttribute(
+                new StructNlAttr(NL80211_ATTR_PROTOCOL_FEATURES, features));
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(
+                TEST_NL80211_REQUEST_GET_PROTOCOL_FEATURES)).thenReturn(new Nl80211Response(msg));
+    }
+
+    private GenericNetlinkMsg createTestScanResultNetlinkMessage(byte[] bssid, byte[] ie,
+            int freq, int signal, long tsf, short capability, boolean associated,
+            List<RadioChainInfo> radioChainInfos, short command) {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(command, (short) 0, (short) 0, 0);
+
+        ByteBuffer capaBuf = ByteBuffer.allocate(Short.BYTES).order(ByteOrder.LITTLE_ENDIAN);
+        capaBuf.putShort(capability);
+
+        List<StructNlAttr> bssAttrs = new ArrayList<>();
+        bssAttrs.add(new StructNlAttr(NL80211_BSS_BSSID, bssid));
+        bssAttrs.add(new StructNlAttr(NL80211_BSS_FREQUENCY, freq));
+        bssAttrs.add(new StructNlAttr(NL80211_BSS_INFORMATION_ELEMENTS, ie));
+        bssAttrs.add(new StructNlAttr(NL80211_BSS_SIGNAL_MBM, signal));
+        bssAttrs.add(new StructNlAttr(NL80211_BSS_TSF, tsf));
+        bssAttrs.add(new StructNlAttr(NL80211_BSS_CAPABILITY, capaBuf.array()));
+
+        if (associated) {
+            bssAttrs.add(new StructNlAttr(NL80211_BSS_STATUS,
+                    NL80211_BSS_STATUS_ASSOCIATED));
+        }
+
+        if (radioChainInfos != null && !radioChainInfos.isEmpty()) {
+            int chainSignalPayloadLength = 0;
+            List<StructNlAttr> chainSignalAttrs = new ArrayList<>();
+            for (RadioChainInfo info : radioChainInfos) {
+                StructNlAttr chainAttr = new StructNlAttr(
+                        (short) info.chainId, new byte[]{(byte) info.level});
+                chainSignalAttrs.add(chainAttr);
+                chainSignalPayloadLength += chainAttr.getAlignedLength();
+            }
+
+            ByteBuffer chainSignalPayload = ByteBuffer.allocate(chainSignalPayloadLength);
+            for (StructNlAttr chainAttr : chainSignalAttrs) {
+                chainAttr.pack(chainSignalPayload);
+            }
+            bssAttrs.add(new StructNlAttr(NL80211_BSS_CHAIN_SIGNAL,
+                    chainSignalPayload.array()));
+        }
+
+        int bssPayloadLength = 0;
+        for (StructNlAttr attr : bssAttrs) {
+            bssPayloadLength += attr.getAlignedLength();
+        }
+
+        ByteBuffer bssPayload = ByteBuffer.allocate(bssPayloadLength);
+        for (StructNlAttr attr : bssAttrs) {
+            attr.pack(bssPayload);
+        }
+
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_BSS, bssPayload.array()));
+        return msg;
+    }
+
+    @Test
+    public void testGetScanResults_success_singleScanResult() {
+        int freq = 2412;
+        int signal = -50;
+        long tsf = 123456789L;
+        short capability = 0x1000; // ESS
+        boolean associated = true;
+        List<RadioChainInfo> radioChainInfos = new ArrayList<>();
+        radioChainInfos.add(new RadioChainInfo(0, -52));
+        radioChainInfos.add(new RadioChainInfo(1, -55));
+
+        GenericNetlinkMsg scanResultMsg = createTestScanResultNetlinkMessage(
+                TEST_MAC_ADDR, TEST_SSID_IE, freq, signal, tsf, capability, associated,
+                radioChainInfos, NL80211_CMD_NEW_SCAN_RESULTS);
+
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_SCAN))
+                .thenReturn(new Nl80211Response(scanResultMsg));
+
+        List<NativeScanResult> results = mNl80211Utils.getScanResults(TEST_IF_NAME);
+
+        assertNotNull(results);
+        assertEquals(1, results.size());
+        NativeScanResult result = results.get(0);
+        assertArrayEquals(TEST_SSID, result.ssid);
+        assertArrayEquals(TEST_MAC_ADDR, result.bssid);
+        assertArrayEquals(TEST_SSID_IE, result.infoElement);
+        assertEquals(freq, result.frequency);
+        assertEquals(signal, result.signalMbm);
+        assertEquals(tsf, result.tsf);
+        assertEquals((char) capability, result.capability);
+        assertEquals(associated, result.associated);
+        assertEquals(radioChainInfos.size(), result.radioChainInfos.size());
+        for (int i = 0; i < radioChainInfos.size(); i++) {
+            assertEquals(radioChainInfos.get(i).chainId, result.radioChainInfos.get(i).chainId);
+            assertEquals(radioChainInfos.get(i).level, result.radioChainInfos.get(i).level);
+        }
+    }
+
+    @Test
+    public void testGetScanResults_success_multipleScanResults() {
+        int freq1 = 2412;
+        int signal1 = -50;
+        long tsf1 = 100000000L;
+        short capability1 = 0x1000;
+
+        int freq2 = 5180;
+        int signal2 = -60;
+        long tsf2 = 200000000L;
+        short capability2 = 0x1000;
+
+        GenericNetlinkMsg scanResultMsg1 = createTestScanResultNetlinkMessage(
+                TEST_MAC_ADDR, TEST_SSID_IE, freq1, signal1, tsf1, capability1, true, null,
+                NL80211_CMD_NEW_SCAN_RESULTS);
+        GenericNetlinkMsg scanResultMsg2 = createTestScanResultNetlinkMessage(
+                TEST_MAC_ADDR_2, TEST_SSID_IE_2, freq2, signal2, tsf2, capability2, false, null,
+                NL80211_CMD_NEW_SCAN_RESULTS);
+
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_SCAN))
+                .thenReturn(new Nl80211Response(scanResultMsg1, scanResultMsg2));
+
+        List<NativeScanResult> results = mNl80211Utils.getScanResults(TEST_IF_NAME);
+
+        assertNotNull(results);
+        assertEquals(2, results.size());
+
+        NativeScanResult result1 = results.get(0);
+        assertArrayEquals(TEST_SSID, result1.ssid);
+        assertArrayEquals(TEST_MAC_ADDR, result1.bssid);
+        assertEquals(freq1, result1.frequency);
+        assertTrue(result1.associated);
+
+        NativeScanResult result2 = results.get(1);
+        assertArrayEquals(TEST_SSID_2, result2.ssid);
+        assertArrayEquals(TEST_MAC_ADDR_2, result2.bssid);
+        assertEquals(freq2, result2.frequency);
+        assertFalse(result2.associated);
+    }
+
+    @Test
+    public void testGetScanResults_unexpectedCommandInResponse() {
+        int freq = 2412;
+        int signal = -50;
+        long tsf = 123456789L;
+        short capability = 0x1000; // ESS
+
+        // Create a message with an unexpected command type
+        GenericNetlinkMsg unexpectedMsg = createTestScanResultNetlinkMessage(
+                TEST_MAC_ADDR, TEST_SSID_IE, freq, signal, tsf, capability, false, null,
+                NL80211_CMD_GET_WIPHY);
+
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_SCAN))
+                .thenReturn(new Nl80211Response(unexpectedMsg));
+
+        List<NativeScanResult> results = mNl80211Utils.getScanResults(TEST_IF_NAME);
+
+        assertNotNull(results);
+        assertTrue(results.isEmpty()); // Unexpected command should be ignored
+    }
+
+    @Test
+    public void testGetScanResults_malformedResponse() {
+        // Create a malformed message missing the BSSID
+        int freq = 2412;
+        int signal = -50;
+        long tsf = 123456789L;
+        short capability = 0x1000;
+
+        GenericNetlinkMsg malformedMsg = createTestScanResultNetlinkMessage(
+                TEST_MAC_ADDR, TEST_SSID_IE, freq, signal, tsf, capability, false, null,
+                NL80211_CMD_NEW_SCAN_RESULTS);
+        // Remove the BSS attribute which is required for parsing.
+        malformedMsg.attributes.remove(NL80211_ATTR_BSS);
+
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_SCAN))
+                .thenReturn(new Nl80211Response(malformedMsg));
+
+        List<NativeScanResult> results = mNl80211Utils.getScanResults(TEST_IF_NAME);
+
+        assertNotNull(results);
+        assertTrue(results.isEmpty());
+    }
+
+    @Test
+    public void testInitialize_splitWiphyDumpSupported() {
+        setupProtocolFeaturesResponse(NL80211_PROTOCOL_FEATURE_SPLIT_WIPHY_DUMP);
+        mNl80211Utils.initialize();
+        assertTrue(mNl80211Utils.isSplitWiphyDumpSupported());
+    }
+
+    @Test
+    public void testInitialize_splitWiphyDumpNotSupported() {
+        setupProtocolFeaturesResponse(0);
+        mNl80211Utils.initialize();
+        assertFalse(mNl80211Utils.isSplitWiphyDumpSupported());
+    }
+
+    @Test
+    public void testInitialize_getProtocolFeaturesFails() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(
+                TEST_NL80211_REQUEST_GET_PROTOCOL_FEATURES)).thenReturn(null);
+        mNl80211Utils.initialize();
+        assertFalse(mNl80211Utils.isSplitWiphyDumpSupported());
+    }
+
+    @Test
+    public void testGetWiphyIndex_success() {
+        assertEquals(TEST_WIPHY_INDEX, mNl80211Utils.getWiphyIndex(TEST_IF_NAME));
+    }
+
+    @Test
+    public void testGetWiphyIndex_getInterfaceInfoFails() throws Exception {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_INTERFACE))
+                .thenReturn(null);
+        assertEquals(-1, mNl80211Utils.getWiphyIndex(TEST_IF_NAME));
+    }
+
+    private GenericNetlinkMsg createBasicWiphyInfoMsg() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(NL80211_CMD_NEW_WIPHY, (short) 0,
+                (short) 0, 0);
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_FEATURE_FLAGS, 0));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_SCAN_SSIDS, (byte) 16));
+        msg.addAttribute(
+                new StructNlAttr(NL80211_ATTR_MAX_NUM_SCHED_SCAN_SSIDS, (byte) 16));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_MATCH_SETS, (byte) 8));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_AKM_SUITES, (short) 1));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_SCHED_SCAN_PLANS, 2));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_SCAN_PLAN_INTERVAL, 10));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_SCAN_PLAN_ITERATIONS, 3));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_EXT_FEATURES, new byte[1]));
+        return msg;
+    }
+
+    private StructNlAttr createWiphyBandsAttribute() {
+        // --- Level 3 (Innermost): The actual frequency values ---
+        StructNlAttr innerFreq2412 = new StructNlAttr(NL80211_FREQUENCY_ATTR_FREQ, 2412);
+        StructNlAttr innerFreq5180 = new StructNlAttr(NL80211_FREQUENCY_ATTR_FREQ, 5180);
+
+        // --- Level 2 (Frequency List Items): Pack L3 into L2 ---
+        // Pack innerFreq2412 into a byte[] payload for the (unnamed) attribute '1'
+        ByteBuffer freq2412Payload = ByteBuffer.allocate(innerFreq2412.getAlignedLength());
+        innerFreq2412.pack(freq2412Payload);
+        StructNlAttr freq2412 = new StructNlAttr((short) 1, freq2412Payload.array());
+
+        // Pack innerFreq5180 into a byte[] payload for the (unnamed) attribute '1'
+        ByteBuffer freq5180Payload = ByteBuffer.allocate(innerFreq5180.getAlignedLength());
+        innerFreq5180.pack(freq5180Payload);
+        StructNlAttr freq5180 = new StructNlAttr((short) 1, freq5180Payload.array());
+
+        // --- Level 1 (Band Containers): Pack L2 into L1 ---
+        // Create the HT/VHT attributes (these are already non-nested)
+        StructNlAttr htCapa = new StructNlAttr(NL80211_BAND_ATTR_HT_CAPA, new byte[0]);
+        StructNlAttr vhtCapa = new StructNlAttr(NL80211_BAND_ATTR_VHT_CAPA, new byte[0]);
+
+        // Pack freq2412 (as byte[]) and htCapa (as byte[]) into the freqs2g payload
+        ByteBuffer freqs2gPayload = ByteBuffer.allocate(freq2412.getAlignedLength());
+        freq2412.pack(freqs2gPayload);
+        StructNlAttr freqs2g = new StructNlAttr(
+                NL80211_BAND_ATTR_FREQS, freqs2gPayload.array());
+
+        // Pack freq5180 (as byte[]) and vhtCapa (as byte[]) into the freqs5g payload
+        ByteBuffer freqs5gPayload = ByteBuffer.allocate(freq5180.getAlignedLength());
+        freq5180.pack(freqs5gPayload);
+        StructNlAttr freqs5g = new StructNlAttr(
+                NL80211_BAND_ATTR_FREQS, freqs5gPayload.array());
+
+        // Pack freqs2g and htCapa into the band2g payload
+        ByteBuffer band2gPayload = ByteBuffer.allocate(
+                freqs2g.getAlignedLength() + htCapa.getAlignedLength());
+        freqs2g.pack(band2gPayload);
+        htCapa.pack(band2gPayload);
+        StructNlAttr band2g = new StructNlAttr(NL80211_BAND_2GHZ, band2gPayload.array());
+
+        // Pack freqs5g and vhtCapa into the band5g payload
+        ByteBuffer band5gPayload = ByteBuffer.allocate(
+                freqs5g.getAlignedLength() + vhtCapa.getAlignedLength());
+        freqs5g.pack(band5gPayload);
+        vhtCapa.pack(band5gPayload);
+        StructNlAttr band5g = new StructNlAttr(NL80211_BAND_5GHZ, band5gPayload.array());
+
+        // --- Level 0 (Outermost): Pack L1 into L0 ---
+        ByteBuffer payload = ByteBuffer.allocate(
+                band2g.getAlignedLength() + band5g.getAlignedLength());
+        band2g.pack(payload);
+        band5g.pack(payload);
+
+        // Note: NL80211_ATTR_WIPHY_BANDS does not have NLA_F_NESTED in the attribute flag
+        // in production. Thus, we must add the payload as a raw byte[] instead of using
+        // the nested constructor (which automatically adds NLA_F_NESTED).
+        return new StructNlAttr(NL80211_ATTR_WIPHY_BANDS, payload.array());
+    }
+
+    @Test
+    public void testWiphyFeaturesBuilder_allFalse() {
+        Nl80211Utils.WiphyFeatures features = new Nl80211Utils.WiphyFeatures.Builder()
+                .setSupportsRandomMacOneShotScan(false)
+                .setSupportsRandomMacSchedScan(false)
+                .setSupportsLowSpanOneShotScan(false)
+                .setSupportsLowPowerOneShotScan(false)
+                .setSupportsHighAccuracyOneShotScan(false)
+                .setSupportsTxMgmtFrameMcs(false)
+                .setSupportsExtSchedScanRelativeRssi(false)
+                .build();
+        assertFalse(features.supportsRandomMacOneShotScan);
+        assertFalse(features.supportsRandomMacSchedScan);
+        assertFalse(features.supportsLowSpanOneShotScan);
+        assertFalse(features.supportsLowPowerOneShotScan);
+        assertFalse(features.supportsHighAccuracyOneShotScan);
+        assertFalse(features.supportsTxMgmtFrameMcs);
+        assertFalse(features.supportsExtSchedScanRelativeRssi);
+    }
+
+    @Test
+    public void testWiphyFeaturesBuilder_allTrue() {
+        Nl80211Utils.WiphyFeatures features = new Nl80211Utils.WiphyFeatures.Builder()
+                .setSupportsRandomMacOneShotScan(true)
+                .setSupportsRandomMacSchedScan(true)
+                .setSupportsLowSpanOneShotScan(true)
+                .setSupportsLowPowerOneShotScan(true)
+                .setSupportsHighAccuracyOneShotScan(true)
+                .setSupportsTxMgmtFrameMcs(true)
+                .setSupportsExtSchedScanRelativeRssi(true)
+                .build();
+        assertTrue(features.supportsRandomMacOneShotScan);
+        assertTrue(features.supportsRandomMacSchedScan);
+        assertTrue(features.supportsLowSpanOneShotScan);
+        assertTrue(features.supportsLowPowerOneShotScan);
+        assertTrue(features.supportsHighAccuracyOneShotScan);
+        assertTrue(features.supportsTxMgmtFrameMcs);
+        assertTrue(features.supportsExtSchedScanRelativeRssi);
+    }
+
+    @Test
+    public void testWiphyFeaturesBuilder_mixedValues() {
+        Nl80211Utils.WiphyFeatures features = new Nl80211Utils.WiphyFeatures.Builder()
+                .setSupportsRandomMacOneShotScan(true)
+                .setSupportsRandomMacSchedScan(false)
+                .setSupportsLowSpanOneShotScan(true)
+                .setSupportsLowPowerOneShotScan(false)
+                .setSupportsHighAccuracyOneShotScan(true)
+                .setSupportsTxMgmtFrameMcs(false)
+                .setSupportsExtSchedScanRelativeRssi(true)
+                .build();
+        assertTrue(features.supportsRandomMacOneShotScan);
+        assertFalse(features.supportsRandomMacSchedScan);
+        assertTrue(features.supportsLowSpanOneShotScan);
+        assertFalse(features.supportsLowPowerOneShotScan);
+        assertTrue(features.supportsHighAccuracyOneShotScan);
+        assertFalse(features.supportsTxMgmtFrameMcs);
+        assertTrue(features.supportsExtSchedScanRelativeRssi);
+    }
+
+    @Test
+    public void testParseWiphyInfo_success() {
+        GenericNetlinkMsg msg = createBasicWiphyInfoMsg();
+        msg.addAttribute(createWiphyBandsAttribute());
+
+        Nl80211Utils.WiphyInfo info = mNl80211Utils.parseWiphyInfo(List.of(msg));
+
+        assertNotNull(info);
+        assertFalse(info.bandInfo.band2g.isEmpty());
+        assertFalse(info.bandInfo.band5g.isEmpty());
+        assertTrue(info.bandInfo.is80211nSupported);
+        assertTrue(info.bandInfo.is80211acSupported);
+        assertEquals(16, info.scanCapabilities.maxNumScanSsids);
+    }
+
+    @Test
+    public void testParseWiphyInfo_antennas_success() {
+        GenericNetlinkMsg msg = createBasicWiphyInfoMsg();
+        msg.addAttribute(createWiphyBandsAttribute());
+        msg.addAttribute(new StructNlAttr(NetlinkConstants.NL80211_ATTR_WIPHY_ANTENNA_AVAIL_TX,
+                0x3));
+        msg.addAttribute(new StructNlAttr(NetlinkConstants.NL80211_ATTR_WIPHY_ANTENNA_AVAIL_RX,
+                0x7));
+        msg.addAttribute(new StructNlAttr(NetlinkConstants.NL80211_ATTR_WIPHY_ANTENNA_TX, 0x1));
+        msg.addAttribute(new StructNlAttr(NetlinkConstants.NL80211_ATTR_WIPHY_ANTENNA_RX, 0x1));
+
+        Nl80211Utils.WiphyInfo info = mNl80211Utils.parseWiphyInfo(List.of(msg));
+
+        assertNotNull(info);
+        assertEquals(0x3, info.availableAntennasTx);
+        assertEquals(0x7, info.availableAntennasRx);
+        assertEquals(0x1, info.configuredAntennasTx);
+        assertEquals(0x1, info.configuredAntennasRx);
+    }
+
+    @Test
+    public void testParseWiphyInfo_splitDump_success() {
+        // Split the response payload into two different msgs.
+        GenericNetlinkMsg msg1 = new GenericNetlinkMsg(NL80211_CMD_NEW_WIPHY, (short) 0,
+                (short) 0, 0);
+        msg1.addAttribute(createWiphyBandsAttribute());
+        msg1.addAttribute(new StructNlAttr(NL80211_ATTR_FEATURE_FLAGS, 0));
+
+        GenericNetlinkMsg msg2 = new GenericNetlinkMsg(NL80211_CMD_NEW_WIPHY, (short) 0,
+                (short) 0, 0);
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_SCAN_SSIDS, (byte) 16));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_SCHED_SCAN_SSIDS, (byte) 16));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_MATCH_SETS, (byte) 8));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_AKM_SUITES, (short) 1));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_SCHED_SCAN_PLANS, 2));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_SCAN_PLAN_INTERVAL, 10));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_SCAN_PLAN_ITERATIONS, 3));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_EXT_FEATURES, new byte[1]));
+
+        Nl80211Utils.WiphyInfo info = mNl80211Utils.parseWiphyInfo(List.of(msg1, msg2));
+
+        assertNotNull(info);
+        // Verify information from msg1
+        assertFalse(info.bandInfo.band2g.isEmpty());
+        assertFalse(info.bandInfo.band5g.isEmpty());
+        // Verify information from msg2
+        assertTrue(info.bandInfo.is80211nSupported);
+        assertTrue(info.bandInfo.is80211acSupported);
+        assertEquals(16, info.scanCapabilities.maxNumScanSsids);
+    }
+
+    @Test
+    public void testParseWiphyInfo_missingBands() {
+        GenericNetlinkMsg msg = createBasicWiphyInfoMsg();
+        assertNull(mNl80211Utils.parseWiphyInfo(List.of(msg)));
+    }
+
+    @Test
+    public void testParseWiphyInfo_missingScanCaps() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(NL80211_CMD_NEW_WIPHY, (short) 0,
+                (short) 0, 0);
+        msg.addAttribute(createWiphyBandsAttribute());
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_FEATURE_FLAGS, 0));
+        assertNull(mNl80211Utils.parseWiphyInfo(List.of(msg)));
+    }
+
+    @Test
+    public void testParseWiphyInfo_missingFeatureFlags() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(NL80211_CMD_NEW_WIPHY, (short) 0,
+                (short) 0, 0);
+        msg.addAttribute(createWiphyBandsAttribute());
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_SCAN_SSIDS, (byte) 16));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_SCHED_SCAN_SSIDS, (byte) 16));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_MATCH_SETS, (byte) 8));
+        assertNull(mNl80211Utils.parseWiphyInfo(List.of(msg)));
+    }
+
+    @Test
+    public void testGetWiphyInfo_noSplitDump_success() {
+        mNl80211Utils.initialize(); // This will set split dump to false by default
+        GenericNetlinkMsg msg = createBasicWiphyInfoMsg();
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, TEST_WIPHY_INDEX));
+        msg.addAttribute(createWiphyBandsAttribute());
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_WIPHY))
+                .thenReturn(new Nl80211Response(msg));
+
+        Nl80211Utils.WiphyInfo info = mNl80211Utils.getWiphyInfo(TEST_WIPHY_INDEX);
+        assertNotNull(info);
+    }
+
+    @Test
+    public void testGetWiphyInfo_noSplitDump_failure() {
+        mNl80211Utils.initialize();
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_WIPHY))
+                .thenReturn(null);
+        assertNull(mNl80211Utils.getWiphyInfo(TEST_WIPHY_INDEX));
+    }
+
+    @Test
+    public void testGetWiphyInfo_splitDump_success() {
+        setupProtocolFeaturesResponse(NL80211_PROTOCOL_FEATURE_SPLIT_WIPHY_DUMP);
+        mNl80211Utils.initialize();
+
+        GenericNetlinkMsg msg1 = new GenericNetlinkMsg(NL80211_CMD_NEW_WIPHY, (short) 0,
+                (short) 0, 0);
+        msg1.addAttribute(createWiphyBandsAttribute());
+        msg1.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, TEST_WIPHY_INDEX));
+        msg1.addAttribute(new StructNlAttr(NL80211_ATTR_FEATURE_FLAGS, 0));
+
+        GenericNetlinkMsg msg2 = new GenericNetlinkMsg(NL80211_CMD_NEW_WIPHY, (short) 0,
+                (short) 0, 0);
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, TEST_WIPHY_INDEX));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_SCAN_SSIDS, (byte) 16));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_SCHED_SCAN_SSIDS, (byte) 16));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_MATCH_SETS, (byte) 8));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_AKM_SUITES, (short) 1));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_NUM_SCHED_SCAN_PLANS, 2));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_SCAN_PLAN_INTERVAL, 10));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAX_SCAN_PLAN_ITERATIONS, 3));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_EXT_FEATURES, new byte[1]));
+
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_WIPHY))
+                .thenReturn(new Nl80211Response(msg1, msg2));
+
+        Nl80211Utils.WiphyInfo info = mNl80211Utils.getWiphyInfo(TEST_WIPHY_INDEX);
+        assertNotNull(info);
+        assertFalse(info.bandInfo.band2g.isEmpty());
+        assertEquals(16, info.scanCapabilities.maxNumScanSsids);
+    }
+
+    @Test
+    public void testGetWiphyInfoCachesResult() {
+        mNl80211Utils.initialize();
+        GenericNetlinkMsg msg = createBasicWiphyInfoMsg();
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, TEST_WIPHY_INDEX));
+        msg.addAttribute(createWiphyBandsAttribute());
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_WIPHY))
+                .thenReturn(new Nl80211Response(msg));
+
+        Nl80211Utils.WiphyInfo info1 = mNl80211Utils.getWiphyInfo(TEST_WIPHY_INDEX);
+        Nl80211Utils.WiphyInfo info2 = mNl80211Utils.getWiphyInfo(TEST_WIPHY_INDEX);
+
+        verify(mNl80211Proxy, times(1))
+                .sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_WIPHY);
+        assertEquals(info1, info2);
+    }
+
+    @Test
+    public void testClearWiphyInfoCaches() {
+        mNl80211Utils.initialize();
+        GenericNetlinkMsg msg = createBasicWiphyInfoMsg();
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, TEST_WIPHY_INDEX));
+        msg.addAttribute(createWiphyBandsAttribute());
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_WIPHY))
+                .thenReturn(new Nl80211Response(msg));
+
+        mNl80211Utils.getWiphyInfo(TEST_WIPHY_INDEX);
+        verify(mNl80211Proxy, times(1))
+                .sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_WIPHY);
+
+        mNl80211Utils.clearWiphyInfoCaches();
+
+        mNl80211Utils.getWiphyInfo(TEST_WIPHY_INDEX);
+        verify(mNl80211Proxy, times(2))
+                .sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_WIPHY);
+    }
+
+    @Test
+    public void testGetInterfaces_success() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(NL80211_CMD_NEW_INTERFACE, (short) 0,
+                (short) 0, 0);
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, TEST_WIPHY_INDEX));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_IFINDEX, TEST_IF_INDEX));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_IFNAME, TEST_IF_NAME));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAC, TEST_MAC_ADDR));
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_INTERFACE))
+                .thenReturn(new Nl80211Response(msg));
+
+        List<Nl80211Utils.InterfaceInfo> interfaces = mNl80211Utils.getInterfaces();
+
+        assertNotNull(interfaces);
+        assertEquals(1, interfaces.size());
+        assertEquals(TEST_IF_INDEX, interfaces.get(0).ifIndex);
+        assertEquals(TEST_WIPHY_INDEX, interfaces.get(0).wiphyIndex);
+        assertEquals(TEST_IF_NAME, interfaces.get(0).name);
+        assertEquals(TEST_MAC_ADDR, interfaces.get(0).macAddress);
+    }
+
+    @Test
+    public void testGetInterfaces_wildcardWiphyIndex_success() {
+        GenericNetlinkMsg requestAllInterfaces = new GenericNetlinkMsg(
+                NL80211_CMD_GET_INTERFACE, (short) 0, (short) 0, 0);
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_GET_INTERFACE),
+                anyShort())).thenReturn(requestAllInterfaces);
+
+        GenericNetlinkMsg msg1 = new GenericNetlinkMsg(NL80211_CMD_NEW_INTERFACE, (short) 0,
+                (short) 0, 0);
+        msg1.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, 0));
+        msg1.addAttribute(new StructNlAttr(NL80211_ATTR_IFINDEX, 1));
+        msg1.addAttribute(new StructNlAttr(NL80211_ATTR_IFNAME, "wlan0"));
+        msg1.addAttribute(new StructNlAttr(NL80211_ATTR_MAC, new byte[6]));
+
+        GenericNetlinkMsg msg2 = new GenericNetlinkMsg(NL80211_CMD_NEW_INTERFACE,
+                (short) 0, (short) 0, 0);
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, 1));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_IFINDEX, 2));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_IFNAME, "wlan1"));
+        msg2.addAttribute(new StructNlAttr(NL80211_ATTR_MAC, new byte[6]));
+
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestAllInterfaces))
+                .thenReturn(new Nl80211Response(msg1, msg2));
+
+        List<Nl80211Utils.InterfaceInfo> interfaces = mNl80211Utils.getInterfaces();
+
+        assertNotNull(interfaces);
+        assertEquals(2, interfaces.size());
+        assertEquals(1, interfaces.get(0).ifIndex);
+        assertEquals(0, interfaces.get(0).wiphyIndex);
+        assertEquals("wlan0", interfaces.get(0).name);
+        assertEquals(2, interfaces.get(1).ifIndex);
+        assertEquals(1, interfaces.get(1).wiphyIndex);
+        assertEquals("wlan1", interfaces.get(1).name);
+    }
+
+    @Test
+    public void testGetInterfaces_failure() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_INTERFACE))
+                .thenReturn(null);
+        assertNull(mNl80211Utils.getInterfaces());
+    }
+
+    @Test
+    public void testGetInterfaces_malformedResponse() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(NL80211_CMD_NEW_INTERFACE,
+                (short) 0, (short) 0, 0);
+        // Missing IFNAME
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_IFINDEX, TEST_IF_INDEX));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_MAC, new byte[6]));
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_INTERFACE))
+                .thenReturn(new Nl80211Response(msg));
+
+        List<Nl80211Utils.InterfaceInfo> interfaces = mNl80211Utils.getInterfaces();
+
+        assertNotNull(interfaces);
+        assertTrue(interfaces.isEmpty());
+    }
+
+    @Test
+    public void testGetInterfaceInfo_success() throws Exception {
+
+        Nl80211Utils.InterfaceInfo info = mNl80211Utils.getInterfaceInfo(TEST_IF_NAME);
+
+        assertNotNull(info);
+        assertEquals(TEST_IF_INDEX, info.ifIndex);
+        assertEquals(TEST_WIPHY_INDEX, info.wiphyIndex);
+        assertEquals(TEST_IF_NAME, info.name);
+        assertArrayEquals(TEST_MAC_ADDR, info.macAddress);
+    }
+
+    @Test
+    public void testGetInterfaceInfo_ifaceNotFound() throws Exception {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_INTERFACE))
+                .thenReturn(new Nl80211Response()); // Empty response
+
+        Nl80211Utils.InterfaceInfo info = mNl80211Utils.getInterfaceInfo(TEST_IF_NAME);
+
+        assertNull(info);
+    }
+
+    @Test
+    public void testGetCountryCode_success() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(NL80211_CMD_REG_CHANGE,
+                (short) 0, (short) 0, 0);
+        msg.addAttribute(new StructNlAttr(NetlinkConstants.NL80211_ATTR_REG_ALPHA2, "US"));
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_REG_TYPE,
+                NL80211_REGDOM_TYPE_COUNTRY));
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(eq(TEST_NL80211_REQUEST_GET_REG)))
+                .thenReturn(new Nl80211Response(msg));
+
+        assertEquals("US", mNl80211Utils.getCountryCode(TEST_WIPHY_INDEX));
+    }
+
+    @Test
+    public void testGetCountryCode_nullResponse() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(eq(TEST_NL80211_REQUEST_GET_REG)))
+                .thenReturn(null);
+
+        assertNull(mNl80211Utils.getCountryCode(TEST_WIPHY_INDEX));
+    }
+
+    @Test
+    public void testGetCountryCode_emptyResponse() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(eq(TEST_NL80211_REQUEST_GET_REG)))
+                .thenReturn(new Nl80211Response());
+
+        assertNull(mNl80211Utils.getCountryCode(TEST_WIPHY_INDEX));
+    }
+
+    @Test
+    public void testGetCountryCode_missingRegAlpha2Attribute() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(NL80211_CMD_REG_CHANGE,
+                (short) 0, (short) 0, 0);
+        // Only add reg type, no alpha2
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_REG_TYPE, NL80211_REGDOM_TYPE_COUNTRY));
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(eq(TEST_NL80211_REQUEST_GET_REG)))
+                .thenReturn(new Nl80211Response(msg));
+
+        assertNull(mNl80211Utils.getCountryCode(TEST_WIPHY_INDEX));
+    }
+
+    @Test
+    public void testTriggerScan_success() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_TRIGGER_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_TRIGGER_SCAN, (short) 0, (short) 0, 0));
+
+        int result = mNl80211Utils.triggerScan(TEST_IF_INDEX, WifiScanner.SCAN_TYPE_HIGH_ACCURACY,
+                null, null, null);
+
+        assertEquals(WifiScanner.REASON_SUCCEEDED, result);
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        assertEquals(NL80211_CMD_TRIGGER_SCAN, request.getCommand());
+        assertEquals(TEST_IF_INDEX,
+                (int) request.getAttributeValueAsInteger(NL80211_ATTR_IFINDEX));
+    }
+
+    @Test
+    public void testTriggerScan_withFrequencies() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_TRIGGER_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_TRIGGER_SCAN, (short) 0, (short) 0, 0));
+        Set<Integer> freqs = Set.of(2412, 5180);
+
+        mNl80211Utils.triggerScan(TEST_IF_INDEX, WifiScanner.SCAN_TYPE_HIGH_ACCURACY,
+                freqs, null, null);
+
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        StructNlAttr freqsAttr = request.getAttribute(
+                StructNlAttr.makeNestedType(NL80211_ATTR_SCAN_FREQUENCIES));
+        assertNotNull(freqsAttr);
+    }
+
+    @Test
+    public void testTriggerScan_withNullHiddenSsids_noSsidsAttribute() {
+        ArgumentCaptor<GenericNetlinkMsg> msgCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(msgCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_TRIGGER_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_TRIGGER_SCAN, (short) 0, (short) 0, 0));
+
+        // Call triggerScan with null for hiddenNetworkSSIDs
+        mNl80211Utils.triggerScan(TEST_IF_INDEX, 0, null, null, null);
+
+        GenericNetlinkMsg msg = msgCaptor.getValue();
+        assertNotNull(msg);
+        StructNlAttr ssidsAttr = msg.getAttribute(
+                StructNlAttr.makeNestedType(NL80211_ATTR_SCAN_SSIDS));
+        assertNull(ssidsAttr);
+    }
+
+    @Test
+    public void testTriggerScan_withHiddenSsids() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_TRIGGER_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_TRIGGER_SCAN, (short) 0, (short) 0, 0));
+        List<byte[]> ssids = List.of(TEST_SSID, TEST_SSID_2);
+
+        mNl80211Utils.triggerScan(TEST_IF_INDEX, WifiScanner.SCAN_TYPE_HIGH_ACCURACY,
+                null, ssids, null);
+
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        StructNlAttr ssidsAttr = request.getAttribute(
+                StructNlAttr.makeNestedType(NL80211_ATTR_SCAN_SSIDS));
+        assertNotNull(ssidsAttr);
+
+        // Verify the contents of the nested SSID attributes
+        List<byte[]> capturedSsids = new ArrayList<>();
+        Map<Short, StructNlAttr> nestedSsidAttrs =
+                GenericNetlinkMsg.getInnerNestedAttributes(ssidsAttr);
+        // The nested attributes are indexed from 0, so we can iterate like this
+        for (short i = 0; i < nestedSsidAttrs.size(); i++) {
+            capturedSsids.add(nestedSsidAttrs.get(i).getValueAsByteBuffer().array());
+        }
+
+        assertEquals(ssids.size(), capturedSsids.size());
+        for (int i = 0; i < ssids.size(); i++) {
+            assertArrayEquals(ssids.get(i), capturedSsids.get(i));
+        }
+    }
+
+    @Test
+    public void testTriggerScan_withVendorIes() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_TRIGGER_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_TRIGGER_SCAN, (short) 0, (short) 0, 0));
+        byte[] vendorIes = new byte[]{4, 5, 6};
+
+        mNl80211Utils.triggerScan(TEST_IF_INDEX, WifiScanner.SCAN_TYPE_HIGH_ACCURACY,
+                null, null, vendorIes);
+
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        // Vendor IEs are not a direct nl80211 attribute but are part of the request payload
+    }
+
+    @Test
+    public void testTriggerScan_withScanFlags() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_TRIGGER_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_TRIGGER_SCAN, (short) 0, (short) 0, 0));
+
+        int scanFlags = NL80211_SCAN_FLAG_HIGH_ACCURACY | NL80211_SCAN_FLAG_RANDOM_ADDR
+                | NL80211_SCAN_FLAG_COLOCATED_6GHZ;
+        mNl80211Utils.triggerScan(TEST_IF_INDEX,
+                scanFlags,
+                null, null, null);
+
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        assertEquals(scanFlags, (int) request.getAttributeValueAsInteger(NL80211_ATTR_SCAN_FLAGS));
+    }
+
+    @Test
+    public void testTriggerScan_errorEBUSY() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(any(GenericNetlinkMsg.class)))
+                .thenReturn(new Nl80211Response(EBUSY));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_TRIGGER_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_TRIGGER_SCAN, (short) 0, (short) 0, 0));
+
+        int result = mNl80211Utils.triggerScan(TEST_IF_INDEX, 0, null, null, null);
+
+        assertEquals(WifiScanner.REASON_BUSY, result);
+    }
+
+    @Test
+    public void testTriggerScan_errorENODEV() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(any(GenericNetlinkMsg.class)))
+                .thenReturn(new Nl80211Response(ENODEV));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_TRIGGER_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_TRIGGER_SCAN, (short) 0, (short) 0, 0));
+
+        int result = mNl80211Utils.triggerScan(TEST_IF_INDEX, 0, null, null, null);
+
+        assertEquals(WifiScanner.REASON_NO_DEVICE, result);
+    }
+
+    @Test
+    public void testTriggerScan_nullResponse() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(any(GenericNetlinkMsg.class)))
+                .thenReturn(null);
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_TRIGGER_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_TRIGGER_SCAN, (short) 0, (short) 0, 0));
+
+        int result = mNl80211Utils.triggerScan(TEST_IF_INDEX, 0, null, null, null);
+
+        assertEquals(WifiScanner.REASON_UNSPECIFIED, result);
+    }
+
+    @Test
+    public void testAbortScan() {
+        when(mNl80211Proxy.createNl80211Request(
+                eq(NetlinkConstants.NL80211_CMD_ABORT_SCAN), anyShort(), any()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NetlinkConstants.NL80211_CMD_ABORT_SCAN, (short) 0, (short) 0, 0));
+
+        mNl80211Utils.abortScan(TEST_IF_INDEX);
+
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        verify(mNl80211Proxy).sendMessageAndReceiveResponse(requestCaptor.capture());
+        GenericNetlinkMsg capturedMsg = requestCaptor.getValue();
+        assertNotNull(capturedMsg);
+        assertEquals(NetlinkConstants.NL80211_CMD_ABORT_SCAN, capturedMsg.getCommand());
+        assertEquals(TEST_IF_INDEX,
+                (int) capturedMsg.getAttributeValueAsInteger(NL80211_ATTR_IFINDEX));
+    }
+
+    @Test
+    public void testStartPnoScan_success_singleInterval() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_START_SCHED_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_START_SCHED_SCAN, (short) 0, (short) 0, 0));
+
+        int interval = 20000;
+        int result = mNl80211Utils.startPnoScan(TEST_IF_INDEX, new ArrayList<>(), interval,
+                -70, -80, false, false, false,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        assertEquals(WifiScanner.REASON_SUCCEEDED, result);
+
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        assertEquals(NL80211_CMD_START_SCHED_SCAN, request.getCommand());
+        assertEquals(TEST_IF_INDEX,
+                (int) request.getAttributeValueAsInteger(NL80211_ATTR_IFINDEX));
+
+        // When no SSIDs are provided, a wildcard SSID is added.
+        StructNlAttr ssidsAttr = request.getAttribute(
+                StructNlAttr.makeNestedType(NL80211_ATTR_SCAN_SSIDS));
+        assertNotNull(ssidsAttr);
+
+        assertNull(GenericNetlinkMsg.getInnerNestedAttributes(ssidsAttr)
+                .get((short) 0)
+                .getValueAsByteBuffer());
+
+        assertEquals(interval, (int) request.getAttributeValueAsInteger(
+                NL80211_ATTR_SCHED_SCAN_INTERVAL));
+    }
+
+    @Test
+    public void testStartPnoScan_success_multipleIntervals() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_START_SCHED_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_START_SCHED_SCAN, (short) 0, (short) 0, 0));
+
+        List<Nl80211Utils.PnoScanPlan> plans = new ArrayList<>();
+        plans.add(new Nl80211Utils.PnoScanPlan(20000, 5));
+        plans.add(new Nl80211Utils.PnoScanPlan(40000, 0)); // Last plan iterations is ignored.
+        int result = mNl80211Utils.startPnoScan(TEST_IF_INDEX, plans, 0,
+                -70, -80, false, false, false,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        assertEquals(WifiScanner.REASON_SUCCEEDED, result);
+
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        StructNlAttr plansAttr = request.getAttribute(
+                StructNlAttr.makeNestedType(NL80211_ATTR_SCHED_SCAN_PLANS));
+        assertNotNull(plansAttr);
+
+        StructNlAttr plan1Attr = GenericNetlinkMsg.getInnerNestedAttributes(plansAttr)
+                .get(StructNlAttr.makeNestedType((short) 0));
+        assertNotNull(plan1Attr);
+        assertEquals(20, (int) GenericNetlinkMsg.getInnerNestedAttributes(plan1Attr)
+                .get(NL80211_SCHED_SCAN_PLAN_INTERVAL)
+                .getValueAsInteger());
+        assertEquals(5, (int) GenericNetlinkMsg.getInnerNestedAttributes(plan1Attr)
+                .get(NL80211_SCHED_SCAN_PLAN_ITERATIONS)
+                .getValueAsInteger());
+
+        StructNlAttr plan2Attr = GenericNetlinkMsg.getInnerNestedAttributes(plansAttr)
+                .get(StructNlAttr.makeNestedType((short) 1));
+        assertNotNull(plan2Attr);
+        assertEquals(40, (int) GenericNetlinkMsg.getInnerNestedAttributes(plan2Attr)
+                .get(NL80211_SCHED_SCAN_PLAN_INTERVAL)
+                .getValueAsInteger());
+        // Last plan should not have iterations.
+        assertNull(GenericNetlinkMsg.getInnerNestedAttributes(plan2Attr)
+                .get(NL80211_SCHED_SCAN_PLAN_ITERATIONS));
+    }
+
+    @Test
+    public void testStartPnoScan_withMatchSsids() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_START_SCHED_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_START_SCHED_SCAN, (short) 0, (short) 0, 0));
+
+        List<byte[]> matchSsids = List.of(TEST_SSID, TEST_SSID_2);
+        int rssi = -80;
+        mNl80211Utils.startPnoScan(TEST_IF_INDEX, new ArrayList<>(), 20000,
+                -70, rssi, false, false, false,
+                new ArrayList<>(), matchSsids, new ArrayList<>());
+
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        StructNlAttr matchAttr = request.getAttribute(
+                StructNlAttr.makeNestedType(NL80211_ATTR_SCHED_SCAN_MATCH));
+        assertNotNull(matchAttr);
+
+        StructNlAttr match1 = GenericNetlinkMsg.getInnerNestedAttributes(matchAttr)
+                .get(StructNlAttr.makeNestedType((short) 0));
+        assertNotNull(match1);
+        assertArrayEquals(TEST_SSID, GenericNetlinkMsg.getInnerNestedAttributes(match1)
+                .get(NL80211_SCHED_SCAN_MATCH_ATTR_SSID)
+                .getValueAsByteBuffer().array());
+        assertEquals(rssi, (int) GenericNetlinkMsg.getInnerNestedAttributes(match1)
+                .get(NL80211_SCHED_SCAN_MATCH_ATTR_RSSI)
+                .getValueAsInteger());
+
+        StructNlAttr match2 = GenericNetlinkMsg.getInnerNestedAttributes(matchAttr)
+                .get(StructNlAttr.makeNestedType((short) 1));
+        assertNotNull(match2);
+        assertArrayEquals(TEST_SSID_2, GenericNetlinkMsg.getInnerNestedAttributes(match2)
+                .get(NL80211_SCHED_SCAN_MATCH_ATTR_SSID)
+                .getValueAsByteBuffer().array());
+    }
+
+    @Test
+    public void testStartPnoScan_withRandomMac() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_START_SCHED_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_START_SCHED_SCAN, (short) 0, (short) 0, 0));
+
+        mNl80211Utils.startPnoScan(TEST_IF_INDEX, new ArrayList<>(), 20000,
+                -70, -80, true, false, false,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        Integer scanFlags = request.getAttributeValueAsInteger(NL80211_ATTR_SCAN_FLAGS);
+        assertNotNull(scanFlags);
+        assertTrue((scanFlags & NL80211_SCAN_FLAG_RANDOM_ADDR) != 0);
+    }
+
+    @Test
+    public void testStartPnoScan_withLowPower() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_START_SCHED_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_START_SCHED_SCAN, (short) 0, (short) 0, 0));
+
+        mNl80211Utils.startPnoScan(TEST_IF_INDEX, new ArrayList<>(), 20000,
+                -70, -80, false, true, false,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        Integer scanFlags = request.getAttributeValueAsInteger(NL80211_ATTR_SCAN_FLAGS);
+        assertNotNull(scanFlags);
+        assertTrue((scanFlags & NL80211_SCAN_FLAG_LOW_POWER) != 0);
+    }
+
+    @Test
+    public void testStartPnoScan_withRelativeRssi() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_START_SCHED_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_START_SCHED_SCAN, (short) 0, (short) 0, 0));
+
+        int min2gRssi = -70;
+        int min5gRssi = -80;
+        mNl80211Utils.startPnoScan(TEST_IF_INDEX, new ArrayList<>(), 20000,
+                min2gRssi, min5gRssi, false, false, true,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        StructNlAttr rssiAdjustAttr = request.getAttribute(
+                NL80211_ATTR_SCHED_SCAN_RSSI_ADJUST);
+        assertNotNull(rssiAdjustAttr);
+        ByteBuffer buf = rssiAdjustAttr.getValueAsByteBuffer();
+        assertEquals(NL80211_BAND_2GHZ, buf.get());
+        assertEquals(min2gRssi - min5gRssi, buf.get());
+    }
+
+    @Test
+    public void testStartPnoScan_nullResponse() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(any(GenericNetlinkMsg.class)))
+                .thenReturn(null);
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_START_SCHED_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_START_SCHED_SCAN, (short) 0, (short) 0, 0));
+
+        int result = mNl80211Utils.startPnoScan(TEST_IF_INDEX, new ArrayList<>(), 20000,
+                -70, -80, false, false, false,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+
+        assertEquals(WifiScanner.REASON_UNSPECIFIED, result);
+    }
+
+    @Test
+    public void testStartPnoScan_errorResponse() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(any(GenericNetlinkMsg.class)))
+                .thenReturn(new Nl80211Response(EBUSY));
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_START_SCHED_SCAN), anyShort()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_START_SCHED_SCAN, (short) 0, (short) 0, 0));
+
+        int result = mNl80211Utils.startPnoScan(TEST_IF_INDEX, new ArrayList<>(), 20000,
+                -70, -80, false, false, false,
+                new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+
+        assertEquals(WifiScanner.REASON_BUSY, result);
+    }
+
+    @Test
+    public void testStopPnoScan_success() {
+        ArgumentCaptor<GenericNetlinkMsg> requestCaptor =
+                ArgumentCaptor.forClass(GenericNetlinkMsg.class);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(requestCaptor.capture()))
+                .thenReturn(new Nl80211Response(0));
+        when(mNl80211Proxy.createNl80211Request(
+                eq(NL80211_CMD_STOP_SCHED_SCAN), anyShort(), any()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_STOP_SCHED_SCAN, (short) 0, (short) 0, 0));
+
+        boolean result = mNl80211Utils.stopPnoScan(TEST_IF_INDEX);
+
+        assertTrue(result);
+        GenericNetlinkMsg request = requestCaptor.getValue();
+        assertNotNull(request);
+        assertEquals(NL80211_CMD_STOP_SCHED_SCAN, request.getCommand());
+        assertEquals(TEST_IF_INDEX,
+                (int) request.getAttributeValueAsInteger(NL80211_ATTR_IFINDEX));
+    }
+
+    @Test
+    public void testStopPnoScan_failure() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(any(GenericNetlinkMsg.class)))
+                .thenReturn(new Nl80211Response(ENOENT));
+        when(mNl80211Proxy.createNl80211Request(
+                eq(NL80211_CMD_STOP_SCHED_SCAN), anyShort(), any()))
+                .thenAnswer(i -> new GenericNetlinkMsg(
+                        NL80211_CMD_STOP_SCHED_SCAN, (short) 0, (short) 0, 0));
+
+        boolean result = mNl80211Utils.stopPnoScan(TEST_IF_INDEX);
+
+        assertFalse(result);
+    }
+
+    private GenericNetlinkMsg createGetStationResponse(
+            Integer txGood, Integer txBad, Byte signal, Integer txBitrate, Integer rxBitrate) {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg(NetlinkConstants.NL80211_CMD_NEW_STATION,
+                (short) 0, (short) 0, 0);
+        List<StructNlAttr> staInfoAttrs = new ArrayList<>();
+        if (txGood != null) {
+            staInfoAttrs.add(new StructNlAttr(
+                    NetlinkConstants.NL80211_STA_INFO_TX_PACKETS, txGood));
+        }
+        if (txBad != null) {
+            staInfoAttrs.add(new StructNlAttr(
+                    NetlinkConstants.NL80211_STA_INFO_TX_FAILED, txBad));
+        }
+        if (signal != null) {
+            staInfoAttrs.add(new StructNlAttr(
+                    NetlinkConstants.NL80211_STA_INFO_SIGNAL, new byte[]{signal}));
+        }
+
+        if (txBitrate != null) {
+            StructNlAttr rate32Attr = new StructNlAttr(
+                    NetlinkConstants.NL80211_RATE_INFO_BITRATE32, txBitrate);
+            ByteBuffer payload = ByteBuffer.allocate(rate32Attr.getAlignedLength());
+            rate32Attr.pack(payload);
+            staInfoAttrs.add(new StructNlAttr(
+                    NetlinkConstants.NL80211_STA_INFO_TX_BITRATE, payload.array()));
+        }
+
+        if (rxBitrate != null) {
+            StructNlAttr rate32Attr = new StructNlAttr(
+                    NetlinkConstants.NL80211_RATE_INFO_BITRATE32, rxBitrate);
+            ByteBuffer payload = ByteBuffer.allocate(rate32Attr.getAlignedLength());
+            rate32Attr.pack(payload);
+            staInfoAttrs.add(new StructNlAttr(
+                    NetlinkConstants.NL80211_STA_INFO_RX_BITRATE, payload.array()));
+        }
+
+        int staInfoPayloadLength = 0;
+        for (StructNlAttr attr : staInfoAttrs) {
+            staInfoPayloadLength += attr.getAlignedLength();
+        }
+
+        ByteBuffer staInfoPayload = ByteBuffer.allocate(staInfoPayloadLength);
+        for (StructNlAttr attr : staInfoAttrs) {
+            attr.pack(staInfoPayload);
+        }
+
+        msg.addAttribute(new StructNlAttr(
+                NetlinkConstants.NL80211_ATTR_STA_INFO, staInfoPayload.array()));
+        return msg;
+    }
+
+    @Test
+    public void testGetStationInfo_success() {
+        int txGood = 100, txBad = 10, txBitrate = 240, rxBitrate = 120;
+        byte signal = -50;
+        GenericNetlinkMsg response = createGetStationResponse(txGood, txBad, signal, txBitrate,
+                rxBitrate);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(eq(TEST_NL80211_REQUEST_GET_STATION)))
+                .thenReturn(new Nl80211Response(response));
+
+        Nl80211Utils.StationInfo stationInfo = mNl80211Utils.getStationInfo(TEST_IF_INDEX,
+                TEST_MAC_ADDR);
+
+        assertNotNull(stationInfo);
+        assertEquals(txGood, stationInfo.txPackets);
+        assertEquals(txBad, stationInfo.txFailed);
+        assertEquals(signal, stationInfo.signalDbm);
+        assertEquals(txBitrate, stationInfo.txBitrate100Kbps);
+        assertEquals(rxBitrate, stationInfo.rxBitrate100Kbps);
+    }
+
+    @Test
+    public void testGetStationInfo_errorResponse() {
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(eq(TEST_NL80211_REQUEST_GET_STATION)))
+                .thenReturn(new Nl80211Response(ENODEV));
+        assertNull(mNl80211Utils.getStationInfo(TEST_IF_INDEX, TEST_MAC_ADDR));
+    }
+
+    @Test
+    public void testGetStationInfo_missingStaInfo() {
+        GenericNetlinkMsg response = new GenericNetlinkMsg(
+                NetlinkConstants.NL80211_CMD_NEW_STATION, (short) 0, (short) 0, 0);
+        // Missing NL80211_ATTR_STA_INFO
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(eq(TEST_NL80211_REQUEST_GET_STATION)))
+                .thenReturn(new Nl80211Response(response));
+        assertNull(mNl80211Utils.getStationInfo(TEST_IF_INDEX, TEST_MAC_ADDR));
+    }
+
+    @Test
+    public void testGetStationInfo_partialData_bitratesMissing() {
+        int txGood = 100;
+        int txBad = 10;
+        byte signal = -50;
+        GenericNetlinkMsg response = createGetStationResponse(txGood, txBad, signal, null, null);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(eq(TEST_NL80211_REQUEST_GET_STATION)))
+                .thenReturn(new Nl80211Response(response));
+
+        Nl80211Utils.StationInfo stationInfo = mNl80211Utils.getStationInfo(TEST_IF_INDEX,
+                TEST_MAC_ADDR);
+
+        assertNotNull(stationInfo);
+        assertEquals(txGood, stationInfo.txPackets);
+        assertEquals(txBad, stationInfo.txFailed);
+        assertEquals(signal, stationInfo.signalDbm);
+        assertEquals(0, stationInfo.txBitrate100Kbps); // Should default to 0
+        assertEquals(0, stationInfo.rxBitrate100Kbps); // Should default to 0
+    }
+
+    @Test
+    public void testGetStationInfo_missingMandatoryField() {
+        // txBad and signal are missing, which are mandatory.
+        GenericNetlinkMsg response = createGetStationResponse(100, null, null, 240, 120);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(eq(TEST_NL80211_REQUEST_GET_STATION)))
+                .thenReturn(new Nl80211Response(response));
+
+        assertNull(mNl80211Utils.getStationInfo(TEST_IF_INDEX, TEST_MAC_ADDR));
+    }
+
+    @Test
+    public void testSendMgmtFrame_success() {
+        long expectedCookie = 54321L;
+        GenericNetlinkMsg responseMsg =
+                new GenericNetlinkMsg(NL80211_CMD_FRAME, (short) 0, (short) 0, 0);
+        responseMsg.addAttribute(
+                new StructNlAttr(NetlinkConstants.NL80211_ATTR_COOKIE, expectedCookie));
+        Nl80211Response response = new Nl80211Response(responseMsg);
+
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_FRAME)))
+                .thenReturn(TEST_NL80211_REQUEST_FRAME);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_FRAME))
+                .thenReturn(response);
+
+        Long cookie = mNl80211Utils.sendMgmtFrame(TEST_IF_INDEX, TEST_SSID, /* mcs */ 5);
+
+        assertNotNull(cookie);
+        assertEquals(expectedCookie, cookie.longValue());
+
+        assertEquals(NL80211_CMD_FRAME, TEST_NL80211_REQUEST_FRAME.getCommand());
+        assertEquals(TEST_IF_INDEX,
+                (int) TEST_NL80211_REQUEST_FRAME.getAttributeValueAsInteger(NL80211_ATTR_IFINDEX));
+        assertArrayEquals(TEST_SSID,
+                TEST_NL80211_REQUEST_FRAME.getAttributeValueAsByteArray(NL80211_ATTR_FRAME));
+    }
+
+    @Test
+    public void testSendMgmtFrame_proxyFailure() {
+        when(mNl80211Proxy.createNl80211Request(eq(NL80211_CMD_FRAME)))
+                .thenReturn(TEST_NL80211_REQUEST_FRAME);
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_FRAME))
+                .thenReturn(null);
+
+        Long cookie = mNl80211Utils.sendMgmtFrame(TEST_IF_INDEX, TEST_SSID, /* mcs */ 5);
+
+        assertNull(cookie);
+    }
+
+    /**
+     * Test that wifi chip stats can be successfully retrieved.
+     */
+    @Test
+    public void testGetWifiChipStatsSuccess() throws Exception {
+        final byte[] payload = new byte[]{1, 2, 3, 4};
+
+        // Prepare the response for the vendor command (chip stats).
+        GenericNetlinkMsg statsResponse = new GenericNetlinkMsg(
+                NetlinkConstants.NL80211_CMD_VENDOR, (short) 0, (short) 0, 0);
+        statsResponse.addAttribute(
+                new StructNlAttr(NetlinkConstants.NL80211_ATTR_VENDOR_DATA, payload));
+
+        when(mNl80211Proxy.createVendorRequest(anyInt(), anyInt(), anyInt()))
+                .thenReturn(new GenericNetlinkMsg(NetlinkConstants.NL80211_CMD_VENDOR, (short) 0,
+                        (short) 0, 0));
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(any(GenericNetlinkMsg.class)))
+                .thenReturn(new Nl80211Response(statsResponse));
+
+        // Mock getInterfaceInfo
+        Nl80211Utils.InterfaceInfo mockInfo = new Nl80211Utils.InterfaceInfo(
+                TEST_IF_INDEX, 0, TEST_IF_NAME, new byte[6]);
+        GenericNetlinkMsg interfaceResponse = new GenericNetlinkMsg(
+                NL80211_CMD_NEW_INTERFACE, (short) 0, (short) 0, 0);
+        interfaceResponse.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY, TEST_WIPHY_INDEX));
+        interfaceResponse.addAttribute(new StructNlAttr(NL80211_ATTR_IFINDEX, TEST_IF_INDEX));
+        interfaceResponse.addAttribute(new StructNlAttr(NL80211_ATTR_IFNAME, TEST_IF_NAME));
+        interfaceResponse.addAttribute(new StructNlAttr(NL80211_ATTR_MAC, TEST_MAC_ADDR));
+        when(mNl80211Proxy.sendMessageAndReceiveResponse(TEST_NL80211_REQUEST_GET_INTERFACE))
+                .thenReturn(new Nl80211Response(interfaceResponse));
+
+        ByteBuffer result = mNl80211Utils.getWifiChipStats(TEST_IF_NAME);
+
+        assertNotNull(result);
+        assertEquals(ByteBuffer.wrap(payload), result);
+    }
+
+    @Test
+    public void testWiphyFeaturesEquals() {
+        Nl80211Utils.WiphyFeatures features1 = new Nl80211Utils.WiphyFeatures.Builder()
+                .setSupportsRandomMacOneShotScan(true)
+                .build();
+        Nl80211Utils.WiphyFeatures features2 = new Nl80211Utils.WiphyFeatures.Builder()
+                .setSupportsRandomMacOneShotScan(true)
+                .build();
+        Nl80211Utils.WiphyFeatures features3 = new Nl80211Utils.WiphyFeatures.Builder()
+                .setSupportsRandomMacOneShotScan(false)
+                .build();
+
+        assertEquals(features1, features2);
+        assertEquals(features1.hashCode(), features2.hashCode());
+        assertNotEquals(features1, features3);
+    }
+
+    @Test
+    public void testBandInfoEquals() {
+        Nl80211Utils.BandInfo bandInfo1 = new Nl80211Utils.BandInfo.Builder()
+                .addBandCapabilities(NL80211_BAND_2GHZ, new Nl80211Utils.BandCapabilities.Builder()
+                        .setBandIndex(NL80211_BAND_2GHZ)
+                        .addFrequency(new Nl80211Utils.FrequencyInfo.Builder()
+                                .setFrequencyMhz(2412).build())
+                        .setIsHeSupported(true)
+                        .build())
+                .build();
+        Nl80211Utils.BandInfo bandInfo2 = new Nl80211Utils.BandInfo.Builder()
+                .addBandCapabilities(NL80211_BAND_2GHZ, new Nl80211Utils.BandCapabilities.Builder()
+                        .setBandIndex(NL80211_BAND_2GHZ)
+                        .addFrequency(new Nl80211Utils.FrequencyInfo.Builder()
+                                .setFrequencyMhz(2412).build())
+                        .setIsHeSupported(true)
+                        .build())
+                .build();
+        Nl80211Utils.BandInfo bandInfo3 = new Nl80211Utils.BandInfo.Builder()
+                .addBandCapabilities(NL80211_BAND_2GHZ, new Nl80211Utils.BandCapabilities.Builder()
+                        .setBandIndex(NL80211_BAND_2GHZ)
+                        .addFrequency(new Nl80211Utils.FrequencyInfo.Builder()
+                                .setFrequencyMhz(2412).build())
+                        .setIsHeSupported(false)
+                        .build())
+                .build();
+
+        assertEquals(bandInfo1, bandInfo2);
+        assertEquals(bandInfo1.hashCode(), bandInfo2.hashCode());
+        assertNotEquals(bandInfo1, bandInfo3);
+    }
+
+    @Test
+    public void testScanCapabilitiesEquals() {
+        Nl80211Utils.ScanCapabilities caps1 = new Nl80211Utils.ScanCapabilities.Builder()
+                .setMaxNumScanSsids(16)
+                .build();
+        Nl80211Utils.ScanCapabilities caps2 = new Nl80211Utils.ScanCapabilities.Builder()
+                .setMaxNumScanSsids(16)
+                .build();
+        Nl80211Utils.ScanCapabilities caps3 = new Nl80211Utils.ScanCapabilities.Builder()
+                .setMaxNumScanSsids(8)
+                .build();
+
+        assertEquals(caps1, caps2);
+        assertEquals(caps1.hashCode(), caps2.hashCode());
+        assertNotEquals(caps1, caps3);
+    }
+
+    @Test
+    public void testDriverCapabilitiesEquals() {
+        Nl80211Utils.DriverCapabilities caps1 = new Nl80211Utils.DriverCapabilities.Builder()
+                .setMaxNumAkmSuites(5)
+                .setSupportedCipherSuites(Set.of(1, 2, 3))
+                .build();
+        Nl80211Utils.DriverCapabilities caps2 = new Nl80211Utils.DriverCapabilities.Builder()
+                .setMaxNumAkmSuites(5)
+                .setSupportedCipherSuites(Set.of(1, 2, 3))
+                .build();
+        Nl80211Utils.DriverCapabilities caps3 = new Nl80211Utils.DriverCapabilities.Builder()
+                .setMaxNumAkmSuites(2)
+                .setSupportedCipherSuites(Set.of(1, 2, 3))
+                .build();
+        Nl80211Utils.DriverCapabilities caps4 = new Nl80211Utils.DriverCapabilities.Builder()
+                .setMaxNumAkmSuites(5)
+                .setSupportedCipherSuites(Set.of(1, 2))
+                .build();
+
+        assertEquals(caps1, caps2);
+        assertEquals(caps1.hashCode(), caps2.hashCode());
+        assertNotEquals(caps1, caps3);
+        assertNotEquals(caps1, caps4);
+    }
+
+    @Test
+    public void testParseCipherSuites_success() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg((short) 0, (short) 0, (short) 0, 0);
+        List<Integer> expectedCiphers = List.of(0x11223344, 0x55667788);
+        ByteBuffer buffer = ByteBuffer.allocate(expectedCiphers.size() * Integer.BYTES)
+                .order(ByteOrder.nativeOrder());
+        for (int cipher : expectedCiphers) {
+            buffer.putInt(cipher);
+        }
+        msg.addAttribute(new StructNlAttr(NetlinkConstants.NL80211_ATTR_CIPHER_SUITES,
+                buffer.array()));
+
+        List<Integer> actualCiphers = mNl80211Utils.parseCipherSuites(msg);
+
+        assertNotNull(actualCiphers);
+        assertEquals(expectedCiphers, actualCiphers);
+    }
+
+    @Test
+    public void testParseCipherSuites_malformedLength() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg((short) 0, (short) 0, (short) 0, 0);
+        byte[] malformedBytes = new byte[Integer.BYTES - 1];
+        msg.addAttribute(new StructNlAttr(NetlinkConstants.NL80211_ATTR_CIPHER_SUITES,
+                malformedBytes));
+
+        assertNull(mNl80211Utils.parseCipherSuites(msg));
+    }
+
+    @Test
+    public void testParseCipherSuites_missingAttribute() {
+        GenericNetlinkMsg msg = new GenericNetlinkMsg((short) 0, (short) 0, (short) 0, 0);
+        assertNull(mNl80211Utils.parseCipherSuites(msg));
+    }
+
+    @Test
+    public void testParseWiphyInfo_withCipherSuites() {
+        GenericNetlinkMsg msg = createBasicWiphyInfoMsg();
+        msg.addAttribute(createWiphyBandsAttribute());
+        Set<Integer> expectedCiphers = Set.of(0x000fac02, 0x000fac04);
+        ByteBuffer buffer = ByteBuffer.allocate(expectedCiphers.size() * Integer.BYTES)
+                .order(ByteOrder.nativeOrder());
+        for (int cipher : expectedCiphers) {
+            buffer.putInt(cipher);
+        }
+        msg.addAttribute(new StructNlAttr(NetlinkConstants.NL80211_ATTR_CIPHER_SUITES,
+                buffer.array()));
+
+        Nl80211Utils.WiphyInfo info = mNl80211Utils.parseWiphyInfo(List.of(msg));
+
+        assertNotNull(info);
+        assertEquals(expectedCiphers, info.driverCapabilities.supportedCipherSuites);
+    }
+
+    @Test
+    public void testParseWiphyInfo_withDetailedBandCapabilities() {
+        GenericNetlinkMsg msg = createBasicWiphyInfoMsg();
+
+        // Prepare raw attribute values
+        byte[] htMcs = new byte[16]; htMcs[0] = (byte) 0xFF; htMcs[1] = (byte) 0xFF; // 2x2 HT
+        // VHT MCS map: 2 bits per stream. 0=MCS 0-7, 1=MCS 0-8, 2=MCS 0-9, 3=unsupported.
+        // For 2x2 with MCS 0-9: stream1=2 (binary 10), stream2=2 (binary 10), others=3 (binary 11).
+        // hex: 0xFFFA (1111 1111 1111 1010)
+        byte[] vhtMcs = new byte[8]; Arrays.fill(vhtMcs, (byte) 0xFF);
+        vhtMcs[0] = (byte) 0xFA; vhtMcs[1] = (byte) 0xFF; // Rx 2x2
+        vhtMcs[4] = (byte) 0xFA; vhtMcs[5] = (byte) 0xFF; // Tx 2x2
+        byte[] heMcs = new byte[4]; Arrays.fill(heMcs, (byte) 0xFF);
+        heMcs[0] = (byte) 0xFA; heMcs[1] = (byte) 0xFF; // Rx 2x2
+        heMcs[2] = (byte) 0xFA; heMcs[3] = (byte) 0xFF; // Tx 2x2
+        // EHT MCS map: same as VHT/HE.
+        byte[] ehtMcs = new byte[6]; Arrays.fill(ehtMcs, (byte) 0xFF);
+        ehtMcs[0] = (byte) 0xFA; ehtMcs[1] = (byte) 0xFF; // Rx 2x2
+        ehtMcs[2] = (byte) 0xFA; ehtMcs[3] = (byte) 0xFF; // Tx 2x2
+        byte[] capMac = new byte[]{0x1, 0x2, 0x3, 0x4, 0x5, 0x6};
+        byte[] capPhy = new byte[]{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9};
+        byte[] ppe = new byte[]{0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8};
+        byte[] vendor = new byte[]{0x8, 0x9};
+        byte[] iftypes = new byte[]{0xA, 0xB};
+        byte[] he6ghz = new byte[]{0xC, 0xD};
+
+        // Inner nested: IFTYPE_DATA children
+        ByteBuffer iftypeDataPayload = ByteBuffer.allocate(256).order(ByteOrder.nativeOrder());
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_IFTYPES, iftypes).pack(iftypeDataPayload);
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_HE_CAP_MAC, capMac).pack(iftypeDataPayload);
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_HE_CAP_PHY, capPhy).pack(iftypeDataPayload);
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_HE_CAP_MCS_SET, heMcs).pack(iftypeDataPayload);
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_HE_CAP_PPE, ppe).pack(iftypeDataPayload);
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_HE_6GHZ_CAPA, he6ghz).pack(iftypeDataPayload);
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_EHT_CAP_MAC, capMac).pack(iftypeDataPayload);
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_EHT_CAP_PHY, capPhy).pack(iftypeDataPayload);
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_EHT_CAP_MCS_SET, ehtMcs).pack(iftypeDataPayload);
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_EHT_CAP_PPE, ppe).pack(iftypeDataPayload);
+        new StructNlAttr(NL80211_BAND_IFTYPE_ATTR_VENDOR_ELEMS, vendor).pack(iftypeDataPayload);
+
+        // Nested attribute list for IFTYPE_DATA index '1' (STA)
+        ByteBuffer staIftypePayload = ByteBuffer.allocate(iftypeDataPayload.position())
+                .order(ByteOrder.nativeOrder());
+        staIftypePayload.put(iftypeDataPayload.array(), 0, iftypeDataPayload.position());
+        StructNlAttr staIftype = new StructNlAttr((short) 1, staIftypePayload.array());
+
+        ByteBuffer iftypeDataRootPayload = ByteBuffer.allocate(staIftype.getAlignedLength());
+        staIftype.pack(iftypeDataRootPayload);
+        StructNlAttr iftypeDataRoot = new StructNlAttr(NL80211_BAND_ATTR_IFTYPE_DATA,
+                iftypeDataRootPayload.array());
+
+        // Frequencies (2412 enabled, 2484 disabled with DFS/No-IR)
+        ByteBuffer f2412Payload = ByteBuffer.allocate(64).order(ByteOrder.nativeOrder());
+        new StructNlAttr(NetlinkConstants.NL80211_FREQUENCY_ATTR_FREQ, 2412).pack(f2412Payload);
+        StructNlAttr freq2412 = new StructNlAttr((short) 1,
+                Arrays.copyOf(f2412Payload.array(), f2412Payload.position()));
+
+        ByteBuffer f2484Payload = ByteBuffer.allocate(64).order(ByteOrder.nativeOrder());
+        new StructNlAttr(NetlinkConstants.NL80211_FREQUENCY_ATTR_FREQ, 2484).pack(f2484Payload);
+        new StructNlAttr(NetlinkConstants.NL80211_FREQUENCY_ATTR_DISABLED, new byte[0])
+                .pack(f2484Payload);
+        new StructNlAttr(NetlinkConstants.NL80211_FREQUENCY_ATTR_NO_IR, new byte[0])
+                .pack(f2484Payload);
+        new StructNlAttr(NetlinkConstants.NL80211_FREQUENCY_ATTR_DFS_STATE,
+                (int) NetlinkConstants.NL80211_DFS_AVAILABLE).pack(f2484Payload);
+        StructNlAttr freq2484 = new StructNlAttr((short) 2,
+                Arrays.copyOf(f2484Payload.array(), f2484Payload.position()));
+
+        ByteBuffer freqsPayload = ByteBuffer.allocate(
+                freq2412.getAlignedLength() + freq2484.getAlignedLength());
+        freq2412.pack(freqsPayload);
+        freq2484.pack(freqsPayload);
+        StructNlAttr freqs = new StructNlAttr(NL80211_BAND_ATTR_FREQS, freqsPayload.array());
+
+        // Final Band 2.4GHz Container
+        ByteBuffer band2gPayload = ByteBuffer.allocate(512).order(ByteOrder.nativeOrder());
+        freqs.pack(band2gPayload);
+        new StructNlAttr(NL80211_BAND_ATTR_HT_CAPA, new byte[]{0x10, 0x20}).pack(band2gPayload);
+        new StructNlAttr(NL80211_BAND_ATTR_HT_MCS_SET, htMcs).pack(band2gPayload);
+        new StructNlAttr(NetlinkConstants.NL80211_BAND_ATTR_HT_AMPDU_FACTOR, (byte) 3)
+                .pack(band2gPayload);
+        new StructNlAttr(NetlinkConstants.NL80211_BAND_ATTR_HT_AMPDU_DENSITY, (byte) 7)
+                .pack(band2gPayload);
+        new StructNlAttr(NL80211_BAND_ATTR_VHT_CAPA, 0x12345678).pack(band2gPayload);
+        new StructNlAttr(NL80211_BAND_ATTR_VHT_MCS_SET, vhtMcs).pack(band2gPayload);
+        iftypeDataRoot.pack(band2gPayload);
+
+        StructNlAttr band2g = new StructNlAttr(NL80211_BAND_2GHZ,
+                Arrays.copyOf(band2gPayload.array(), band2gPayload.position()));
+
+        ByteBuffer bandsPayload = ByteBuffer.allocate(band2g.getAlignedLength());
+        band2g.pack(bandsPayload);
+        msg.addAttribute(new StructNlAttr(NL80211_ATTR_WIPHY_BANDS, bandsPayload.array()));
+
+        // Parse
+        Nl80211Utils.WiphyInfo info = mNl80211Utils.parseWiphyInfo(List.of(msg));
+
+        // Assertions
+        assertNotNull(info);
+        Nl80211Utils.BandCapabilities caps = info.bandInfo.perBandCapabilities.get(
+                (int) NL80211_BAND_2GHZ);
+        assertNotNull(caps);
+        assertEquals((int) NL80211_BAND_2GHZ, caps.bandIndex);
+        assertTrue(caps.isHtSupported);
+        assertTrue(caps.isVhtSupported);
+        assertTrue(caps.isHeSupported);
+        assertTrue(caps.isEhtSupported);
+
+        // Verify Spatial Streams
+        assertEquals(2, caps.htMaxTxStreams);
+        assertEquals(2, caps.htMaxRxStreams);
+        assertEquals(2, caps.vhtMaxTxStreams);
+        assertEquals(2, caps.vhtMaxRxStreams);
+        assertEquals(2, caps.heMaxTxStreams);
+        assertEquals(2, caps.heMaxRxStreams);
+        assertEquals(2, caps.ehtMaxTxStreams);
+        assertEquals(2, caps.ehtMaxRxStreams);
+
+        // Verify Standard Caps and MCS Sets
+        assertArrayEquals(iftypes, caps.iftypes);
+        assertArrayEquals(new byte[]{0x10, 0x20}, caps.htCap);
+        assertArrayEquals(htMcs, caps.htMcsSet);
+        assertEquals(Byte.valueOf((byte) 3), caps.htAmpduFactor);
+        assertEquals(Byte.valueOf((byte) 7), caps.htAmpduDensity);
+        assertEquals(Integer.valueOf(0x12345678), caps.vhtCap);
+        assertArrayEquals(vhtMcs, caps.vhtMcsSet);
+        assertArrayEquals(capMac, caps.heCapMac);
+        assertArrayEquals(capPhy, caps.heCapPhy);
+        assertArrayEquals(heMcs, caps.heMcsSet);
+        assertArrayEquals(ppe, caps.heCapPpe);
+        assertArrayEquals(he6ghz, caps.he6ghzCapa);
+        assertArrayEquals(capMac, caps.ehtCapMac);
+        assertArrayEquals(capPhy, caps.ehtCapPhy);
+        assertArrayEquals(ehtMcs, caps.ehtMcsSet);
+        assertArrayEquals(ppe, caps.ehtCapPpe);
+        assertArrayEquals(vendor, caps.vendorElems);
+
+        // Verify Frequencies
+        assertEquals(2, caps.frequencies.size());
+        Nl80211Utils.FrequencyInfo f1 = caps.frequencies.get(0);
+        assertEquals(2412, f1.frequencyMhz);
+        assertFalse(f1.disabled);
+        assertFalse(f1.noIr);
+        assertNull(f1.dfsState);
+
+        Nl80211Utils.FrequencyInfo f2 = caps.frequencies.get(1);
+        assertEquals(2484, f2.frequencyMhz);
+        assertTrue(f2.disabled);
+        assertTrue(f2.noIr);
+        assertEquals(Integer.valueOf((int) NetlinkConstants.NL80211_DFS_AVAILABLE), f2.dfsState);
+
+        // Verify merged fields still work
+        assertTrue(info.bandInfo.is80211nSupported);
+        assertTrue(info.bandInfo.is80211acSupported);
+        assertTrue(info.bandInfo.is80211axSupported);
+        assertTrue(info.bandInfo.is80211beSupported);
+        assertEquals(2, info.bandInfo.maxTxStreams);
+        assertEquals(2, info.bandInfo.maxRxStreams);
+        assertTrue(info.bandInfo.band2g.contains(2412));
+        assertFalse(info.bandInfo.band2g.contains(2484)); // Merged list skips disabled
+    }
+
+    @Test
+    public void testWiphyInfoEquals() {
+        Nl80211Utils.BandInfo bandInfo = new Nl80211Utils.BandInfo.Builder()
+                .addBandCapabilities(NL80211_BAND_2GHZ, new Nl80211Utils.BandCapabilities.Builder()
+                        .setBandIndex(NL80211_BAND_2GHZ)
+                        .addFrequency(new Nl80211Utils.FrequencyInfo.Builder()
+                                .setFrequencyMhz(2412).build())
+                        .build())
+                .build();
+        Nl80211Utils.ScanCapabilities scanCaps = new Nl80211Utils.ScanCapabilities.Builder()
+                .setMaxNumScanSsids(16).build();
+        Nl80211Utils.WiphyFeatures features = new Nl80211Utils.WiphyFeatures.Builder()
+                .setSupportsRandomMacOneShotScan(true).build();
+        Nl80211Utils.DriverCapabilities driverCaps = new Nl80211Utils.DriverCapabilities.Builder()
+                .setMaxNumAkmSuites(1).build();
+
+        Nl80211Utils.WiphyInfo info1 = new Nl80211Utils.WiphyInfo.Builder()
+                .setBandInfo(bandInfo)
+                .setScanCapabilities(scanCaps)
+                .setWiphyFeatures(features)
+                .setDriverCapabilities(driverCaps)
+                .build();
+
+        Nl80211Utils.WiphyInfo info2 = new Nl80211Utils.WiphyInfo.Builder()
+                .setBandInfo(bandInfo)
+                .setScanCapabilities(scanCaps)
+                .setWiphyFeatures(features)
+                .setDriverCapabilities(driverCaps)
+                .build();
+
+        Nl80211Utils.WiphyInfo info3 = new Nl80211Utils.WiphyInfo.Builder()
+                .setBandInfo(bandInfo)
+                .setScanCapabilities(scanCaps)
+                .setWiphyFeatures(new Nl80211Utils.WiphyFeatures.Builder().build())
+                .setDriverCapabilities(driverCaps)
+                .build();
+
+        assertEquals(info1, info2);
+        assertEquals(info1.hashCode(), info2.hashCode());
+        assertNotEquals(info1, info3);
+    }
+
+    @Test
+    public void testWiphyInfoEmptyDefaultEquals() {
+        Nl80211Utils.WiphyInfo info1 = new Nl80211Utils.WiphyInfo.Builder().build();
+        Nl80211Utils.WiphyInfo info2 = new Nl80211Utils.WiphyInfo.Builder().build();
+
+        assertEquals(info1, info2);
+        assertEquals(info1.hashCode(), info2.hashCode());
+    }
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "complete_disc_if_no_rnr"
+  state: ENABLED
+  permission: READ_ONLY
+}

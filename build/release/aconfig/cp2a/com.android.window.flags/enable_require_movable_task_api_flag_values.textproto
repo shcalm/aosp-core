@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_require_movable_task_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.init.flags"
+  name: "enable_init_event_timestamp"
+  state: ENABLED
+  permission: READ_ONLY
+}

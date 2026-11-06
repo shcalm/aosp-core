@@ -1,0 +1,4 @@
+name: "RELEASE_USE_STANDALONE_WEBVIEW"
+value {
+  bool_value: true
+}

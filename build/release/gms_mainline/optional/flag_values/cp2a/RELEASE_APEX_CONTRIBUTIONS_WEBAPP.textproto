@@ -1,0 +1,4 @@
+name: "RELEASE_APEX_CONTRIBUTIONS_WEBAPP"
+value: {
+  string_value: "webapp.google.contributions.prebuilt"
+}

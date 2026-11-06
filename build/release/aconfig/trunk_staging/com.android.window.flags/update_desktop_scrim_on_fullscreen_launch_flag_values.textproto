@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "update_desktop_scrim_on_fullscreen_launch"
+  state: ENABLED
+  permission: READ_WRITE
+}

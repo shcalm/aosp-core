@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.flags"
+  name: "redact_web_otp_sms_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

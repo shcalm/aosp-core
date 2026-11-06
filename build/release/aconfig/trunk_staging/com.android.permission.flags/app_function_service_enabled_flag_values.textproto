@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.permission.flags"
+  name: "app_function_service_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

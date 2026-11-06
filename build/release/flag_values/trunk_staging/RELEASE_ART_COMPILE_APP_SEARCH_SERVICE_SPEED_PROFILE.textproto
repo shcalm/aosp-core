@@ -1,0 +1,4 @@
+name: "RELEASE_ART_COMPILE_APP_SEARCH_SERVICE_SPEED_PROFILE"
+value {
+  bool_value: true
+}

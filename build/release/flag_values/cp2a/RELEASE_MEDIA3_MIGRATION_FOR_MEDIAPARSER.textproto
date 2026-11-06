@@ -1,0 +1,4 @@
+name: "RELEASE_MEDIA3_MIGRATION_FOR_MEDIAPARSER"
+value {
+  bool_value: true
+}

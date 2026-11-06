@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "modeset_state_machine"
+  state: ENABLED
+  permission: READ_WRITE
+}

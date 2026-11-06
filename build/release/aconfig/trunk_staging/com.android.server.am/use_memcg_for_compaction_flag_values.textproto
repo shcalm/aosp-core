@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "use_memcg_for_compaction"
+  state: ENABLED
+  permission: READ_WRITE
+}

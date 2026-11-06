@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "fix_nssl_blocking_qs"
+  state: ENABLED
+  permission: READ_ONLY
+}

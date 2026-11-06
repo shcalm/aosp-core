@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "enable_traffic_descriptor_connection_capability"
+  state: ENABLED
+  permission: READ_ONLY
+}

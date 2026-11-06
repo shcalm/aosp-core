@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "make_filling_bounds_change_effect_lifecycle"
+  state: ENABLED
+  permission: READ_ONLY
+}

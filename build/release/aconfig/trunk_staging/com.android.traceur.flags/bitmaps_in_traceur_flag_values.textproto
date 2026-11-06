@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.traceur.flags"
+  name: "bitmaps_in_traceur"
+  state: ENABLED
+  permission: READ_WRITE
+}

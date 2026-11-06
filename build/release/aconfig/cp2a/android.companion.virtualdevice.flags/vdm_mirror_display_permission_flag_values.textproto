@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "vdm_mirror_display_permission"
+  state: ENABLED
+  permission: READ_ONLY
+}

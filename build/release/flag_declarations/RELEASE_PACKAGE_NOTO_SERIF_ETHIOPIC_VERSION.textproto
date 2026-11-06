@@ -1,0 +1,8 @@
+name: "RELEASE_PACKAGE_NOTO_SERIF_ETHIOPIC_VERSION"
+namespace: "text"
+description: "Version of the Noto Serif Ethiopic font."
+value: {
+  string_value: "2.000"
+}
+workflow: PREBUILT
+containers: "system"

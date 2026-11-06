@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "lowlight_clock_set_brightness"
+  state: ENABLED
+  permission: READ_ONLY
+}

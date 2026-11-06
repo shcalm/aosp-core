@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.voiceinteraction.flags"
+  name: "disable_starting_contextual_search_via_vims"
+  state: ENABLED
+  permission: READ_ONLY
+}

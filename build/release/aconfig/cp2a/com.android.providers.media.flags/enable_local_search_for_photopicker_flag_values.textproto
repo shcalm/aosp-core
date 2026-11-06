@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.media.flags"
+  name: "enable_local_search_for_photopicker"
+  state: ENABLED
+  permission: READ_ONLY
+}

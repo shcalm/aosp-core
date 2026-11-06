@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "donot_collide_with_closed_port"
+  state: ENABLED
+  permission: READ_ONLY
+}

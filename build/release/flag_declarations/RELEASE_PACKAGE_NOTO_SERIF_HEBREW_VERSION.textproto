@@ -1,0 +1,8 @@
+name: "RELEASE_PACKAGE_NOTO_SERIF_HEBREW_VERSION"
+namespace: "text"
+description: "Version of the Noto Serif Hebrew font."
+value: {
+  string_value: "2.002"
+}
+workflow: PREBUILT
+containers: "system"

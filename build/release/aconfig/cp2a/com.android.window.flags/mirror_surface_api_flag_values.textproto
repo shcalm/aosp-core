@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "mirror_surface_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

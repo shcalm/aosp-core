@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "vibration_sound_usage"
+  state: ENABLED
+  permission: READ_WRITE
+}

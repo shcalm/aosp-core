@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.permission.flags"
+  name: "migrate_to_new_safety_center_ui_features"
+  state: ENABLED
+  permission: READ_ONLY
+}

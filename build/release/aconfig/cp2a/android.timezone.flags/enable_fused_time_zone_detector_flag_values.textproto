@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.timezone.flags"
+  name: "enable_fused_time_zone_detector"
+  state: ENABLED
+  permission: READ_ONLY
+}

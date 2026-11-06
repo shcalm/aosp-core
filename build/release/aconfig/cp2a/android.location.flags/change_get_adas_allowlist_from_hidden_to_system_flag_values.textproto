@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.location.flags"
+  name: "change_get_adas_allowlist_from_hidden_to_system"
+  state: ENABLED
+  permission: READ_ONLY
+}

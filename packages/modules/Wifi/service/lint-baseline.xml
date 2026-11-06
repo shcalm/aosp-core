@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues
+    format="6"
+    by="lint 8.4.0-alpha08"
+    type="baseline"
+    client=""
+    dependencies="true"
+    name=""
+    variant="all"
+    version="8.4.0-alpha08">
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.security.KeyChain#hasWifiKeyGrantAsUser`"
+        errorLine1="        return KeyChain.hasWifiKeyGrantAsUser(context, user, alias);"
+        errorLine2="                        ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/FrameworkFacade.java"
+            line="386"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Class requires API level 31 (current min is 30): `android.net.wifi.nl80211.WifiNl80211Manager.CountryCodeChangedListener`"
+        errorLine1="            extends WifiNl80211Manager.CountryCodeChangedListener {"
+        errorLine2="                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/nl80211/Nl80211Native.java"
+            line="74"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 34 (current min is 30): `android.net.wifi.nl80211.WifiNl80211Manager#startScan2`"
+        errorLine1="            return mWificondManager.startScan2("
+        errorLine2="                                    ~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/nl80211/Nl80211Native.java"
+            line="378"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.net.wifi.nl80211.WifiNl80211Manager#startScan`"
+        errorLine1="            return mWificondManager.startScan("
+        errorLine2="                                    ~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/nl80211/Nl80211Native.java"
+            line="406"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.net.wifi.nl80211.WifiNl80211Manager#getMaxSsidsPerScan`"
+        errorLine1="            return mWificondManager.getMaxSsidsPerScan(ifaceName);"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/nl80211/Nl80211Native.java"
+            line="699"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.net.wifi.nl80211.WifiNl80211Manager#registerCountryCodeChangedListener`"
+        errorLine1="            return mWificondManager.registerCountryCodeChangedListener(executor, listener);"
+        errorLine2="                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/nl80211/Nl80211Native.java"
+            line="723"
+            column="37"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 31 (current min is 30): `android.net.wifi.nl80211.WifiNl80211Manager#unregisterCountryCodeChangedListener`"
+        errorLine1="            mWificondManager.unregisterCountryCodeChangedListener(listener);"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/nl80211/Nl80211Native.java"
+            line="748"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.net.wifi.nl80211.WifiNl80211Manager#notifyCountryCodeChanged`"
+        errorLine1="            mWificondManager.notifyCountryCodeChanged(newCountryCode);"
+        errorLine2="                             ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/nl80211/Nl80211Native.java"
+            line="773"
+            column="30"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Trace#traceBegin`"
+        errorLine1="            Trace.traceBegin(Trace.TRACE_TAG_NETWORK, signature);"
+        errorLine2="                  ~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/RunnerHandler.java"
+            line="125"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Trace#traceEnd`"
+        errorLine1="            Trace.traceEnd(Trace.TRACE_TAG_NETWORK);"
+        errorLine2="                  ~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/RunnerHandler.java"
+            line="134"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Trace#traceBegin`"
+        errorLine1="            Trace.traceBegin(Trace.TRACE_TAG_NETWORK, signatureToLog);"
+        errorLine2="                  ~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/RunnerState.java"
+            line="76"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Trace#traceEnd`"
+        errorLine1="            Trace.traceEnd(Trace.TRACE_TAG_NETWORK);"
+        errorLine2="                  ~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/RunnerState.java"
+            line="85"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Trace#traceBegin`"
+        errorLine1="            Trace.traceBegin(Trace.TRACE_TAG_NETWORK, signatureToLog);"
+        errorLine2="                  ~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/RunnerState.java"
+            line="102"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Trace#traceEnd`"
+        errorLine1="            Trace.traceEnd(Trace.TRACE_TAG_NETWORK);"
+        errorLine2="                  ~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/RunnerState.java"
+            line="108"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Trace#traceBegin`"
+        errorLine1="            Trace.traceBegin(Trace.TRACE_TAG_NETWORK, signatureToLog);"
+        errorLine2="                  ~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/RunnerState.java"
+            line="123"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Trace#traceEnd`"
+        errorLine1="            Trace.traceEnd(Trace.TRACE_TAG_NETWORK);"
+        errorLine2="                  ~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/RunnerState.java"
+            line="129"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `setMaxChannelBandwidth`"
+        errorLine1="                    configBuilder.setMaxChannelBandwidth(SoftApInfo.CHANNEL_WIDTH_20MHZ);"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/WifiShellCommand.java"
+            line="3008"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `setMaxChannelBandwidth`"
+        errorLine1="                    configBuilder.setMaxChannelBandwidth(SoftApInfo.CHANNEL_WIDTH_40MHZ);"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/WifiShellCommand.java"
+            line="3010"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `setMaxChannelBandwidth`"
+        errorLine1="                    configBuilder.setMaxChannelBandwidth(SoftApInfo.CHANNEL_WIDTH_80MHZ);"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/WifiShellCommand.java"
+            line="3012"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `setMaxChannelBandwidth`"
+        errorLine1="                    configBuilder.setMaxChannelBandwidth(SoftApInfo.CHANNEL_WIDTH_160MHZ);"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/WifiShellCommand.java"
+            line="3014"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `setMaxChannelBandwidth`"
+        errorLine1="                    configBuilder.setMaxChannelBandwidth(SoftApInfo.CHANNEL_WIDTH_320MHZ);"
+        errorLine2="                                  ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/WifiShellCommand.java"
+            line="3016"
+            column="35"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 34 (current min is 30): `android.net.wifi.nl80211.WifiNl80211Manager.ScanEventCallback#onScanFailed`"
+        errorLine1="                            executor.execute(() -&gt; scanCallback.onScanFailed("
+        errorLine2="                                                                ~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/nl80211/Nl80211Native.java"
+            line="122"
+            column="65"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Call requires API level 33 (current min is 30): `android.os.Bundle#getParcelable`"
+        errorLine1="                (AttributionSource) extras.getParcelable("
+        errorLine2="                                           ~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/rtt/RttServiceImpl.java"
+            line="1064"
+            column="44"/>
+    </issue>
+
+    <issue
+        id="NewApi"
+        message="Class requires API level 31 (current min is 30): `android.content.AttributionSource`"
+        errorLine1="                        WifiManager.EXTRA_PARAM_KEY_ATTRIBUTION_SOURCE, AttributionSource.class),"
+        errorLine2="                                                                        ~~~~~~~~~~~~~~~~~">
+        <location
+            file="packages/modules/Wifi/service/java/com/android/server/wifi/rtt/RttServiceImpl.java"
+            line="1065"
+            column="73"/>
+    </issue>
+
+</issues>

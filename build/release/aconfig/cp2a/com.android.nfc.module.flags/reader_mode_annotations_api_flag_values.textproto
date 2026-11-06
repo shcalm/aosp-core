@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.nfc.module.flags"
+  name: "reader_mode_annotations_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

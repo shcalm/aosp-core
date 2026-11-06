@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "check_mapclient_connection_policy_for_ancs"
+  state: ENABLED
+  permission: READ_ONLY
+}

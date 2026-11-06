@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "disable_high_res_images_on_low_ram"
+  state: ENABLED
+  permission: READ_WRITE
+}

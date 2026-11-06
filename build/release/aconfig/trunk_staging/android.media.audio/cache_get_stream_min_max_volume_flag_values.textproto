@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "cache_get_stream_min_max_volume"
+  state: ENABLED
+  permission: READ_WRITE
+}

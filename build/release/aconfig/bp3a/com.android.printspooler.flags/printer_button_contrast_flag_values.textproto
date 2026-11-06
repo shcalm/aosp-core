@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.printspooler.flags"
+  name: "printer_button_contrast"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_LIBBINDER_DEFER_BC_REQUEST_FREEZE_NOTIFICATION"
+value {
+  bool_value: true
+}

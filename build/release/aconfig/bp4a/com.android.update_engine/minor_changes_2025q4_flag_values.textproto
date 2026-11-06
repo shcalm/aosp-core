@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.update_engine"
+  name: "minor_changes_2025q4"
+  state: ENABLED
+  permission: READ_ONLY
+}

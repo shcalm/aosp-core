@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.intentresolver"
+  name: "limit_target_data_loading_threads"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "enforce_device_policy_ime"
+  state: ENABLED
+  permission: READ_WRITE
+}

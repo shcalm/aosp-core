@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_battery_no_conflation"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "enable_time_based_gc_triggering"
+  state: ENABLED
+  permission: READ_ONLY
+}

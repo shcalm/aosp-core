@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.memory.lmkd.flags"
+  name: "lmkd_use_dmabuf_size"
+  state: ENABLED
+  permission: READ_WRITE
+}

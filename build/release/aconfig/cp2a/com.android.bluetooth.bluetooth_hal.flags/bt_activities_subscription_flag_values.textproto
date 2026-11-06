@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.bluetooth_hal.flags"
+  name: "bt_activities_subscription"
+  state: ENABLED
+  permission: READ_ONLY
+}

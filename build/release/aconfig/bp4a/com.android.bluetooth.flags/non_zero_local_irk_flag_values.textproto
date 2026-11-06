@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "non_zero_local_irk"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.feature.flags"
+  name: "partial_sleep_wakelocks"
+  state: ENABLED
+  permission: READ_ONLY
+}

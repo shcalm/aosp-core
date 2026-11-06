@@ -1,0 +1,24 @@
+{
+  "captiveportal-networkstack-resolve-tethering-mainline-presubmit": [
+    {
+      "name": "NetworkSecurityUnitTests"
+    }
+  ],
+  "presubmit": [
+    {
+      "name": "CtsNetSecConfigCertificateTransparencyTestCases"
+    },
+    {
+      "name": "CtsNetSecConfigCertificateTransparencyDefaultTestCases"
+    },
+    {
+      "name": "NetSecConfigCertificateTransparencySctLogListTestCases"
+    },
+    {
+      "name": "NetSecConfigCertificateTransparencySctNoLogListTestCases"
+    },
+    {
+      "name": "NetworkSecurityUnitTests"
+    }
+  ]
+}

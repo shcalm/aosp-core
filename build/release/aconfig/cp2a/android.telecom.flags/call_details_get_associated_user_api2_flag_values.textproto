@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "call_details_get_associated_user_api2"
+  state: ENABLED
+  permission: READ_ONLY
+}

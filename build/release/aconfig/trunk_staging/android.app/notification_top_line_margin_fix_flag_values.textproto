@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "notification_top_line_margin_fix"
+  state: ENABLED
+  permission: READ_WRITE
+}

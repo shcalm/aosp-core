@@ -1,0 +1,4 @@
+name: "RELEASE_WIFI_MAINLINE_SUPPLICANT_VERSION"
+value {
+  string_value: "202605-0"
+}

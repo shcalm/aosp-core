@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.downloads.flags"
+  name: "ensure_uij_notification"
+  state: ENABLED
+  permission: READ_WRITE
+}

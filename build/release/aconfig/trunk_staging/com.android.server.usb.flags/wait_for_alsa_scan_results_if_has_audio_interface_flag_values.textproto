@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.usb.flags"
+  name: "wait_for_alsa_scan_results_if_has_audio_interface"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.timezone.flags"
+  name: "enable_home_time_zone_api"
+  state: ENABLED
+  permission: READ_WRITE
+}

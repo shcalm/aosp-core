@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.inputmethod"
+  name: "invalidate_input_calls_restart"
+  state: ENABLED
+  permission: READ_ONLY
+}

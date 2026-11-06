@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audioserver"
+  name: "conditionally_ignore_preferred_input_device"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "dismiss_pip_from_lockscreen"
+  state: ENABLED
+  permission: READ_WRITE
+}

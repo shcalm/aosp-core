@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.credentials.flags"
+  name: "is_credman_settings_expressive_design"
+  state: ENABLED
+  permission: READ_ONLY
+}

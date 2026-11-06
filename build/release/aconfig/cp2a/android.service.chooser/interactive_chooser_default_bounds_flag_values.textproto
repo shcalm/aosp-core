@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.chooser"
+  name: "interactive_chooser_default_bounds"
+  state: ENABLED
+  permission: READ_ONLY
+}

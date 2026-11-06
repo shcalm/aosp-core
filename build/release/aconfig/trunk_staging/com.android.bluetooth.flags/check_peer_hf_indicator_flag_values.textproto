@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "check_peer_hf_indicator"
+  state: ENABLED
+  permission: READ_WRITE
+}

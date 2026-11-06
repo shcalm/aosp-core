@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.backup"
+  name: "enable_cross_platform_transfer"
+  state: ENABLED
+  permission: READ_ONLY
+}

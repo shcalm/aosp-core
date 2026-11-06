@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.cellbroadcastreceiver.flags"
+  name: "enable_cellbroadcast_translation"
+  state: ENABLED
+  permission: READ_ONLY
+}

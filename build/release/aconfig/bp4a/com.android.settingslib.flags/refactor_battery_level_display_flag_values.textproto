@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settingslib.flags"
+  name: "refactor_battery_level_display"
+  state: ENABLED
+  permission: READ_ONLY
+}

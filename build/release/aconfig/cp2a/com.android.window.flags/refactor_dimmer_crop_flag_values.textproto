@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "refactor_dimmer_crop"
+  state: ENABLED
+  permission: READ_ONLY
+}

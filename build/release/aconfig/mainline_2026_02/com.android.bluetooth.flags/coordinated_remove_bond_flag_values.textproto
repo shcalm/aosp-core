@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "coordinated_remove_bond"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,11 @@
+name:  "RELEASE_TELECOM_MAINLINE_MODULE"
+namespace:  "telecom"
+description:  "b/400503648: Flag to enable Telecom mainline module"
+value: {
+  bool_value: false
+}
+workflow:  LAUNCH
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

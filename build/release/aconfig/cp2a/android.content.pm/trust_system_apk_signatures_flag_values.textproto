@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.pm"
+  name: "trust_system_apk_signatures"
+  state: ENABLED
+  permission: READ_ONLY
+}

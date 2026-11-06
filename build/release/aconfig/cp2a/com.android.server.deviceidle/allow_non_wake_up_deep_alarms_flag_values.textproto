@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.deviceidle"
+  name: "allow_non_wake_up_deep_alarms"
+  state: ENABLED
+  permission: READ_ONLY
+}

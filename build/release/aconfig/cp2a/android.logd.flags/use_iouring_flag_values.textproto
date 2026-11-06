@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.logd.flags"
+  name: "use_iouring"
+  state: ENABLED
+  permission: READ_ONLY
+}

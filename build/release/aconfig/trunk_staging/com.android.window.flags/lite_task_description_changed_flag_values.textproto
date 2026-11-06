@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "lite_task_description_changed"
+  state: ENABLED
+  permission: READ_WRITE
+}

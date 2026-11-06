@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "le_peripheral_enc_failure"
+  state: ENABLED
+  permission: READ_WRITE
+}

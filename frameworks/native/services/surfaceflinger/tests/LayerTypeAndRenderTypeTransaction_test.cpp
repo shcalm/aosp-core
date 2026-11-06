@@ -1,0 +1,1748 @@
+/*
+ * Copyright (C) 2019 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// TODO(b/129481165): remove the #pragma below and fix conversion issues
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wconversion"
+
+#include <com_android_graphics_libgui_flags.h>
+#include <gui/BufferItemConsumer.h>
+#include "TransactionTestHarnesses.h"
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#include <android/ipcrenderbuffer/IPCRecordingCanvas.h>
+#pragma clang diagnostic pop
+#include <SkColorSpace.h>
+#include <SkImage.h>
+#include <SkRuntimeEffect.h>
+#include <SkString.h>
+#include <android/hardware_buffer.h>
+#include <android/ipcrenderbuffer/RenderBufferHelpers.h>
+#include <gui/GraphicBuffersRegisterInfo.h>
+#include <gui/ISurfaceComposer.h>
+#include <gui/SurfaceComposerClient.h>
+#include <private/gui/ComposerService.h>
+
+namespace android {
+
+using android::hardware::graphics::common::V1_1::BufferUsage;
+
+class LayerTypeAndRenderTypeTransactionTest
+      : public LayerTypeTransactionHarness,
+        public ::testing::WithParamInterface<std::tuple<uint32_t, RenderPath>> {
+public:
+    LayerTypeAndRenderTypeTransactionTest()
+          : LayerTypeTransactionHarness(std::get<0>(GetParam())),
+            mRenderPathHarness(LayerRenderPathTestHarness(this, std::get<1>(GetParam()))) {}
+
+    std::unique_ptr<ScreenCapture> getScreenCapture() {
+        return mRenderPathHarness.getScreenCapture();
+    }
+
+protected:
+    LayerRenderPathTestHarness mRenderPathHarness;
+
+    static constexpr int64_t kUsageFlags = BufferUsage::CPU_READ_OFTEN |
+            BufferUsage::CPU_WRITE_OFTEN | BufferUsage::COMPOSER_OVERLAY | BufferUsage::GPU_TEXTURE;
+};
+
+::testing::Environment* const binderEnv =
+        ::testing::AddGlobalTestEnvironment(new BinderEnvironment());
+
+INSTANTIATE_TEST_CASE_P(
+        LayerTypeAndRenderTypeTransactionTests, LayerTypeAndRenderTypeTransactionTest,
+        ::testing::Combine(
+            []() {
+                std::vector<uint32_t> layerTypes;
+                if (com_android_graphics_libgui_flags_out_of_process_rendering()) {
+                    layerTypes.push_back(
+                            static_cast<uint32_t>(ISurfaceComposerClient::eFXSurfaceBufferState));
+                    layerTypes.push_back(static_cast<uint32_t>(LAYER_TYPE_RENDER_COMMAND_BUFFER));
+                } else {
+                    layerTypes.push_back(
+                            static_cast<uint32_t>(ISurfaceComposerClient::eFXSurfaceBufferState));
+                }
+                return ::testing::ValuesIn(layerTypes);
+            }(),
+                ::testing::Values(RenderPath::VIRTUAL_DISPLAY, RenderPath::SCREENSHOT)));
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetZBasic) {
+    sp<SurfaceControl> layerR;
+    sp<SurfaceControl> layerG;
+    ASSERT_NO_FATAL_FAILURE(layerR = createLayer("test R", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layerR, Color::RED, 32, 32));
+    ASSERT_NO_FATAL_FAILURE(layerG = createLayer("test G", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layerG, Color::GREEN, 32, 32));
+
+    Transaction().setLayer(layerR, mLayerZBase + 1).apply();
+    {
+        SCOPED_TRACE("layerR");
+        getScreenCapture()->expectColor(Rect(0, 0, 32, 32), Color::RED);
+    }
+
+    Transaction().setLayer(layerG, mLayerZBase + 2).apply();
+    {
+        SCOPED_TRACE("layerG");
+        getScreenCapture()->expectColor(Rect(0, 0, 32, 32), Color::GREEN);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetRelativeZBug64572777) {
+    sp<SurfaceControl> layerR;
+    sp<SurfaceControl> layerG;
+
+    ASSERT_NO_FATAL_FAILURE(layerR = createLayer("test R", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layerR, Color::RED, 32, 32));
+    ASSERT_NO_FATAL_FAILURE(layerG = createLayer("test G", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layerG, Color::GREEN, 32, 32));
+
+    Transaction().setPosition(layerG, 16, 16).setRelativeLayer(layerG, layerR, 1).apply();
+
+    Transaction().reparent(layerG, nullptr).apply();
+
+    // layerG should have been removed
+    getScreenCapture()->expectColor(Rect(0, 0, 32, 32), Color::RED);
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetFlagsHidden) {
+    sp<SurfaceControl> layer;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layer, Color::RED, 32, 32));
+
+    Transaction().setFlags(layer, layer_state_t::eLayerHidden, layer_state_t::eLayerHidden).apply();
+    {
+        SCOPED_TRACE("layer hidden");
+        getScreenCapture()->expectColor(mDisplayRect, Color::BLACK);
+    }
+
+    Transaction().setFlags(layer, 0, layer_state_t::eLayerHidden).apply();
+    {
+        SCOPED_TRACE("layer shown");
+        getScreenCapture()->expectColor(Rect(0, 0, 32, 32), Color::RED);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetFlagsOpaque) {
+    const Color translucentRed = {100, 0, 0, 100};
+    sp<SurfaceControl> layerR;
+    sp<SurfaceControl> layerG;
+    ASSERT_NO_FATAL_FAILURE(layerR = createLayer("test R", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layerR, translucentRed, 32, 32));
+    ASSERT_NO_FATAL_FAILURE(layerG = createLayer("test G", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layerG, Color::GREEN, 32, 32));
+
+    Transaction()
+            .setLayer(layerR, mLayerZBase + 1)
+            .setFlags(layerR, layer_state_t::eLayerOpaque, layer_state_t::eLayerOpaque)
+            .apply();
+    {
+        SCOPED_TRACE("layerR opaque");
+        getScreenCapture()->expectColor(Rect(0, 0, 32, 32), {100, 0, 0, 255});
+    }
+
+    Transaction().setFlags(layerR, 0, layer_state_t::eLayerOpaque).apply();
+    {
+        SCOPED_TRACE("layerR translucent");
+        const uint8_t g = uint8_t(255 - translucentRed.a);
+        getScreenCapture()->expectColor(Rect(0, 0, 32, 32), {100, g, 0, 255});
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetZNegative) {
+    sp<SurfaceControl> parent =
+            LayerTransactionTest::createLayer("Parent", 0 /* buffer width */, 0 /* buffer height */,
+                                              ISurfaceComposerClient::eFXSurfaceContainer);
+    Transaction().setCrop(parent, Rect(0, 0, mDisplayWidth, mDisplayHeight)).apply();
+    sp<SurfaceControl> layerR;
+    sp<SurfaceControl> layerG;
+    ASSERT_NO_FATAL_FAILURE(layerR = createLayer("test R", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layerR, Color::RED, 32, 32));
+    ASSERT_NO_FATAL_FAILURE(layerG = createLayer("test G", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layerG, Color::GREEN, 32, 32));
+
+    Transaction().reparent(layerR, parent).reparent(layerG, parent).apply();
+    Transaction().setLayer(layerR, -1).setLayer(layerG, -2).apply();
+    {
+        SCOPED_TRACE("layerR");
+        auto shot = getScreenCapture();
+        shot->expectColor(Rect(0, 0, 32, 32), Color::RED);
+    }
+
+    Transaction().setLayer(layerR, -3).apply();
+    {
+        SCOPED_TRACE("layerG");
+        auto shot = getScreenCapture();
+        shot->expectColor(Rect(0, 0, 32, 32), Color::GREEN);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetAlphaClamped) {
+    const Color color = {64, 0, 0, 255};
+    sp<SurfaceControl> layer;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layer, color, 32, 32));
+
+    Transaction().setAlpha(layer, 2.0f).apply();
+    {
+        SCOPED_TRACE("clamped to 1.0f");
+        getScreenCapture()->expectColor(Rect(0, 0, 32, 32), color);
+    }
+
+    Transaction().setAlpha(layer, -1.0f).apply();
+    {
+        SCOPED_TRACE("clamped to 0.0f");
+        getScreenCapture()->expectColor(Rect(0, 0, 32, 32), Color::BLACK);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadius) {
+    sp<SurfaceControl> layer;
+    const uint8_t size = 64;
+    const uint8_t testArea = 4;
+    const float cornerRadius = 20.0f;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layer, Color::RED, size, size));
+
+    Transaction().setCornerRadius(layer, cornerRadius).apply();
+    {
+        const uint8_t bottom = size - 1;
+        const uint8_t right = size - 1;
+        auto shot = getScreenCapture();
+        // Transparent corners
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::BLACK);
+        shot->expectColor(Rect(size - testArea, 0, right, testArea), Color::BLACK);
+        shot->expectColor(Rect(0, bottom - testArea, testArea, bottom), Color::BLACK);
+        shot->expectColor(Rect(size - testArea, bottom - testArea, right, bottom), Color::BLACK);
+        // Solid center
+        shot->expectColor(Rect(size / 2 - testArea / 2, size / 2 - testArea / 2,
+                               size / 2 + testArea / 2, size / 2 + testArea / 2),
+                          Color::RED);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadiusFourCorners) {
+    sp<SurfaceControl> layer;
+    const uint8_t size = 64;
+    const uint8_t testArea = 4;
+    const gui::CornerRadii cornerRadius = gui::CornerRadii(20.f, 20.f, 0.f, 0.f);
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layer, Color::RED, size, size));
+
+    Transaction().setCornerRadius(layer, cornerRadius).apply();
+    {
+        const uint8_t bottom = size - 1;
+        const uint8_t right = size - 1;
+        auto shot = getScreenCapture();
+        // Transparent corners
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::BLACK);
+        shot->expectColor(Rect(size - testArea, 0, right, testArea), Color::BLACK);
+        // Zero radius on bottom two corners
+        shot->expectColor(Rect(0, bottom - testArea, testArea, bottom), Color::RED);
+        shot->expectColor(Rect(size - testArea, bottom - testArea, right, bottom), Color::RED);
+        // Solid center
+        shot->expectColor(Rect(size / 2 - testArea / 2, size / 2 - testArea / 2,
+                               size / 2 + testArea / 2, size / 2 + testArea / 2),
+                          Color::RED);
+    }
+}
+
+// b/200781179 - don't round a layer without a valid crop
+// This behaviour should be fixed since we treat buffer layers differently than
+// effect or container layers.
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadiusInvalidCrop) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint8_t size = 64;
+    const uint8_t testArea = 4;
+    const float cornerRadius = 20.0f;
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::GREEN, size, size));
+    ASSERT_NO_FATAL_FAILURE(child = createColorLayer("child", Color::RED));
+
+    Transaction().setCornerRadius(child, cornerRadius).reparent(child, parent).show(child).apply();
+    {
+        const uint8_t bottom = size - 1;
+        const uint8_t right = size - 1;
+        auto shot = getScreenCapture();
+        // Solid corners since we don't round a layer without a valid crop
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::RED);
+        shot->expectColor(Rect(size - testArea, 0, right, testArea), Color::RED);
+        shot->expectColor(Rect(0, bottom - testArea, testArea, bottom), Color::RED);
+        shot->expectColor(Rect(size - testArea, bottom - testArea, right, bottom), Color::RED);
+        // Solid center
+        shot->expectColor(Rect(size / 2 - testArea / 2, size / 2 - testArea / 2,
+                               size / 2 + testArea / 2, size / 2 + testArea / 2),
+                          Color::RED);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadiusRotated) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint8_t size = 64;
+    const uint8_t testArea = 4;
+    const float cornerRadius = 20.0f;
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, size, size));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, size, size));
+
+    Transaction()
+            .setCornerRadius(parent, cornerRadius)
+            .reparent(child, parent)
+            .setPosition(child, 0, size)
+            // Rotate by half PI
+            .setMatrix(child, 0.0f, -1.0f, 1.0f, 0.0f)
+            .apply();
+
+    {
+        const uint8_t bottom = size - 1;
+        const uint8_t right = size - 1;
+        auto shot = getScreenCapture();
+        // Edges are transparent
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::BLACK);
+        shot->expectColor(Rect(size - testArea, 0, right, testArea), Color::BLACK);
+        shot->expectColor(Rect(0, bottom - testArea, testArea, bottom - testArea), Color::BLACK);
+        shot->expectColor(Rect(right - testArea, bottom - testArea, right, bottom), Color::BLACK);
+        // Solid center
+        shot->expectColor(Rect(size / 2 - testArea / 2, size / 2 - testArea / 2,
+                               size / 2 + testArea / 2, size / 2 + testArea / 2),
+                          Color::GREEN);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadiiWithRotation) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint8_t size = 64;
+    const gui::CornerRadii radii = gui::CornerRadii(0, 10, 20, 30); // TL, TR, BL, BR
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, size, size));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, size, size));
+
+    Transaction()
+            .reparent(child, parent)
+            .setCornerRadius(child, radii)
+            .setPosition(child, 0, size)
+            // Rotate by half PI CCW
+            .setMatrix(child, 0.0f, -1.0f, 1.0f, 0.0f)
+            .apply();
+
+    {
+        auto shot = getScreenCapture();
+
+        shot->expectBufferMatchesImageFromFile(Rect(0, 0, size, size),
+                                               "testdata/SetCornerRadiiWithRotation.png");
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadiusChildCrop) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint8_t size = 64;
+    const uint8_t testArea = 4;
+    const float cornerRadius = 20.0f;
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, size, size));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", size, size / 2));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, size, size / 2));
+
+    Transaction()
+            .setCornerRadius(parent, cornerRadius)
+            .reparent(child, parent)
+            .setPosition(child, 0, size / 2)
+            .apply();
+
+    {
+        const uint8_t bottom = size - 1;
+        const uint8_t right = size - 1;
+        auto shot = getScreenCapture();
+        // Top edge of child should not have rounded corners because it's translated in the parent
+        shot->expectColor(Rect(0, size / 2, right, static_cast<int>(bottom - cornerRadius)),
+                          Color::GREEN);
+        // But bottom edges should have been clipped according to parent bounds
+        shot->expectColor(Rect(0, bottom - testArea, testArea, bottom), Color::BLACK);
+        shot->expectColor(Rect(right - testArea, bottom - testArea, right, bottom), Color::BLACK);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadiusBufferRotationTransform) {
+    sp<SurfaceControl> layer;
+    sp<SurfaceControl> parent;
+    ASSERT_NO_FATAL_FAILURE(
+            parent = LayerTransactionTest::createLayer("parent", 0, 0,
+                                                       ISurfaceComposerClient::eFXSurfaceEffect));
+
+    const uint32_t bufferWidth = 1500;
+    const uint32_t bufferHeight = 300;
+
+    const uint32_t layerWidth = 300;
+    const uint32_t layerHeight = 1500;
+
+    const uint32_t testArea = 4;
+    const float cornerRadius = 120.0f;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", bufferWidth, bufferHeight));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layer, Color::RED, bufferWidth, bufferHeight));
+
+    Transaction()
+            .reparent(layer, parent)
+            .setColor(parent, half3(0, 1, 0))
+            .setCrop(parent, Rect(0, 0, layerWidth, layerHeight))
+            .setCornerRadius(parent, cornerRadius)
+
+            .setTransform(layer, ui::Transform::ROT_90)
+            .setDestinationFrame(layer, Rect(0, 0, layerWidth, layerHeight))
+            .apply();
+    {
+        auto shot = getScreenCapture();
+        // Corners are transparent
+        // top-left
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::BLACK);
+        // top-right
+        shot->expectColor(Rect(layerWidth - testArea, 0, layerWidth, testArea), Color::BLACK);
+        // bottom-left
+        shot->expectColor(Rect(0, layerHeight - testArea, testArea, layerHeight), Color::BLACK);
+        // bottom-right
+        shot->expectColor(Rect(layerWidth - testArea, layerHeight - testArea, layerWidth,
+                               layerHeight),
+                          Color::BLACK);
+
+        // Area after corner radius is solid
+        // top-left to top-right under the corner
+        shot->expectColor(Rect(0, cornerRadius, layerWidth, cornerRadius + testArea), Color::RED);
+        // bottom-left to bottom-right above the corner
+        shot->expectColor(Rect(0, layerHeight - cornerRadius - testArea, layerWidth,
+                               layerHeight - cornerRadius),
+                          Color::RED);
+        // left side after the corner
+        shot->expectColor(Rect(cornerRadius, 0, cornerRadius + testArea, layerHeight), Color::RED);
+        // right side before the corner
+        shot->expectColor(Rect(layerWidth - cornerRadius - testArea, 0, layerWidth - cornerRadius,
+                               layerHeight),
+                          Color::RED);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadiusBufferCropTransform) {
+    sp<SurfaceControl> layer;
+    sp<SurfaceControl> parent;
+    ASSERT_NO_FATAL_FAILURE(
+            parent = LayerTransactionTest::createLayer("parent", 0, 0,
+                                                       ISurfaceComposerClient::eFXSurfaceEffect));
+
+    const uint32_t bufferWidth = 150 * 2;
+    const uint32_t bufferHeight = 750 * 2;
+
+    const Rect bufferCrop(0, 0, 150, 750);
+
+    const uint32_t layerWidth = 300;
+    const uint32_t layerHeight = 1500;
+
+    const uint32_t testArea = 4;
+    const float cornerRadius = 120.0f;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", bufferWidth, bufferHeight));
+    ASSERT_NO_FATAL_FAILURE(fillLayerQuadrant(layer, bufferWidth, bufferHeight, Color::RED,
+                                              Color::BLACK, Color::GREEN, Color::BLUE));
+
+    Transaction()
+            .reparent(layer, parent)
+            .setColor(parent, half3(0, 1, 0))
+            .setCrop(parent, Rect(0, 0, layerWidth, layerHeight))
+            .setCornerRadius(parent, cornerRadius)
+
+            .setBufferCrop(layer, bufferCrop)
+            .setDestinationFrame(layer, Rect(0, 0, layerWidth, layerHeight))
+            .apply();
+    {
+        auto shot = getScreenCapture();
+        // Corners are transparent
+        // top-left
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::BLACK);
+        // top-right
+        shot->expectColor(Rect(layerWidth - testArea, 0, layerWidth, testArea), Color::BLACK);
+        // bottom-left
+        shot->expectColor(Rect(0, layerHeight - testArea, testArea, layerHeight), Color::BLACK);
+        // bottom-right
+        shot->expectColor(Rect(layerWidth - testArea, layerHeight - testArea, layerWidth,
+                               layerHeight),
+                          Color::BLACK);
+
+        // Area after corner radius is solid
+        // since the buffer is scaled, there will blending so adjust some of the bounds when
+        // checking.
+        float adjustedCornerRadius = cornerRadius + 15;
+        float adjustedLayerHeight = layerHeight - 15;
+        float adjustedLayerWidth = layerWidth - 15;
+
+        // top-left to top-right under the corner
+        shot->expectColor(Rect(15, adjustedCornerRadius, adjustedLayerWidth,
+                               adjustedCornerRadius + testArea),
+                          Color::RED);
+        // bottom-left to bottom-right above the corner
+        shot->expectColor(Rect(15, adjustedLayerHeight - adjustedCornerRadius - testArea,
+                               adjustedLayerWidth, adjustedLayerHeight - adjustedCornerRadius),
+                          Color::RED);
+        // left side after the corner
+        shot->expectColor(Rect(adjustedCornerRadius, 15, adjustedCornerRadius + testArea,
+                               adjustedLayerHeight),
+                          Color::RED);
+        // right side before the corner
+        shot->expectColor(Rect(adjustedLayerWidth - adjustedCornerRadius - testArea, 15,
+                               adjustedLayerWidth - adjustedCornerRadius, adjustedLayerHeight),
+                          Color::RED);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadiusChildBufferRotationTransform) {
+    sp<SurfaceControl> layer;
+    sp<SurfaceControl> parent;
+    ASSERT_NO_FATAL_FAILURE(
+            parent = LayerTransactionTest::createLayer("parent", 0, 0,
+                                                       ISurfaceComposerClient::eFXSurfaceEffect));
+
+    const uint32_t bufferWidth = 1500;
+    const uint32_t bufferHeight = 300;
+
+    const uint32_t layerWidth = 300;
+    const uint32_t layerHeight = 1500;
+
+    const uint32_t testArea = 4;
+    const float cornerRadius = 120.0f;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", bufferWidth, bufferHeight));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layer, Color::BLUE, bufferWidth, bufferHeight));
+
+    sp<SurfaceControl> child;
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", bufferWidth, bufferHeight));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::RED, bufferWidth, bufferHeight));
+
+    Transaction()
+            .reparent(layer, parent)
+            .reparent(child, layer)
+            .setColor(parent, half3(0, 1, 0))
+            .setCrop(parent, Rect(0, 0, layerWidth, layerHeight))
+            .setCornerRadius(parent, cornerRadius) /* */
+
+            .setTransform(layer, ui::Transform::ROT_90)
+            .setDestinationFrame(layer, Rect(0, 0, layerWidth, layerHeight))
+
+            .setTransform(child, ui::Transform::ROT_90)
+            .setDestinationFrame(child, Rect(0, 0, layerWidth, layerHeight))
+            .apply();
+    {
+        auto shot = getScreenCapture();
+        // Corners are transparent
+        // top-left
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::BLACK);
+        // top-right
+        shot->expectColor(Rect(layerWidth - testArea, 0, layerWidth, testArea), Color::BLACK);
+        // bottom-left
+        shot->expectColor(Rect(0, layerHeight - testArea, testArea, layerHeight), Color::BLACK);
+        // bottom-right
+        shot->expectColor(Rect(layerWidth - testArea, layerHeight - testArea, layerWidth,
+                               layerHeight),
+                          Color::BLACK);
+
+        // Area after corner radius is solid
+        // top-left to top-right under the corner
+        shot->expectColor(Rect(0, cornerRadius, layerWidth, cornerRadius + testArea), Color::RED);
+        // bottom-left to bottom-right above the corner
+        shot->expectColor(Rect(0, layerHeight - cornerRadius - testArea, layerWidth,
+                               layerHeight - cornerRadius),
+                          Color::RED);
+        // left side after the corner
+        shot->expectColor(Rect(cornerRadius, 0, cornerRadius + testArea, layerHeight), Color::RED);
+        // right side before the corner
+        shot->expectColor(Rect(layerWidth - cornerRadius - testArea, 0, layerWidth - cornerRadius,
+                               layerHeight),
+                          Color::RED);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, ChildCornerRadiusTakesPrecedence) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t size = 64;
+    const uint32_t parentSize = size * 3;
+    const uint32_t testLength = 4;
+    const float cornerRadius = 20.0f;
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, size, size));
+
+    Transaction()
+            .setCornerRadius(parent, cornerRadius)
+            .setCornerRadius(child, cornerRadius)
+            .reparent(child, parent)
+            .setPosition(child, size, size)
+            .apply();
+
+    {
+        const uint32_t top = size - 1;
+        const uint32_t left = size - 1;
+        const uint32_t bottom = size * 2 - 1;
+        const uint32_t right = size * 2 - 1;
+        auto shot = getScreenCapture();
+        // Edges are transparent
+        // TL
+        shot->expectColor(Rect(left, top, testLength, testLength), Color::RED);
+        // TR
+        shot->expectColor(Rect(right - testLength, top, right, testLength), Color::RED);
+        // BL
+        shot->expectColor(Rect(left, bottom - testLength, testLength, bottom - testLength),
+                          Color::RED);
+        // BR
+        shot->expectColor(Rect(right - testLength, bottom - testLength, right, bottom), Color::RED);
+        // Solid center
+        shot->expectColor(Rect(parentSize / 2 - testLength / 2, parentSize / 2 - testLength / 2,
+                               parentSize / 2 + testLength / 2, parentSize / 2 + testLength / 2),
+                          Color::GREEN);
+    }
+}
+
+// Test if ParentCornerRadiusTakesPrecedence if the parent corner radius crop is fully contained by
+// the child corner radius crop.
+TEST_P(LayerTypeAndRenderTypeTransactionTest, ParentCornerRadiusTakesPrecedence) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t size = 64;
+    const uint32_t parentSize = size * 3;
+    const Rect parentCrop(size + 1, size + 1, size * 2 - 1, size * 2 - 1);
+    const uint32_t testLength = 4;
+    const float cornerRadius = 20.0f;
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, size, size));
+
+    Transaction()
+            .setCornerRadius(parent, cornerRadius)
+            .setCrop(parent, parentCrop)
+            .setCornerRadius(child, cornerRadius)
+            .reparent(child, parent)
+            .setPosition(child, size, size)
+            .apply();
+
+    {
+        const uint32_t top = size - 1;
+        const uint32_t left = size - 1;
+        const uint32_t bottom = size * 2 - 1;
+        const uint32_t right = size * 2 - 1;
+        auto shot = getScreenCapture();
+        // Edges are transparent
+        // TL
+        shot->expectColor(Rect(left, top, testLength, testLength), Color::BLACK);
+        // TR
+        shot->expectColor(Rect(right - testLength, top, right, testLength), Color::BLACK);
+        // BL
+        shot->expectColor(Rect(left, bottom - testLength, testLength, bottom - testLength),
+                          Color::BLACK);
+        // BR
+        shot->expectColor(Rect(right - testLength, bottom - testLength, right, bottom),
+                          Color::BLACK);
+        // Solid center
+        shot->expectColor(Rect(parentSize / 2 - testLength / 2, parentSize / 2 - testLength / 2,
+                               parentSize / 2 + testLength / 2, parentSize / 2 + testLength / 2),
+                          Color::GREEN);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, ChildOverlapsParentCornerRegion) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t parentSize = 100;
+    const uint32_t childSize = 75;
+    const gui::CornerRadii cornerRadius = gui::CornerRadii(50.f);
+    const uint32_t testArea = 4;
+
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", childSize, childSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, childSize, childSize));
+
+    // Set parent with rounded corners
+    Transaction()
+            .setCornerRadius(parent, cornerRadius)
+            .setCrop(parent, Rect(parentSize, parentSize))
+            .apply();
+
+    Transaction()
+            .reparent(child, parent)
+            .setPosition(child, 10, 10)
+            .setCrop(child, Rect(childSize, childSize))
+            .apply();
+
+    {
+        auto shot = getScreenCapture();
+
+        // Check if the child's top-left corner is transparent
+        shot->expectColor(Rect(10, 10, 10 + testArea, 10 + testArea), Color::BLACK);
+
+        // Solid center
+        shot->expectColor(Rect(childSize / 2 - testArea / 2 + 1, childSize / 2 - testArea / 2 + 1,
+                               childSize / 2 + testArea / 2, childSize / 2 + testArea / 2),
+                          Color::GREEN);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, ChildInheritsParentSettingsWhenChildCropIsEmpty) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t size = 100;
+    const gui::CornerRadii cornerRadius = gui::CornerRadii(50.f);
+    const uint32_t testArea = 4;
+
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, size, size));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, size, size));
+
+    // Set parent with rounded corners
+    Transaction().setCornerRadius(parent, cornerRadius).setCrop(parent, Rect(size, size)).apply();
+
+    Transaction().reparent(child, parent).apply();
+
+    {
+        const uint8_t bottom = size - 1;
+        const uint8_t right = size - 1;
+
+        auto shot = getScreenCapture();
+        // Corners are transparent
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::BLACK);
+        shot->expectColor(Rect(size - testArea, 0, right, testArea), Color::BLACK);
+        shot->expectColor(Rect(0, bottom - testArea, testArea, bottom), Color::BLACK);
+        shot->expectColor(Rect(size - testArea, bottom - testArea, right, bottom), Color::BLACK);
+
+        // Solid center
+        shot->expectColor(Rect(size / 2 - testArea / 2 + 1, size / 2 - testArea / 2 + 1,
+                               size / 2 + testArea / 2, size / 2 + testArea / 2),
+                          Color::GREEN);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, ChildDoesNotOverlapParentCornerRegion) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t parentSize = 100;
+    const uint32_t childSize = 75;
+    const gui::CornerRadii cornerRadius = gui::CornerRadii(10.f);
+    const uint32_t testArea = 4;
+
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", childSize, childSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, childSize, childSize));
+
+    // Set parent with rounded corners
+    Transaction()
+            .setCornerRadius(parent, cornerRadius)
+            .setCrop(parent, Rect(parentSize, parentSize))
+            .apply();
+
+    Transaction()
+            .reparent(child, parent)
+            .setPosition(child, 25, 25)
+            .setCrop(child, Rect(childSize, childSize))
+            .apply();
+
+    {
+        auto shot = getScreenCapture();
+
+        // Check if the child's top-left corner is solid
+        shot->expectColor(Rect(25, 25, 25 + testArea, 25 + testArea), Color::GREEN);
+
+        // Solid center
+        shot->expectColor(Rect(childSize / 2 - testArea / 2 + 1, childSize / 2 - testArea / 2 + 1,
+                               childSize / 2 + testArea / 2, childSize / 2 + testArea / 2),
+                          Color::GREEN);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadiusChildScaledUp) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t parentSize = 100;
+    const uint32_t childSize = 20;
+    const gui::CornerRadii cornerRadius = gui::CornerRadii(25.0f);
+    const uint32_t testArea = 4;
+
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", childSize, childSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, childSize, childSize));
+
+    Transaction()
+            .setCornerRadius(parent, cornerRadius)
+            .setCrop(parent, Rect(parentSize, parentSize))
+            .apply();
+
+    // Child positioned such that it doesn't intersect parent TL corner region
+    // unless scaled up
+    Transaction()
+            .reparent(child, parent)
+            .setPosition(child, 30, 30)
+            .setMatrix(child, 2.0f, 0.0f, 0.0f, 2.0f)
+            .setCrop(child, Rect(childSize, childSize))
+            .apply();
+    {
+        auto shot = getScreenCapture();
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::BLACK);
+        shot->expectColor(Rect(30, 30, 30 + testArea, 30 + testArea), Color::GREEN);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetCornerRadiusChildScaledDown) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t parentSize = 100;
+    const uint32_t childSize = 20;
+    const gui::CornerRadii cornerRadius = gui::CornerRadii(25.0f);
+    const uint32_t testArea = 4;
+
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", childSize, childSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, childSize, childSize));
+
+    Transaction()
+            .setCornerRadius(parent, cornerRadius)
+            .setCrop(parent, Rect(parentSize, parentSize))
+            .apply();
+
+    // Child positioned such that it will not intersect with parent's TL corner
+    // when scaled down
+    Transaction()
+            .reparent(child, parent)
+            .setPosition(child, 50, 50)
+            .setMatrix(child, 0.5f, 0.0f, 0.0f, 0.5f)
+            .setCrop(child, Rect(childSize, childSize))
+            .apply();
+
+    {
+        auto shot = getScreenCapture();
+        shot->expectColor(Rect(50, 50, 50 + testArea, 50 + testArea), Color::GREEN);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetClientDrawnCornerRadiiWithMatchingCrop) {
+    sp<SurfaceControl> layer;
+    const uint8_t size = 64;
+    const uint8_t testArea = 4;
+    const gui::CornerRadii cornerRadius = gui::CornerRadii(20.f, 20.f, 10.f, 10.f);
+    FloatRect crop(0, 0, size, size);
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layer, Color::RED, size, size));
+
+    Transaction()
+            .setClientDrawnCornerRadius(layer, cornerRadius, crop)
+            .setCornerRadius(layer, cornerRadius)
+            .apply();
+    {
+        const uint8_t bottom = size - 1;
+        const uint8_t right = size - 1;
+        auto shot = getScreenCapture();
+        // Solid corners
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::RED);
+        shot->expectColor(Rect(size - testArea, 0, right, testArea), Color::RED);
+        shot->expectColor(Rect(0, bottom - testArea, testArea, bottom), Color::RED);
+        shot->expectColor(Rect(size - testArea, bottom - testArea, right, bottom), Color::RED);
+        // Solid center
+        shot->expectColor(Rect(size / 2 - testArea / 2, size / 2 - testArea / 2,
+                               size / 2 + testArea / 2, size / 2 + testArea / 2),
+                          Color::RED);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetClientDrawnCornerRadiiWithMismatchingCrop) {
+    sp<SurfaceControl> layer;
+    const uint8_t size = 64;
+    const uint8_t testArea = 4;
+    const gui::CornerRadii cornerRadius = gui::CornerRadii(30.f, 30.f, 20.f, 20.f);
+    FloatRect clientCrop(0, 0, size + 12, size + 12);
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layer, Color::RED, size, size));
+
+    Transaction()
+            .setCornerRadius(layer, cornerRadius)
+            .setClientDrawnCornerRadius(layer, cornerRadius, clientCrop)
+            .apply();
+    {
+        const uint8_t bottom = size - 1;
+        const uint8_t right = size - 1;
+        auto shot = getScreenCapture();
+        // Corners are transparent because SF will draw rounded corners
+        shot->expectColor(Rect(0, 0, testArea, testArea), Color::BLACK);
+        shot->expectColor(Rect(size - testArea, 0, right, testArea), Color::BLACK);
+        shot->expectColor(Rect(0, bottom - testArea, testArea, bottom), Color::BLACK);
+        shot->expectColor(Rect(size - testArea, bottom - testArea, right, bottom), Color::BLACK);
+        // Solid center
+        shot->expectColor(Rect(size / 2 - testArea / 2, size / 2 - testArea / 2,
+                               size / 2 + testArea / 2, size / 2 + testArea / 2),
+                          Color::RED);
+    }
+}
+
+// Test if ParentCornerRadiusTakesPrecedence if the parent's client drawn corner radius crop
+// is fully contained by the child corner radius crop.
+TEST_P(LayerTypeAndRenderTypeTransactionTest, ParentCornerRadiusPrecedenceClientDrawnCornerRadius) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t size = 64;
+    const uint32_t parentSize = size * 3;
+    const Rect parentCrop(size, size, size, size);
+    const FloatRect clientCrop(size, size, size, size);
+    const uint32_t testLength = 4;
+    gui::CornerRadii cornerRadius(20.0f);
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, size, size));
+
+    Transaction()
+            .setCornerRadius(parent, cornerRadius)
+            .setCrop(parent, parentCrop)
+            .setClientDrawnCornerRadius(parent, cornerRadius, clientCrop)
+            .reparent(child, parent)
+            .setPosition(child, size, size)
+            .apply(true);
+
+    {
+        const uint32_t top = size;
+        const uint32_t left = size;
+        const uint32_t bottom = size * 2;
+        const uint32_t right = size * 2;
+        auto shot = getScreenCapture();
+        // Corners are RED because parent's client drawn corner radius is actually 0
+        // and the child is fully within the parent's crop
+        // TL
+        shot->expectColor(Rect(left, top, testLength, testLength), Color::RED);
+        // TR
+        shot->expectColor(Rect(right - testLength, top, testLength, testLength), Color::RED);
+        // BL
+        shot->expectColor(Rect(left, bottom - testLength, testLength, testLength), Color::RED);
+        // BR
+        shot->expectColor(Rect(right - testLength, bottom - testLength, testLength, testLength),
+                          Color::RED);
+        // Solid center
+        shot->expectColor(Rect(parentSize / 2 - testLength, parentSize / 2 - testLength, testLength,
+                               testLength),
+                          Color::GREEN);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetBorderSettings) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t size = 64;
+    const uint32_t parentSize = size * 3;
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::RED, parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, size, size));
+
+    gui::BorderSettings outline;
+    outline.strokeWidth = 3;
+    outline.color = 0xff0000ff;
+    Transaction()
+            .setCrop(parent, Rect(0, 0, parentSize, parentSize))
+            .reparent(child, parent)
+            .setPosition(child, size, size)
+            .setCornerRadius(child, 20.0f)
+            .setBorderSettings(child, outline)
+            .apply(true);
+
+    {
+        auto shot = getScreenCapture();
+
+        shot->expectBufferMatchesImageFromFile(Rect(0, 0, parentSize, parentSize),
+                                               "testdata/SetBorderSettings_Opaque.png");
+    }
+
+    {
+        Transaction().setAlpha(child, 0.5f).apply(true);
+        auto shot = getScreenCapture();
+
+        shot->expectBufferMatchesImageFromFile(Rect(0, 0, parentSize, parentSize),
+                                               "testdata/SetBorderSettings_HalfAlpha.png");
+    }
+
+    {
+        Transaction().setAlpha(child, 0.0f).apply(true);
+
+        auto shot = getScreenCapture();
+
+        shot->expectBufferMatchesImageFromFile(Rect(0, 0, parentSize, parentSize),
+                                               "testdata/SetBorderSettings_ZeroAlpha.png");
+    }
+
+    {
+        Transaction()
+                .setAlpha(child, 1.0f)
+                .setCrop(parent, Rect(0, 0, parentSize / 2, parentSize))
+                .apply(true);
+
+        auto shot = getScreenCapture();
+
+        shot->expectBufferMatchesImageFromFile(Rect(0, 0, parentSize, parentSize),
+                                               "testdata/SetBorderSettings_Cropped.png");
+    }
+
+    {
+        outline.color = 0xff0000ff;
+        outline.strokeWidth = 1;
+        Transaction()
+                .setCrop(parent, Rect(0, 0, parentSize, parentSize))
+                .setBorderSettings(child, outline)
+                .apply(true);
+
+        auto shot = getScreenCapture();
+
+        shot->expectBufferMatchesImageFromFile(Rect(0, 0, parentSize, parentSize),
+                                               "testdata/SetBorderSettings_StrokeWidth1.png");
+    }
+
+    {
+        outline.color = 0x440000ff;
+        outline.strokeWidth = 3;
+        Transaction()
+                .setCrop(parent, Rect(0, 0, parentSize, parentSize))
+                .setBorderSettings(child, outline)
+                .apply(true);
+
+        auto shot = getScreenCapture();
+
+        shot->expectBufferMatchesImageFromFile(Rect(0, 0, parentSize, parentSize),
+                                               "testdata/"
+                                               "SetBorderSettings_StrokeColorWithAlpha.png");
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetBoxShadowSettings) {
+    const uint32_t parentSize = 720;
+    sp<SurfaceControl> parent;
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::WHITE, parentSize, parentSize));
+
+    float ystep = 350;
+    float xstep = 350;
+
+    float yinitial = 100;
+
+    float yoffset = yinitial;
+    float xoffset = 100;
+
+    Transaction tx;
+    tx.setCrop(parent, Rect(0, 0, parentSize, parentSize));
+
+    // layer 1
+    sp<SurfaceControl> child1;
+    ASSERT_NO_FATAL_FAILURE(child1 = createLayer("Child1_Standard", 250, 150));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child1, Color::WHITE, 250, 150));
+    gui::BoxShadowSettings settings1;
+    gui::BoxShadowSettings::BoxShadowParams boxShadow1;
+    boxShadow1.spreadRadius = 0.0f;
+    boxShadow1.blurRadius = 25.0f;
+    boxShadow1.offsetX = 15.0f;
+    boxShadow1.offsetY = 15.0f;
+    boxShadow1.color = 0xff000000;
+    settings1.boxShadows.push_back(boxShadow1);
+    tx.reparent(child1, parent)
+            .setPosition(child1, xoffset, yoffset)
+            .setCornerRadius(child1, 24.0f)
+            .setBoxShadowSettings(child1, settings1);
+
+    yoffset += ystep;
+
+    // layer 2
+    sp<SurfaceControl> child2;
+    ASSERT_NO_FATAL_FAILURE(child2 = createLayer("child2", 200, 120));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child2, Color::WHITE, 200, 120));
+    gui::BoxShadowSettings settings2;
+    gui::BoxShadowSettings::BoxShadowParams boxShadow2;
+    boxShadow2.spreadRadius = 0.0f;
+    boxShadow2.blurRadius = 60.0f;
+    boxShadow2.offsetX = 0.0f;
+    boxShadow2.offsetY = 10.0f;
+    boxShadow2.color = 0xff000000;
+    settings2.boxShadows.push_back(boxShadow2);
+    tx.reparent(child2, parent)
+            .setPosition(child2, xoffset, yoffset)
+            .setCornerRadius(child2, 20.0f)
+            .setBoxShadowSettings(child2, settings2);
+
+    yoffset = yinitial;
+    xoffset += xstep;
+
+    // layer 3
+    sp<SurfaceControl> child3;
+    ASSERT_NO_FATAL_FAILURE(child3 = createLayer("child3", 250, 150));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child3, Color::WHITE, 250, 150));
+    gui::BoxShadowSettings settings3;
+    gui::BoxShadowSettings::BoxShadowParams boxShadow3;
+    boxShadow3.spreadRadius = 0.0f;
+    boxShadow3.blurRadius = 15.0f;
+    boxShadow3.offsetX = 0.0f;
+    boxShadow3.offsetY = 0.0f;
+    boxShadow3.color = 0xff000000;
+    settings3.boxShadows.push_back(boxShadow3);
+    tx.reparent(child3, parent)
+            .setPosition(child3, xoffset, yoffset)
+            .setCornerRadius(child3, 4.0f)
+            .setBoxShadowSettings(child3, settings3);
+
+    yoffset += ystep;
+
+    // layer 4
+    sp<SurfaceControl> child4;
+    ASSERT_NO_FATAL_FAILURE(child4 = createLayer("child4", 100, 100));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child4, Color::WHITE, 100, 100));
+    gui::BoxShadowSettings settings4;
+    gui::BoxShadowSettings::BoxShadowParams boxShadow4;
+    boxShadow4.spreadRadius = 0.0f;
+    boxShadow4.blurRadius = 10.0f;
+    boxShadow4.offsetX = 0.0f;
+    boxShadow4.offsetY = 0.0f;
+    boxShadow4.color = 0xff000000;
+    settings4.boxShadows.push_back(boxShadow4);
+    tx.reparent(child4, parent)
+            .setPosition(child4, xoffset, yoffset)
+            .setCornerRadius(child4, 50.0f)
+            .setBoxShadowSettings(child4, settings4);
+
+    // apply and screenshot
+    tx.apply(true);
+
+    auto shot = getScreenCapture();
+    shot->expectBufferMatchesImageFromFile(Rect(0, 0, parentSize, parentSize),
+                                           "testdata/SetBoxShadowSettings.png");
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetRenderBuffer) {
+    if (!com_android_graphics_libgui_flags_out_of_process_rendering()) {
+        return;
+    }
+
+    const uint32_t layerSize = 256;
+    sp<SurfaceControl> layer;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("renderbuffer layer", 0, 0));
+
+    IPCClientResourceCache clientCache;
+    auto canvas = IPCRecordingCanvas(clientCache);
+    canvas.storeSize(layerSize, layerSize);
+    canvas.startRecording();
+    canvas.drawColor(0xFFB0E0E6, SkBlendMode::kSrc);
+
+    SkPaint paint;
+    paint.setAntiAlias(true);
+    paint.setColor(0xFFE55B13);
+    canvas.drawRect(SkRect::MakeWH(layerSize / 2, layerSize / 2), paint);
+
+    SkPaint circlePaint;
+    circlePaint.setAntiAlias(true);
+    circlePaint.setColor(0xFF556B2F);
+    canvas.drawCircle(layerSize, layerSize, layerSize / 2, circlePaint);
+
+    canvas.endRecording();
+
+    constexpr int cropInset = 10;
+    constexpr int cornerRadius = 20;
+    Transaction()
+            .setLayer(layer, mLayerZBase + 1)
+            .setRenderCommandBuffer(layer, canvas.getRenderCommandBufferProducer())
+            .setRenderCommandBufferFrameId(layer, 1)
+            .setCrop(layer,
+                     Rect(cropInset, cropInset, layerSize - 2 * cropInset,
+                          layerSize - 2 * cropInset))
+            .setCornerRadius(layer, cornerRadius)
+            .apply();
+
+    auto shot = getScreenCapture();
+    shot->expectBufferMatchesImageFromFile(Rect(0, 0, layerSize, layerSize),
+                                           "testdata/SetRenderBuffer.png");
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetRenderBufferWithShader) {
+    if (!com_android_graphics_libgui_flags_out_of_process_rendering()) {
+        return;
+    }
+
+    const uint32_t layerSize = 256;
+    sp<SurfaceControl> layer;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("shader layer", 0, 0));
+
+    IPCClientResourceCache clientCache;
+    auto canvas = IPCRecordingCanvas(clientCache);
+    canvas.storeSize(layerSize, layerSize);
+
+    // Animate over 3 frames
+    canvas.startRecording();
+    canvas.drawColor(SK_ColorBLACK);
+
+    auto [effect, error] = SkRuntimeEffect::MakeForShader(SkString(R"(
+        uniform float2 iResolution;
+        vec4 main(vec2 fragCoord) {
+            vec2 uv = fragCoord / iResolution.xy;
+            float v = 0.0;
+            vec2 c = uv * 2.0 - 1.0;
+            v += sin((c.x));
+            v += sin((c.y)/2.0);
+            v += sin((c.x+c.y)/2.0);
+            v += sqrt(c.x*c.x+c.y*c.y+1.0);
+            v = v/2.0;
+            vec3 col = vec3(sin(3.14*v), cos(3.14*v), -sin(3.14*v));
+            return vec4(col * 0.5 + 0.5, 1.0);
+        }
+    )"));
+    ASSERT_NE(nullptr, effect);
+
+    SkRuntimeShaderBuilder builder(effect);
+    builder.uniform("iResolution") = SkV2{(float)layerSize, (float)layerSize};
+
+    SkPaint paint;
+    paint.setShader(builder.makeShader());
+    canvas.drawRect(SkRect::MakeWH(layerSize, layerSize), paint);
+    canvas.endRecording();
+
+    Transaction()
+            .setLayer(layer, mLayerZBase + 1)
+            .setRenderCommandBuffer(layer, canvas.getRenderCommandBufferProducer())
+            .setRenderCommandBufferFrameId(layer, 1)
+            .setCrop(layer, Rect(0, 0, layerSize, layerSize))
+            .apply(true);
+
+    // Verify output
+    auto shot = getScreenCapture();
+    shot->expectBufferMatchesImageFromFile(Rect(0, 0, layerSize, layerSize),
+                                           "testdata/SetRenderBufferWithShader.png");
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, RegisterGraphicBuffer) {
+    if (!com_android_graphics_libgui_flags_out_of_process_rendering()) {
+        return;
+    }
+
+    const uint32_t width = 256;
+    const uint32_t height = 256;
+
+    sp<SurfaceControl> layer;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("fractalLayer", width, height));
+
+    // Create GraphicBuffer and draw a fractal
+    sp<GraphicBuffer> buffer =
+            sp<GraphicBuffer>::make(width, height, PIXEL_FORMAT_RGBA_8888, 1,
+                                    BufferUsage::CPU_WRITE_OFTEN | BufferUsage::GPU_TEXTURE,
+                                    "fractalBuffer");
+    ASSERT_NE(nullptr, buffer);
+
+    uint32_t* pixels = nullptr;
+    buffer->lock(static_cast<uint32_t>(BufferUsage::CPU_WRITE_OFTEN), (void**)&pixels);
+    ASSERT_NE(nullptr, pixels);
+
+    // Simple Mandelbrot fractal generation
+    for (uint32_t y = 0; y < height; ++y) {
+        for (uint32_t x = 0; x < width; ++x) {
+            float real = (x - width / 2.0f) * 4.0f / width;
+            float imag = (y - height / 2.0f) * 4.0f / height;
+            float cr = real;
+            float ci = imag;
+            int n;
+            for (n = 0; n < 255; n++) {
+                float nr = real * real - imag * imag + cr;
+                float ni = 2 * real * imag + ci;
+                if (nr * nr + ni * ni > 4.0f) break;
+                real = nr;
+                imag = ni;
+            }
+            // Simple grayscale coloring based on iteration count
+            uint8_t color = n;
+            pixels[y * width + x] = (0xFF << 24) | (color << 16) | (color << 8) | color;
+        }
+    }
+    buffer->unlock();
+
+    sk_sp<SkImage> image =
+            SkImages::DeferredFromAHardwareBuffer(buffer->toAHardwareBuffer(), kOpaque_SkAlphaType);
+
+    // Register the buffer with SurfaceFlinger
+    auto renderResourceToken = sp<BBinder>::make();
+
+    gui::GraphicBuffersRegisterInfo registerInfo;
+    registerInfo.renderResourceToken = renderResourceToken;
+    registerInfo.buffers.push_back(buffer);
+    ComposerService::getComposerService()->registerGraphicBuffers(registerInfo);
+
+    // Populate the cache with the GraphicBuffer id
+    IPCClientResourceCache clientCache;
+    clientCache.bitmaps[image->uniqueID()] = IPCClientBitmap{buffer->getId()};
+
+    // Command recording
+    auto canvas = IPCRecordingCanvas(clientCache);
+    canvas.storeSize(width, height);
+    canvas.startRecording();
+    canvas.drawImage(image.get(), 0, 0, SkSamplingOptions());
+    canvas.endRecording();
+
+    // Set buffer and apply transaction
+    Transaction()
+            .setLayer(layer, mLayerZBase + 1)
+            //.setBuffer(layer, buffer)
+            .setRenderResourceToken(layer, renderResourceToken)
+            .setCrop(layer, Rect(0, 0, width, height))
+            .setRenderCommandBuffer(layer, canvas.getRenderCommandBufferProducer())
+            .setRenderCommandBufferFrameId(layer, 1)
+            .apply(true);
+
+    // Verify output
+    auto shot = getScreenCapture();
+    shot->expectBufferMatchesImageFromFile(Rect(0, 0, width, height), "testdata/DrawFractal.png");
+
+    // Unregister the buffer
+    gui::GraphicBuffersUnregisterInfo unregisterInfo;
+    unregisterInfo.renderResourceToken = renderResourceToken;
+    unregisterInfo.bufferIds.push_back(buffer->getId());
+    ComposerService::getComposerService()->unregisterGraphicBuffers(unregisterInfo);
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, RegisterGraphicBufferRenderTarget) {
+    if (!com_android_graphics_libgui_flags_out_of_process_rendering()) {
+        return;
+    }
+
+    const uint32_t width = 256;
+    const uint32_t height = 256;
+
+    sp<SurfaceControl> layer;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("renderTargetLayer", width, height));
+
+    // Create GraphicBuffer with HW_TEXTURE | HW_RENDER
+    sp<GraphicBuffer> buffer = sp<GraphicBuffer>::make(width, height, PIXEL_FORMAT_RGBA_8888, 1,
+                                                       GraphicBuffer::USAGE_HW_TEXTURE |
+                                                               GraphicBuffer::USAGE_HW_RENDER |
+                                                               GraphicBuffer::USAGE_SW_WRITE_OFTEN,
+                                                       "renderTargetBuffer");
+    ASSERT_NE(nullptr, buffer);
+
+    sk_sp<SkImage> image =
+            SkImages::DeferredFromAHardwareBuffer(buffer->toAHardwareBuffer(), kOpaque_SkAlphaType);
+
+    // Register the buffer with SurfaceFlinger
+    auto renderResourceToken = sp<BBinder>::make();
+    gui::GraphicBuffersRegisterInfo registerInfo;
+    registerInfo.renderResourceToken = renderResourceToken;
+    registerInfo.buffers.push_back(buffer);
+    ComposerService::getComposerService()->registerGraphicBuffers(registerInfo);
+
+    // Populate the cache
+    IPCClientResourceCache clientCache;
+    uint32_t imageId = image->uniqueID();
+    clientCache.bitmaps[imageId] = IPCClientBitmap{buffer->getId()};
+
+    auto canvas = IPCRecordingCanvas(clientCache);
+    canvas.storeSize(width, height);
+    canvas.startRecording();
+
+    // Draw a pretty picture offscreen
+    canvas.beginRenderTarget(buffer->getId());
+    canvas.drawColor(0xFFFDF5E6);
+    SkPaint paint;
+    paint.setAntiAlias(true);
+    paint.setColor(0xFFFF7F50);
+    canvas.drawCircle(width / 3.0f, height / 3.0f, 60, paint);
+    paint.setColor(0xFF4682B4);
+    canvas.drawCircle(2 * width / 3.0f, 2 * height / 3.0f, 80, paint);
+    paint.setColor(0xFFFFD700);
+    canvas.drawCircle(width / 2.0f, height / 2.0f, 40, paint);
+    canvas.endRenderTarget();
+
+    // Draw the result of the render target onto the main canvas
+    canvas.drawColor(SK_ColorWHITE);
+    canvas.drawImage(image.get(), 0, 0, SkSamplingOptions());
+
+    canvas.endRecording();
+
+    // Set buffer and apply transaction
+    Transaction()
+            .setLayer(layer, mLayerZBase + 1)
+            .setRenderResourceToken(layer, renderResourceToken)
+            .setCrop(layer, Rect(0, 0, width, height))
+            .setRenderCommandBuffer(layer, canvas.getRenderCommandBufferProducer())
+            .setRenderCommandBufferFrameId(layer, 1)
+            .apply(true);
+
+    auto shot = getScreenCapture();
+    shot->expectBufferMatchesImageFromFile(Rect(0, 0, width, height),
+                                           "testdata/RegisterGraphicBufferRenderTarget.png");
+
+    // Unregister the buffer
+    gui::GraphicBuffersUnregisterInfo unregisterInfo;
+    unregisterInfo.renderResourceToken = renderResourceToken;
+    unregisterInfo.bufferIds.push_back(buffer->getId());
+    ComposerService::getComposerService()->unregisterGraphicBuffers(unregisterInfo);
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, CropElevationShadowByParent) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t size = 64;
+    const uint32_t parentSize = size * 3;
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::WHITE, parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::BLUE, size, size));
+
+    SurfaceComposerClient::getDefault()->setGlobalShadowSettings({1, 0, 0, 0.5f}, {0, 1, 0, 0.5f},
+                                                                 0, 250.0f, 800.0f);
+
+    // Global shadow settings are committed after snapshot updates so we have to perform a commit
+    // before enabling layer shadows.
+    Transaction().apply(true);
+
+    ui::Size resolution = mRenderPathHarness.getRotatedResolution();
+    int x = resolution.width / 2;
+    int y = 500;
+
+    Transaction()
+            .setPosition(parent, x, y)
+            .setCrop(parent, Rect(0, 0, parentSize / 2, parentSize))
+            .reparent(child, parent)
+            .setPosition(child, size, size)
+            .setCrop(child, Rect(0, 0, size, size))
+            .setPosition(child, size, size)
+            .setCornerRadius(child, 20.0f)
+            .setShadowRadius(child, 20.0f)
+            .apply(true);
+
+    auto shot = getScreenCapture();
+
+    shot->expectBufferMatchesImageFromFile(Rect(x, y, x + parentSize, y + parentSize),
+                                           "testdata/CropElevationShadowByParent.png");
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetBackgroundBlurRadiusSimple) {
+    if (!deviceSupportsBlurs()) GTEST_SKIP();
+    if (!deviceUsesSkiaRenderEngine()) GTEST_SKIP();
+
+    const auto canvasSize = 256;
+
+    sp<SurfaceControl> leftLayer;
+    sp<SurfaceControl> rightLayer;
+    sp<SurfaceControl> greenLayer;
+    sp<SurfaceControl> blurLayer;
+    const auto leftRect = Rect(0, 0, canvasSize / 2, canvasSize);
+    const auto rightRect = Rect(canvasSize / 2, 0, canvasSize, canvasSize);
+    const auto blurRect = Rect(0, 0, canvasSize, canvasSize);
+
+    ASSERT_NO_FATAL_FAILURE(leftLayer =
+                                    createLayer("Left", leftRect.getWidth(), leftRect.getHeight()));
+    ASSERT_NO_FATAL_FAILURE(
+            fillLayerColor(leftLayer, Color::BLUE, leftRect.getWidth(), leftRect.getHeight()));
+    ASSERT_NO_FATAL_FAILURE(greenLayer = createLayer("Green", canvasSize * 2, canvasSize * 2));
+    ASSERT_NO_FATAL_FAILURE(
+            fillLayerColor(greenLayer, Color::GREEN, canvasSize * 2, canvasSize * 2));
+    ASSERT_NO_FATAL_FAILURE(
+            rightLayer = createLayer("Right", rightRect.getWidth(), rightRect.getHeight()));
+    ASSERT_NO_FATAL_FAILURE(
+            fillLayerColor(rightLayer, Color::RED, rightRect.getWidth(), rightRect.getHeight()));
+
+    Transaction()
+            .setLayer(greenLayer, mLayerZBase)
+            .setLayer(leftLayer, mLayerZBase + 1)
+            .setLayer(rightLayer, mLayerZBase + 2)
+            .setPosition(rightLayer, rightRect.left, rightRect.top)
+            .apply();
+
+    {
+        auto shot = getScreenCapture();
+        shot->expectColor(leftRect, Color::BLUE);
+        shot->expectColor(rightRect, Color::RED);
+    }
+
+    ASSERT_NO_FATAL_FAILURE(blurLayer = createColorLayer("BackgroundBlur", Color::TRANSPARENT));
+
+    const auto blurRadius = canvasSize / 2;
+    Transaction()
+            .setLayer(blurLayer, mLayerZBase + 3)
+            .setBackgroundBlurRadius(blurLayer, blurRadius)
+            .setCrop(blurLayer, blurRect)
+            .setAlpha(blurLayer, 0.0f)
+            .apply();
+
+    {
+        auto shot = getScreenCapture();
+
+        const auto stepSize = 1;
+        const auto blurAreaOffset = blurRadius * 0.7f;
+        const auto blurAreaStartX = canvasSize / 2 - blurRadius + blurAreaOffset;
+        const auto blurAreaEndX = canvasSize / 2 + blurRadius - blurAreaOffset;
+        Color previousColor;
+        Color currentColor;
+        for (int y = 0; y < canvasSize; y++) {
+            shot->checkPixel(0, y, /* r = */ 0, /* g = */ 0, /* b = */ 255);
+            previousColor = shot->getPixelColor(0, y);
+            for (int x = blurAreaStartX; x < blurAreaEndX; x += stepSize) {
+                currentColor = shot->getPixelColor(x, y);
+                ASSERT_GT(currentColor.r, previousColor.r);
+                ASSERT_LT(currentColor.b, previousColor.b);
+                ASSERT_EQ(0, currentColor.g);
+            }
+            shot->checkPixel(canvasSize - 1, y, 255, 0, 0);
+        }
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetBackgroundBlurRadiusOnMultipleLayers) {
+    if (!deviceSupportsBlurs()) GTEST_SKIP();
+    if (!deviceUsesSkiaRenderEngine()) GTEST_SKIP();
+
+    auto size = 256;
+    auto center = size / 2;
+    auto blurRadius = 50;
+
+    sp<SurfaceControl> backgroundLayer;
+    ASSERT_NO_FATAL_FAILURE(backgroundLayer = createLayer("background", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(backgroundLayer, Color::GREEN, size, size));
+
+    sp<SurfaceControl> leftLayer;
+    ASSERT_NO_FATAL_FAILURE(leftLayer = createLayer("left", size / 2, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(leftLayer, Color::RED, size / 2, size));
+
+    sp<SurfaceControl> blurLayer1;
+    auto centralSquareSize = size / 2;
+    ASSERT_NO_FATAL_FAILURE(blurLayer1 =
+                                    createLayer("blur1", centralSquareSize, centralSquareSize));
+    ASSERT_NO_FATAL_FAILURE(
+            fillLayerColor(blurLayer1, Color::BLUE, centralSquareSize, centralSquareSize));
+
+    sp<SurfaceControl> blurLayer2;
+    ASSERT_NO_FATAL_FAILURE(blurLayer2 = createLayer("blur2", size, size));
+    ASSERT_NO_FATAL_FAILURE(
+            fillLayerColor(blurLayer2, Color::TRANSPARENT, centralSquareSize, centralSquareSize));
+
+    Transaction()
+            .setBackgroundBlurRadius(blurLayer1, blurRadius)
+            .setBackgroundBlurRadius(blurLayer2, blurRadius)
+            .apply();
+
+    auto shot = getScreenCapture();
+    shot->expectColor(Rect(center - 5, center - 5, center, center), Color{100, 100, 100, 255},
+                      40 /* tolerance */);
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetBackgroundBlurAffectedByParentAlpha) {
+    if (!deviceSupportsBlurs()) GTEST_SKIP();
+    if (!deviceUsesSkiaRenderEngine()) GTEST_SKIP();
+
+    sp<SurfaceControl> left;
+    sp<SurfaceControl> right;
+    sp<SurfaceControl> blur;
+    sp<SurfaceControl> blurParent;
+
+    const auto size = 256;
+    ASSERT_NO_FATAL_FAILURE(left = createLayer("Left", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(left, Color::BLUE, size, size));
+    ASSERT_NO_FATAL_FAILURE(right = createLayer("Right", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(right, Color::RED, size, size));
+
+    Transaction()
+            .setLayer(left, mLayerZBase + 1)
+            .setLayer(right, mLayerZBase + 2)
+            .setPosition(right, size, 0)
+            .apply();
+
+    {
+        auto shot = getScreenCapture();
+        shot->expectColor(Rect(0, 0, size, size), Color::BLUE);
+        shot->expectColor(Rect(size, 0, size * 2, size), Color::RED);
+    }
+
+    ASSERT_NO_FATAL_FAILURE(blur = createLayer("BackgroundBlur", size * 2, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(blur, Color::TRANSPARENT, size * 2, size));
+    ASSERT_NO_FATAL_FAILURE(blurParent = createLayer("BackgroundBlurParent", size * 2, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(blurParent, Color::TRANSPARENT, size * 2, size));
+
+    Transaction()
+            .setLayer(blurParent, mLayerZBase + 3)
+            .setAlpha(blurParent, 0.5)
+            .setLayer(blur, mLayerZBase + 4)
+            .setBackgroundBlurRadius(blur, size) // set the blur radius to the size of one rect
+            .reparent(blur, blurParent)
+            .apply();
+
+    {
+        auto shot = getScreenCapture();
+        // assert that outer sides of the red and blue rects are not blended with the other color;
+        // if the blur didn't take into account parent alpha, the outer sides would have traces of
+        // the other color
+        shot->expectColor(Rect(0, 0, size / 2, size), Color::BLUE);
+        shot->expectColor(Rect(size + size / 2, 0, size * 2, size), Color::RED);
+        // assert that middle line has blended red and blur color; adding a tolerance of 10 to
+        // account for future blur algorithm changes
+        shot->expectColor(Rect(size, 0, size + 1, size), {136, 0, 119, 255}, 10);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetColorWithBuffer) {
+    sp<SurfaceControl> bufferLayer;
+    ASSERT_NO_FATAL_FAILURE(bufferLayer = createLayer("test", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(bufferLayer, Color::RED, 32, 32));
+
+    // color is ignored
+    Transaction().setColor(bufferLayer, half3(0.0f, 1.0f, 0.0f)).apply();
+    getScreenCapture()->expectColor(Rect(0, 0, 32, 32), Color::RED);
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetLayerStackBasic) {
+    sp<SurfaceControl> layer;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", 32, 32));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(layer, Color::RED, 32, 32));
+
+    const auto layerStack = ui::LayerStack::fromValue(mDisplayLayerStack.id + 1);
+    Transaction().setLayerStack(layer, layerStack).apply();
+    {
+        SCOPED_TRACE("non-existing layer stack");
+        getScreenCapture()->expectColor(mDisplayRect, Color::BLACK);
+    }
+
+    Transaction().setLayerStack(layer, mDisplayLayerStack).apply();
+    {
+        SCOPED_TRACE("original layer stack");
+        getScreenCapture()->expectColor(Rect(0, 0, 32, 32), Color::RED);
+    }
+}
+
+TEST_P(LayerTypeAndRenderTypeTransactionTest, SetBufferFormat) {
+    int32_t width = 100;
+    int32_t height = 100;
+    Rect crop = Rect(0, 0, width, height);
+
+    sp<SurfaceControl> behindLayer = createColorLayer("Behind layer", Color::RED);
+    sp<SurfaceControl> layer;
+    ASSERT_NO_FATAL_FAILURE(layer = createLayer("test", width, height, 0, nullptr, nullptr,
+                                                PIXEL_FORMAT_RGBX_8888));
+
+    Transaction()
+            .setLayer(layer, INT32_MAX - 1)
+            .show(layer)
+            .setLayerStack(behindLayer, mDisplayLayerStack)
+            .setCrop(behindLayer, crop)
+            .setLayer(behindLayer, INT32_MAX - 2)
+            .show(behindLayer)
+            .apply();
+
+    sp<Surface> surface = layer->getSurface();
+
+    sp<GraphicBuffer> buffer =
+            sp<GraphicBuffer>::make(width, height, PIXEL_FORMAT_RGBX_8888, 1, kUsageFlags, "test");
+    ASSERT_NO_FATAL_FAILURE(
+            TransactionUtils::fillGraphicBufferColor(buffer, crop, Color::TRANSPARENT));
+
+    if (mLayerType == ISurfaceComposerClient::eFXSurfaceBufferQueue) {
+        Surface::attachAndQueueBufferWithDataspace(surface.get(), buffer, ui::Dataspace::V0_SRGB);
+    } else {
+        Transaction().setBuffer(layer, buffer).apply();
+    }
+
+    {
+        SCOPED_TRACE("Buffer Opaque Format");
+        auto shot = screenshot();
+        shot->expectColor(crop, Color::BLACK);
+    }
+
+    buffer = sp<GraphicBuffer>::make(width, height, PIXEL_FORMAT_RGBA_8888, 1, kUsageFlags, "test");
+    ASSERT_NO_FATAL_FAILURE(
+            TransactionUtils::fillGraphicBufferColor(buffer, crop, Color::TRANSPARENT));
+
+    if (mLayerType == ISurfaceComposerClient::eFXSurfaceBufferQueue) {
+        Surface::attachAndQueueBufferWithDataspace(surface.get(), buffer, ui::Dataspace::V0_SRGB);
+    } else {
+        Transaction().setBuffer(layer, buffer).apply();
+    }
+
+    {
+        SCOPED_TRACE("Buffer Transparent Format");
+        auto shot = screenshot();
+        shot->expectColor(crop, Color::RED);
+    }
+}
+
+class RotatedVirtualDisplayTest
+      : public LayerTypeTransactionHarness,
+        public ::testing::WithParamInterface<std::tuple<uint32_t, RenderPath, ui::Rotation>> {
+public:
+    RotatedVirtualDisplayTest()
+          : LayerTypeTransactionHarness(std::get<0>(GetParam())),
+            mRenderPathHarness(this, std::get<1>(GetParam()), std::get<2>(GetParam())) {}
+
+    std::unique_ptr<ScreenCapture> getScreenCapture() {
+        return mRenderPathHarness.getScreenCapture();
+    }
+
+protected:
+    LayerRenderPathTestHarness mRenderPathHarness;
+};
+
+INSTANTIATE_TEST_CASE_P(RotatedVirtualDisplayTests, RotatedVirtualDisplayTest,
+                        ::testing::Combine(::testing::Values(static_cast<uint32_t>(
+                                                   ISurfaceComposerClient::eFXSurfaceBufferState)),
+                                           ::testing::Values(RenderPath::VIRTUAL_DISPLAY),
+                                           ::testing::Values(ui::Rotation::Rotation0,
+                                                             ui::Rotation::Rotation90,
+                                                             ui::Rotation::Rotation180,
+                                                             ui::Rotation::Rotation270)));
+
+TEST_P(RotatedVirtualDisplayTest, ElevationShadowHasCorrectOrientation) {
+    sp<SurfaceControl> parent;
+    sp<SurfaceControl> child;
+    const uint32_t size = 64;
+    const uint32_t parentSize = size * 3;
+    ASSERT_NO_FATAL_FAILURE(parent = createLayer("parent", parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(parent, Color::WHITE, parentSize, parentSize));
+    ASSERT_NO_FATAL_FAILURE(child = createLayer("child", size, size));
+    ASSERT_NO_FATAL_FAILURE(fillLayerColor(child, Color::GREEN, size, size));
+
+    SurfaceComposerClient::getDefault()->setGlobalShadowSettings({1, 0, 0, 1.0f}, {0, 1, 0, 1.0f},
+                                                                 0, 500.0f, 800.0f);
+
+    // Global shadow settings are committed after snapshot updates so we have to perform a commit
+    // before enabling layer shadows.
+    Transaction().apply(true);
+
+    ui::Size resolution = mRenderPathHarness.getRotatedResolution();
+    int x = resolution.width / 2;
+    int y = 500;
+    Transaction()
+            .setPosition(parent, x, y)
+            .setCrop(parent, Rect(0, 0, parentSize, parentSize))
+            .reparent(child, parent)
+            .setCrop(child, Rect(0, 0, size, size))
+            .setPosition(child, size, size)
+            .setCornerRadius(child, 20.0f)
+            .setShadowRadius(child, 20.0f)
+            .apply(true);
+
+    auto shot = getScreenCapture();
+
+    shot->expectBufferMatchesImageFromFile(mRenderPathHarness.rotateRect(
+                                                   Rect(x, y, x + parentSize, y + parentSize)),
+                                           "testdata/Shadow_" +
+                                                   mRenderPathHarness.getRotationName() + ".png");
+}
+
+} // namespace android
+
+// TODO(b/129481165): remove the #pragma below and fix conversion issues
+#pragma clang diagnostic pop // ignored "-Wconversion"

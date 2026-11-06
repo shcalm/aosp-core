@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "adm_unset_others_on_hfp_changed"
+  state: ENABLED
+  permission: READ_WRITE
+}

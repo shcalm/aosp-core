@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "move_get_tty_mode_to_telephony_manager"
+  state: ENABLED
+  permission: READ_WRITE
+}

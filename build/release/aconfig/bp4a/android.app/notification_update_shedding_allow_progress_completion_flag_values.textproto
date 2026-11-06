@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "notification_update_shedding_allow_progress_completion"
+  state: ENABLED
+  permission: READ_ONLY
+}

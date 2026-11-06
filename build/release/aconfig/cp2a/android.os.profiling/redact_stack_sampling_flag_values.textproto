@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.profiling"
+  name: "redact_stack_sampling"
+  state: ENABLED
+  permission: READ_ONLY
+}

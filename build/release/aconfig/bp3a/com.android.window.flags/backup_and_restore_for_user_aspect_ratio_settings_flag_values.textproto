@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "backup_and_restore_for_user_aspect_ratio_settings"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,4 @@
+name: "RELEASE_DISABLE_WIFICOND"
+value {
+  bool_value: true
+}

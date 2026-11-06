@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "respect_requested_task_snapshot_resolution"
+  state: ENABLED
+  permission: READ_ONLY
+}

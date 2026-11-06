@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "update_recents_from_system"
+  state: ENABLED
+  permission: READ_WRITE
+}

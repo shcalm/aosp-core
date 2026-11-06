@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "original_address_filter_match"
+  state: ENABLED
+  permission: READ_ONLY
+}

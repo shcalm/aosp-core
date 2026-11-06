@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "enable_is_private_network_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

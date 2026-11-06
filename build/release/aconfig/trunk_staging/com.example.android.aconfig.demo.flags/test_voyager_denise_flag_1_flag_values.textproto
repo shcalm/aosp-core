@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.example.android.aconfig.demo.flags"
+  name: "test_voyager_denise_flag_1"
+  state: ENABLED
+  permission: READ_WRITE
+}

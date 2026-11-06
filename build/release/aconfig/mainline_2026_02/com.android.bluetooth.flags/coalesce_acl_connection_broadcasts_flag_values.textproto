@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "coalesce_acl_connection_broadcasts"
+  state: ENABLED
+  permission: READ_ONLY
+}

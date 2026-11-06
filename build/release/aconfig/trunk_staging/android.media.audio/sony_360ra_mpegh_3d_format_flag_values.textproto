@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "sony_360ra_mpegh_3d_format"
+  state: ENABLED
+  permission: READ_ONLY
+}

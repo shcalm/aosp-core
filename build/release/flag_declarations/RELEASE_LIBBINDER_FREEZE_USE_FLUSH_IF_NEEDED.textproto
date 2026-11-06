@@ -1,0 +1,5 @@
+name: "RELEASE_LIBBINDER_FREEZE_USE_FLUSH_IF_NEEDED"
+namespace: "system_performance"
+description: "Use flushIfNeeded() when adding/removing frozen callbacks."
+workflow: LAUNCH
+containers: "system"

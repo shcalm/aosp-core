@@ -1,0 +1,11 @@
+name:  "RELEASE_BUILD_EXECUTE_ONLY_MEMORY"
+namespace:  "security"
+description:  "Mark executable pages Execute-Only (non-readable) at link-time."
+value: {
+  bool_value: false
+}
+workflow:  LAUNCH
+containers:  "product"
+containers:  "system"
+containers:  "system_ext"
+containers:  "vendor"

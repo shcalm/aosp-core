@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "avalanche_replace_hun_when_critical"
+  state: ENABLED
+  permission: READ_ONLY
+}

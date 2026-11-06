@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.egl.flags"
+  name: "do_not_unload_driver_from_updatable_apk"
+  state: ENABLED
+  permission: READ_ONLY
+}

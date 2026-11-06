@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.chre.flags"
+  name: "gnss_hal_use_endpoint_messaging"
+  state: ENABLED
+  permission: READ_ONLY
+}

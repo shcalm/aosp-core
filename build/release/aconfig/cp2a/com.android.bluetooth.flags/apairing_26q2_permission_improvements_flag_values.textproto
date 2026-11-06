@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "apairing_26q2_permission_improvements"
+  state: ENABLED
+  permission: READ_ONLY
+}

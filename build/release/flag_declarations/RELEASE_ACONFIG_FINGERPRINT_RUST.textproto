@@ -1,0 +1,8 @@
+name: "RELEASE_ACONFIG_FINGERPRINT_RUST"
+namespace: "core_experiments_team_internal"
+description: "Control checking the fingerprint in the rust codegen."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

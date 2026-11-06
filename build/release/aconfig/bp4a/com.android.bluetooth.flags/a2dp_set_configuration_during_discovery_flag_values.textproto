@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "a2dp_set_configuration_during_discovery"
+  state: ENABLED
+  permission: READ_ONLY
+}

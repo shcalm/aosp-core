@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.npumanager"
+  name: "npumanager_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

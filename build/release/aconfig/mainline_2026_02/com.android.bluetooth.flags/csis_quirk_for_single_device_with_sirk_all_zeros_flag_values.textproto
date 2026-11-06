@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "csis_quirk_for_single_device_with_sirk_all_zeros"
+  state: ENABLED
+  permission: READ_ONLY
+}

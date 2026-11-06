@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "bt_audio_disconnect_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

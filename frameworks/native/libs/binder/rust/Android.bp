@@ -1,0 +1,427 @@
+package {
+    // See: http://go/android-license-faq
+    // A large-scale-change added 'default_applicable_licenses' to import
+    // all of the 'license_kinds' from "frameworks_native_license"
+    // to get the below license kinds:
+    //   SPDX-license-identifier-Apache-2.0
+    default_applicable_licenses: ["frameworks_native_license"],
+}
+
+// TODO(b/402766978) : This bindgen is meant for NDK APIs for which we
+// need the API level checks as rust has no support for it.
+rust_bindgen {
+    name: "libbinder_ndk_compat_bindgen",
+    crate_name: "binder_ndk_compat_bindgen",
+    host_supported: true,
+    vendor_available: true,
+    product_available: true,
+    recovery_available: true,
+    wrapper_src: "src/cpp/include/binder_rust.hpp",
+    source_stem: "bindings",
+    visibility: [":__subpackages__"],
+    bindgen_flags: [
+        "--raw-line",
+        "#![no_std]",
+        "--blocklist-type",
+        "AIBinder_Class",
+        "--blocklist-type",
+        "AIBinder",
+        "--allowlist-function",
+        "Compat_AIBinder_Class_setTransactionCodeToFunctionNameMap",
+        "--allowlist-function",
+        "Compat_AIBinder_Class_getFunctionName",
+        "--allowlist-function",
+        "Compat_AIBinder_requiresVintfDeclaration",
+        "--allowlist-function",
+        "Compat_AIBinder_isVendorStable",
+        "--allowlist-function",
+        "Compat_AIBinder_isSystemStable",
+        "--raw-line",
+        "use binder_ndk_sys::AIBinder_Class;",
+        "--raw-line",
+        "use binder_ndk_sys::AIBinder;",
+        "--use-core",
+        "--ctypes-prefix",
+        "::core::ffi",
+    ],
+    apex_available: [
+        "//apex_available:platform",
+        "//apex_available:anyapex",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    rustlibs: [
+        "libbinder_ndk_sys",
+    ],
+    min_sdk_version: "Tiramisu",
+    no_std: {
+        enabled: true,
+    },
+}
+
+// TODO(b/402766978) : This c++ lib is wrapper for calling NDK APIs for which we
+// need the API level checks as rust has no support for it.
+cc_library_static {
+    name: "libbinder_rs_compat",
+    srcs: ["src/cpp/binder_rust.cpp"],
+    host_supported: true,
+    vendor_available: true,
+    product_available: true,
+    recovery_available: true,
+    min_sdk_version: "Tiramisu",
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    apex_available: [
+        "//apex_available:platform",
+        "//apex_available:anyapex",
+    ],
+    visibility: [":__subpackages__"],
+}
+
+// TODO(b/402766978) : rust lib which calls into C++ wrapper API around the NDK APIs.
+rust_library {
+    name: "libbinder_rs_ndk_compat",
+    crate_name: "binder_rs_ndk_compat",
+    srcs: ["src/cpp/lib.rs"],
+    whole_static_libs: [
+        "libbinder_rs_compat",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    rustlibs: [
+        "libbinder_ndk_compat_bindgen",
+        "libbinder_ndk_sys",
+    ],
+    host_supported: true,
+    vendor_available: true,
+    product_available: true,
+    recovery_available: true,
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
+    apex_available: [
+        "//apex_available:platform",
+        "//apex_available:anyapex",
+    ],
+    min_sdk_version: "Tiramisu",
+    visibility: [":__subpackages__"],
+    no_std: {
+        enabled: true,
+    },
+}
+
+rust_library {
+    name: "libbinder_rs",
+    crate_name: "binder",
+    srcs: ["src/lib.rs"],
+    rustlibs: [
+        "libbinder_ndk_sys",
+        "libdowncast_rs",
+        "liblibc",
+        "liblog_rust",
+        "libstatic_assertions",
+        "libzerocopy",
+        "libbinder_rs_ndk_compat",
+    ],
+    host_supported: true,
+    vendor_available: true,
+    product_available: true,
+    recovery_available: true,
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
+    apex_available: [
+        "//apex_available:platform",
+        "//apex_available:anyapex",
+    ],
+    features: [
+        "std",
+        "kernel_ipc",
+        "android_ndk_compat_symbols",
+    ],
+    min_sdk_version: "Tiramisu",
+    // The no_std version of libbinder_rs is enabled in a mode that
+    // allows testing the no_std support of the lib and rust AIDL
+    // backend. This currently has shared lib deps and enables kernel binder,
+    // both of which are unlikely to work for targets that require no_std support.
+    // As of the time of this writing, such targets are not using soong to build
+    // binder so this is not a concerrn.
+    no_std: {
+        enabled: true,
+        features: [
+            "android_ndk_compat_symbols",
+            // Needed for testing no_std on Android where
+            // most meaningful integration tests are using
+            // kernel binder and service manager for service discovery.
+            "kernel_ipc",
+        ],
+        cfgs: [
+            "single_threaded",
+        ],
+        rustlibs: [
+            "libbinder_ndk_sys",
+            "libbinder_rs_ndk_compat",
+            "libdowncast_rs_nostd",
+            "liblibc",
+            "liblog_rust",
+            "libspin",
+            "libstatic_assertions",
+            "libzerocopy",
+        ],
+    },
+}
+
+rust_library {
+    name: "libbinder_rs_on_trusty_mock",
+    crate_name: "binder",
+    srcs: ["src/lib.rs"],
+    cfgs: [
+        "trusty",
+    ],
+    features: [
+        "std",
+    ],
+    rustlibs: [
+        "libbinder_ndk_sys_on_trusty_mock",
+        "libdowncast_rs",
+        "liblibc",
+        "libbinder_rs_ndk_compat",
+        "libstatic_assertions",
+        "libzerocopy",
+    ],
+    vendor: true,
+}
+
+rust_library {
+    name: "libbinder_tokio_rs",
+    crate_name: "binder_tokio",
+    srcs: ["binder_tokio/lib.rs"],
+    rustlibs: [
+        "libbinder_rs",
+        "libtokio",
+    ],
+    host_supported: true,
+    vendor_available: true,
+    product_available: true,
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
+    apex_available: [
+        "//apex_available:platform",
+        "//apex_available:anyapex",
+    ],
+    min_sdk_version: "Tiramisu",
+}
+
+rust_library {
+    name: "libbinder_ndk_sys",
+    crate_name: "binder_ndk_sys",
+    srcs: [
+        "sys/lib.rs",
+        ":libbinder_ndk_bindgen",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    rustlibs: [
+        "liblibc",
+    ],
+    host_supported: true,
+    vendor_available: true,
+    product_available: true,
+    recovery_available: true,
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
+    apex_available: [
+        "//apex_available:platform",
+        "//apex_available:anyapex",
+    ],
+    min_sdk_version: "Tiramisu",
+    features: [
+        "std",
+    ],
+    lints: "none",
+    clippy_lints: "none",
+    visibility: [":__subpackages__"],
+    no_std: {
+        enabled: true,
+        features: [],
+    },
+}
+
+rust_library {
+    name: "libbinder_ndk_sys_on_trusty_mock",
+    crate_name: "binder_ndk_sys",
+    srcs: [
+        "sys/lib.rs",
+        ":libbinder_ndk_bindgen_on_trusty_mock",
+    ],
+    cfgs: [
+        "trusty",
+    ],
+    shared_libs: [
+        "libbinder_ndk_on_trusty_mock",
+    ],
+    vendor: true,
+    // Lints are checked separately for libbinder_ndk_sys.
+    // The Trusty mock copy pulls in extra headers that
+    // don't pass the lints for the bindgen output.
+    lints: "none",
+}
+
+rust_defaults {
+    name: "libbinder_ndk_bindgen_defaults",
+    wrapper_src: "sys/BinderBindings.hpp",
+    source_stem: "bindings",
+    bindgen_flag_files: [
+        // Unfortunately the only way to specify the rust_non_exhaustive enum
+        // style for a type is to make it the default
+        // and then specify constified enums for the enums we don't want
+        // rustified
+        "libbinder_ndk_bindgen_flags.txt",
+    ],
+    bindgen_flags: [
+        "--blocklist-type",
+        "sockaddr",
+        "--raw-line",
+        "use libc::sockaddr;",
+        "--blocklist-item",
+        "AIBinder_Class_setTransactionCodeToFunctionNameMap",
+        "--blocklist-item",
+        "AIBinder_Class_getFunctionName",
+        // Generate code compatible with `no_std` environments by using `core`
+        // instead of `std` and referencing C types via `core::ffi`.
+        "--use-core",
+        "--ctypes-prefix",
+        "::core::ffi",
+    ],
+    cflags: [
+        "-DANDROID_PLATFORM",
+    ],
+}
+
+rust_bindgen {
+    name: "libbinder_ndk_bindgen",
+    crate_name: "binder_ndk_bindgen",
+    defaults: [
+        "libbinder_ndk_bindgen_defaults",
+    ],
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    rustlibs: [
+        "liblibc",
+    ],
+    host_supported: true,
+    vendor_available: true,
+    product_available: true,
+    recovery_available: true,
+
+    // Currently necessary for host builds
+    // TODO(b/31559095): bionic on host should define this
+    target: {
+        darwin: {
+            enabled: false,
+        },
+    },
+    apex_available: [
+        "//apex_available:platform",
+        "//apex_available:anyapex",
+    ],
+    min_sdk_version: "Tiramisu",
+}
+
+rust_bindgen {
+    name: "libbinder_ndk_bindgen_on_trusty_mock",
+    crate_name: "binder_ndk_bindgen",
+    wrapper_src: "sys/BinderBindings.hpp",
+    source_stem: "bindings",
+    defaults: [
+        "trusty_mock_defaults",
+    ],
+
+    bindgen_flag_files: [
+        // Unfortunately the only way to specify the rust_non_exhaustive enum
+        // style for a type is to make it the default
+        // and then specify constified enums for the enums we don't want
+        // rustified
+        "libbinder_ndk_bindgen_flags.txt",
+    ],
+    cflags: [
+        "-DANDROID_PLATFORM",
+    ],
+    shared_libs: [
+        "libbinder_ndk_on_trusty_mock",
+        "libc++",
+    ],
+}
+
+rust_test {
+    name: "libbinder_rs-internal_test",
+    crate_name: "binder",
+    srcs: ["src/lib.rs"],
+    test_suites: ["general-tests"],
+    auto_gen_config: true,
+    shared_libs: [
+        "libbinder_ndk",
+    ],
+    features: [
+        "std",
+        "kernel_ipc",
+    ],
+    rustlibs: [
+        "libbinder_ndk_sys",
+        "libdowncast_rs",
+        "liblibc",
+        "liblog_rust",
+        "libstatic_assertions",
+        "libzerocopy",
+        "libbinder_rs_ndk_compat",
+    ],
+}
+
+rust_test {
+    name: "libbinder_rs_nostd-internal_test",
+    crate_name: "binder",
+    srcs: ["src/lib.rs"],
+    test_suites: ["general-tests"],
+    cfgs: [
+        "single_threaded",
+    ],
+    rustlibs: [
+        "libdowncast_rs_nostd",
+        "liblog_rust_nostd",
+        "libspin_nostd",
+    ],
+    no_std_rlibs: [
+        "libbinder_ndk_sys",
+        "libstatic_assertions",
+        "libzerocopy",
+        "liblibc",
+    ],
+}
+
+rust_test {
+    name: "libbinder_ndk_bindgen_test",
+    srcs: [":libbinder_ndk_bindgen"],
+    crate_name: "binder_ndk_bindgen",
+    test_suites: ["general-tests"],
+    auto_gen_config: true,
+    clippy_lints: "none",
+    lints: "none",
+    rustlibs: [
+        "liblibc",
+    ],
+}

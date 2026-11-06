@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "catalyst_use_string_bundle"
+  state: ENABLED
+  permission: READ_ONLY
+}

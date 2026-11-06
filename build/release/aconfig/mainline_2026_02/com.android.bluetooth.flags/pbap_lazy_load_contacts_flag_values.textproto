@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "pbap_lazy_load_contacts"
+  state: ENABLED
+  permission: READ_ONLY
+}

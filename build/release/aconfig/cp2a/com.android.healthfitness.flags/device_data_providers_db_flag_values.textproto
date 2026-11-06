@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "device_data_providers_db"
+  state: ENABLED
+  permission: READ_ONLY
+}

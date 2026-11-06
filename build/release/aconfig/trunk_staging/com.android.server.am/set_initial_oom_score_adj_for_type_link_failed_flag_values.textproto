@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "set_initial_oom_score_adj_for_type_link_failed"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "reset_auth_flags_and_metrics_in_lock_user"
+  state: ENABLED
+  permission: READ_WRITE
+}

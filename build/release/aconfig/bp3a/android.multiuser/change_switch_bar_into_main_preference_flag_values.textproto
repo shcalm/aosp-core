@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "change_switch_bar_into_main_preference"
+  state: ENABLED
+  permission: READ_ONLY
+}

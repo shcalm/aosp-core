@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.optimization"
+  name: "concurrent_queue_for_pending_removed_uids"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.notification"
+  name: "log_visually_changed_updates"
+  state: ENABLED
+  permission: READ_WRITE
+}

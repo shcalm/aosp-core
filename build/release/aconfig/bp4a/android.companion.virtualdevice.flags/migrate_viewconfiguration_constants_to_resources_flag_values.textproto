@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.companion.virtualdevice.flags"
+  name: "migrate_viewconfiguration_constants_to_resources"
+  state: ENABLED
+  permission: READ_ONLY
+}

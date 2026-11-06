@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.appsearch.flags"
+  name: "enable_sharded_embedding_storage"
+  state: ENABLED
+  permission: READ_ONLY
+}

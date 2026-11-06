@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "fix_task_compatible_modes"
+  state: ENABLED
+  permission: READ_ONLY
+}

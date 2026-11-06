@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "restrict_freeform_hidden_system_bars_to_filling_tasks"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "dispatch_first_keyguard_locked_state"
+  state: ENABLED
+  permission: READ_ONLY
+}

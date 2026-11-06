@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "notification_use_dpc_policy"
+  state: ENABLED
+  permission: READ_ONLY
+}

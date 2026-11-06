@@ -1,0 +1,302 @@
+/*
+ * Copyright (C) 2012 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <gtest/gtest.h>
+
+#include "utils.h"
+
+#include <fenv.h>
+#include <stdint.h>
+#include <sys/cdefs.h>
+
+#include <android-base/test_utils.h>
+
+static void DivideByZero() {
+  // Volatile to prevent compile-time evaluation.
+  volatile float zero = 0.0f;
+  android::base::DoNotOptimize(123.0f / zero);
+}
+
+TEST(fenv, fesetround_fegetround_FE_TONEAREST) {
+  fesetround(FE_TONEAREST);
+  ASSERT_EQ(FE_TONEAREST, fegetround());
+
+  // "To nearest, ties to even".
+  // 1.5f + 2^-24 = 1.5f           for FE_TONEAREST, FE_DOWNWARD, FE_TOWARDZERO
+  //              = 0x1.100002p0f  for FE_UPWARD
+  // 1.5f - 2^-24 = 1.5f           for FE_TONEAREST, FE_UPWARD
+  //              = 0x1.0ffffep-1f for FE_DOWNWARD, FE_TOWARDZERO
+
+  // Volatile to prevent compile-time evaluation.
+  volatile float x = 0x1.0p-24f;
+  float y, z;
+  android::base::DoNotOptimize(y = 1.5f + x);
+  android::base::DoNotOptimize(z = 1.5f - x);
+  EXPECT_EQ(y, z);
+}
+
+TEST(fenv, fesetround_fegetround_FE_TONEARESTFROMZERO) {
+#if defined(FE_TONEARESTFROMZERO)
+  fesetround(FE_TONEARESTFROMZERO);
+  ASSERT_EQ(FE_TONEARESTFROMZERO, fegetround());
+
+  // "To nearest, ties away from zero".
+  //  1.0f + 2^-24 =  0x1.000004p0f for FE_UPWARD, FE_TONEARESTFROMZERO
+  //               =  0x1.000002p0f for FE_DOWNWARD, FE_TOWARDZERO, FE_TONEAREST
+  // -1.0f - 2^-24 = -0x1.000004p0f for FE_DOWNWARD, FE_TONEARESTFROMZERO
+  //               = -0x1.000002p0f for FE_UPWARD, FE_TOWARDZERO, FE_TONEAREST
+
+  // Volatile to prevent compile-time evaluation.
+  volatile float x = 0x1.0p-24f;
+  float y, z;
+  android::base::DoNotOptimize(y = 1.0f + x);
+  android::base::DoNotOptimize(z = -1.0f - x);
+  EXPECT_EQ(y, 0x1.000002p0f);
+  EXPECT_EQ(z, -0x1.000002p0f);
+#else
+  // To be clear: arm64 and x86-64 do support this rounding mode for _some_ instructions.
+  // What they don't have is a way to set this as the _default_ rounding mode.
+  GTEST_SKIP() << "no hardware FE_TONEARESTFROMZERO default rounding mode";
+#endif
+}
+
+TEST(fenv, fesetround_fegetround_FE_TOWARDZERO) {
+  fesetround(FE_TOWARDZERO);
+  ASSERT_EQ(FE_TOWARDZERO, fegetround());
+
+  //  1.0f + 2^-23 + 2^-24 = 0x1.000002p0f for FE_DOWNWARD, FE_TOWARDZERO
+  //                       = 0x1.000004p0f for FE_TONEAREST, FE_UPWARD,
+  // -1.0f - 2^-24 = -1.0f          for FE_TONEAREST, FE_UPWARD, FE_TOWARDZERO
+  //               = -0x1.000002p0f for FE_DOWNWARD
+  //
+  // (0x1.000002p0f + 2^-24) + (-1.0f - 2^-24) = 2^-23 for FE_TOWARDZERO
+  //                                           = 2^-22 for FE_TONEAREST, FE_UPWARD
+  //                                           = 0 for FE_DOWNWARD
+
+  // Volatile to prevent compile-time evaluation.
+  volatile float x = 0x1.0p-24f;
+  float y, z;
+  android::base::DoNotOptimize(y = 0x1.000002p0f + x);
+  android::base::DoNotOptimize(z = -1.0f - x);
+  EXPECT_EQ(y + z, 0x1.0p-23f);
+}
+
+TEST(fenv, fesetround_fegetround_FE_UPWARD) {
+  fesetround(FE_UPWARD);
+  ASSERT_EQ(FE_UPWARD, fegetround());
+
+  // 1.0f + 2^-25 = 1.0f        for FE_TONEAREST, FE_DOWNWARD, FE_TOWARDZERO
+  //              = 0x1.000002f for FE_UPWARD
+
+  // Volatile to prevent compile-time evaluation.
+  volatile float x = 0x1.0p-25f;
+  float y;
+  android::base::DoNotOptimize(y = x + 1.0f);
+  EXPECT_NE(x, y);
+}
+
+TEST(fenv, fesetround_fegetround_FE_DOWNWARD) {
+  fesetround(FE_DOWNWARD);
+  ASSERT_EQ(FE_DOWNWARD, fegetround());
+
+  // -1.0f - 2^-25 = -1.0f        for FE_TONEAREST, FE_UPWARD, FE_TOWARDZERO
+  //               = -0x1.000002f for FE_DOWNWARD
+
+  // Volatile to prevent compile-time evaluation.
+  volatile float x = 0x1.0p-25f;
+  float y;
+  android::base::DoNotOptimize(y = -1.0f - x);
+  EXPECT_NE(y, -1.0f);
+}
+
+TEST(fenv, feclearexcept_fetestexcept) {
+  // Clearing clears.
+  feclearexcept(FE_ALL_EXCEPT);
+  ASSERT_EQ(0, fetestexcept(FE_ALL_EXCEPT));
+
+  // Dividing by zero sets FE_DIVBYZERO.
+  DivideByZero();
+  int raised = fetestexcept(FE_DIVBYZERO | FE_OVERFLOW);
+  ASSERT_TRUE((raised & FE_OVERFLOW) == 0);
+  ASSERT_TRUE((raised & FE_DIVBYZERO) != 0);
+
+  // Clearing an unset bit is a no-op.
+  feclearexcept(FE_OVERFLOW);
+  ASSERT_TRUE((raised & FE_OVERFLOW) == 0);
+  ASSERT_TRUE((raised & FE_DIVBYZERO) != 0);
+
+  // Clearing a set bit works.
+  feclearexcept(FE_DIVBYZERO);
+  ASSERT_EQ(0, fetestexcept(FE_ALL_EXCEPT));
+}
+
+TEST(fenv, FE_DFL_ENV_macro) {
+  ASSERT_EQ(0, fesetenv(FE_DFL_ENV));
+}
+
+TEST(fenv, feraiseexcept) {
+  feclearexcept(FE_ALL_EXCEPT);
+  ASSERT_EQ(0, fetestexcept(FE_ALL_EXCEPT));
+
+  ASSERT_EQ(0, feraiseexcept(FE_DIVBYZERO | FE_OVERFLOW));
+  ASSERT_EQ(FE_DIVBYZERO | FE_OVERFLOW, fetestexcept(FE_ALL_EXCEPT));
+}
+
+TEST(fenv, fegetenv_fesetenv) {
+  // Set FE_OVERFLOW only.
+  feclearexcept(FE_ALL_EXCEPT);
+  ASSERT_EQ(0, fetestexcept(FE_ALL_EXCEPT));
+  ASSERT_EQ(0, feraiseexcept(FE_OVERFLOW));
+
+  // fegetenv (unlike feholdexcept) leaves the current state untouched...
+  fenv_t state;
+  ASSERT_EQ(0, fegetenv(&state));
+  ASSERT_EQ(FE_OVERFLOW, fetestexcept(FE_ALL_EXCEPT));
+
+  // Dividing by zero sets the appropriate flag...
+  DivideByZero();
+  ASSERT_EQ(FE_DIVBYZERO | FE_OVERFLOW, fetestexcept(FE_ALL_EXCEPT));
+
+  // And fesetenv (unlike feupdateenv) clobbers that to return to where
+  // we started.
+  ASSERT_EQ(0, fesetenv(&state));
+  ASSERT_EQ(FE_OVERFLOW, fetestexcept(FE_ALL_EXCEPT));
+}
+
+TEST(fenv, fegetenv_fesetenv_rounding_mode) {
+  // Test that fegetenv()/fesetenv() includes the rounding mode.
+  fesetround(FE_DOWNWARD);
+  ASSERT_EQ(FE_DOWNWARD, fegetround());
+
+  fenv_t env;
+  fegetenv(&env);
+
+  fesetround(FE_UPWARD);
+  ASSERT_EQ(FE_UPWARD, fegetround());
+
+  fesetenv(&env);
+  ASSERT_EQ(FE_DOWNWARD, fegetround());
+}
+
+TEST(fenv, feholdexcept_feupdateenv) {
+  // Set FE_OVERFLOW only.
+  feclearexcept(FE_ALL_EXCEPT);
+  ASSERT_EQ(0, fetestexcept(FE_ALL_EXCEPT));
+  ASSERT_EQ(0, feraiseexcept(FE_OVERFLOW));
+
+  // feholdexcept (unlike fegetenv) clears everything...
+  fenv_t state;
+  ASSERT_EQ(0, feholdexcept(&state));
+  ASSERT_EQ(0, fetestexcept(FE_ALL_EXCEPT));
+
+  // Dividing by zero sets the appropriate flag...
+  DivideByZero();
+  ASSERT_EQ(FE_DIVBYZERO, fetestexcept(FE_ALL_EXCEPT));
+
+  // And feupdateenv (unlike fesetenv) merges what we started with
+  // (FE_OVERFLOW) with what we now have (FE_DIVBYZERO).
+  ASSERT_EQ(0, feupdateenv(&state));
+  ASSERT_EQ(FE_DIVBYZERO | FE_OVERFLOW, fetestexcept(FE_ALL_EXCEPT));
+}
+
+TEST(fenv, fegetexceptflag_fesetexceptflag) {
+  // Set three flags.
+  feclearexcept(FE_ALL_EXCEPT);
+  ASSERT_EQ(0, feraiseexcept(FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW));
+  ASSERT_EQ(FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW, fetestexcept(FE_ALL_EXCEPT));
+
+  fexcept_t all; // FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW
+  fexcept_t two; // FE_OVERFLOW | FE_UNDERFLOW
+  ASSERT_EQ(0, fegetexceptflag(&all, FE_ALL_EXCEPT));
+  ASSERT_EQ(0, fegetexceptflag(&two, FE_OVERFLOW | FE_UNDERFLOW));
+
+  // Check we can restore all.
+  feclearexcept(FE_ALL_EXCEPT);
+  ASSERT_EQ(0, fesetexceptflag(&all, FE_ALL_EXCEPT));
+  ASSERT_EQ(FE_DIVBYZERO | FE_OVERFLOW | FE_UNDERFLOW, fetestexcept(FE_ALL_EXCEPT));
+
+  // Check that `two` only stored a subset.
+  feclearexcept(FE_ALL_EXCEPT);
+  ASSERT_EQ(0, fesetexceptflag(&two, FE_ALL_EXCEPT));
+  ASSERT_EQ(FE_OVERFLOW | FE_UNDERFLOW, fetestexcept(FE_ALL_EXCEPT));
+
+  // Check that we can restore a single flag.
+  feclearexcept(FE_ALL_EXCEPT);
+  ASSERT_EQ(0, fesetexceptflag(&all, FE_DIVBYZERO));
+  ASSERT_EQ(FE_DIVBYZERO, fetestexcept(FE_ALL_EXCEPT));
+
+  // Check that we can restore a subset of flags.
+  feclearexcept(FE_ALL_EXCEPT);
+  ASSERT_EQ(0, fesetexceptflag(&all, FE_OVERFLOW | FE_UNDERFLOW));
+  ASSERT_EQ(FE_OVERFLOW | FE_UNDERFLOW, fetestexcept(FE_ALL_EXCEPT));
+}
+
+TEST(fenv, fedisableexcept_fegetexcept) {
+#if !defined(ANDROID_HOST_MUSL)
+  feclearexcept(FE_ALL_EXCEPT);
+  ASSERT_EQ(0, fetestexcept(FE_ALL_EXCEPT));
+
+  // No SIGFPE please...
+  ASSERT_EQ(0, fedisableexcept(FE_ALL_EXCEPT));
+  ASSERT_EQ(0, fegetexcept());
+  ASSERT_EQ(0, feraiseexcept(FE_INVALID));
+  ASSERT_EQ(FE_INVALID, fetestexcept(FE_ALL_EXCEPT));
+#else
+  GTEST_SKIP() << "musl doesn't have fegetexcept";
+#endif
+}
+
+TEST(fenv, feenableexcept_fegetexcept) {
+#if !defined(ANDROID_HOST_MUSL)
+#if defined(__aarch64__) || defined(__arm__) || defined(__riscv)
+  // ARM and RISC-V don't support hardware trapping of floating point
+  // exceptions. ARM used to if you go back far enough, but it was
+  // removed in the Cortex-A8 between r3p1 and r3p2. RISC-V never has.
+  ASSERT_EQ(-1, feenableexcept(FE_INVALID));
+  ASSERT_EQ(0, fegetexcept());
+  ASSERT_EQ(-1, feenableexcept(FE_DIVBYZERO));
+  ASSERT_EQ(0, fegetexcept());
+  ASSERT_EQ(-1, feenableexcept(FE_OVERFLOW));
+  ASSERT_EQ(0, fegetexcept());
+  ASSERT_EQ(-1, feenableexcept(FE_UNDERFLOW));
+  ASSERT_EQ(0, fegetexcept());
+  ASSERT_EQ(-1, feenableexcept(FE_INEXACT));
+  ASSERT_EQ(0, fegetexcept());
+#if defined(_FE_DENORMAL)  // riscv64 doesn't support this.
+  ASSERT_EQ(-1, feenableexcept(FE_DENORMAL));
+  ASSERT_EQ(0, fegetexcept());
+#endif
+#else
+  // We can't recover from SIGFPE, so sacrifice a child...
+  pid_t pid = fork();
+  ASSERT_NE(-1, pid) << strerror(errno);
+
+  if (pid == 0) {
+    signal(SIGFPE, SIG_DFL);  // Disable debuggerd.
+    feclearexcept(FE_ALL_EXCEPT);
+    ASSERT_EQ(0, fetestexcept(FE_ALL_EXCEPT));
+    ASSERT_EQ(0, feenableexcept(FE_INVALID));
+    ASSERT_EQ(FE_INVALID, fegetexcept());
+    ASSERT_EQ(0, feraiseexcept(FE_INVALID));
+    _exit(123);
+  }
+
+  AssertChildExited(pid, -SIGFPE);
+#endif
+#else
+  GTEST_SKIP() << "musl doesn't have fegetexcept";
+#endif
+}

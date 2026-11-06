@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.rw.flags"
+  name: "lower_young_gc_throughput_expectation"
+  state: ENABLED
+  permission: READ_ONLY
+}

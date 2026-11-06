@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "cleanup_instances_when_display_removed"
+  state: ENABLED
+  permission: READ_WRITE
+}

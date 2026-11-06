@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "grant_read_blocked_numbers_to_system_ui_intelligence"
+  state: ENABLED
+  permission: READ_ONLY
+}

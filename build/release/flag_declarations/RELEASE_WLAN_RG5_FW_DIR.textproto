@@ -1,0 +1,8 @@
+name: "RELEASE_WLAN_RG5_FW_DIR"
+namespace: "pixel_wifi"
+description: "Directory for the release WLAN firmware for RG5."
+value: {
+  string_value: "."
+}
+workflow: PREBUILT
+containers: "vendor"

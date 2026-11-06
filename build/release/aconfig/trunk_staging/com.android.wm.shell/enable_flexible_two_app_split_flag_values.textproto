@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "enable_flexible_two_app_split"
+  state: ENABLED
+  permission: READ_WRITE
+}

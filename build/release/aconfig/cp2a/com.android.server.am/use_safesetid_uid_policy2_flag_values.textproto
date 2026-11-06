@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.am"
+  name: "use_safesetid_uid_policy2"
+  state: ENABLED
+  permission: READ_ONLY
+}

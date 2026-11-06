@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.providers.contacts.flags"
+  name: "log_call_method"
+  state: ENABLED
+  permission: READ_WRITE
+}

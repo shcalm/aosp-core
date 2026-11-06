@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.flags"
+  name: "hide_modes_setting_in_demo_mode"
+  state: ENABLED
+  permission: READ_WRITE
+}

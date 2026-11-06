@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "prevent_btm_sec_cb_overwrite_during_pairing"
+  state: ENABLED
+  permission: READ_ONLY
+}

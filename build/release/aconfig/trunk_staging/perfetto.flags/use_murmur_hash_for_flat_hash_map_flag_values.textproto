@@ -1,0 +1,6 @@
+flag_value {
+  package: "perfetto.flags"
+  name: "use_murmur_hash_for_flat_hash_map"
+  state: ENABLED
+  permission: READ_ONLY
+}

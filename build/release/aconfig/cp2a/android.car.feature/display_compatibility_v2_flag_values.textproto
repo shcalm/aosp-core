@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.car.feature"
+  name: "display_compatibility_v2"
+  state: ENABLED
+  permission: READ_ONLY
+}

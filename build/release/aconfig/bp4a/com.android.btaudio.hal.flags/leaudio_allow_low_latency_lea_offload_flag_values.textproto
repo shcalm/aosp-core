@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.btaudio.hal.flags"
+  name: "leaudio_allow_low_latency_lea_offload"
+  state: ENABLED
+  permission: READ_ONLY
+}

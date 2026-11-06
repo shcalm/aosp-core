@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.chooser"
+  name: "tap_to_share"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security.keystore2"
+  name: "async_lock_state"
+  state: ENABLED
+  permission: READ_ONLY
+}

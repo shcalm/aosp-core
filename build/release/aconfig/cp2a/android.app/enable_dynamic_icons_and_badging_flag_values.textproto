@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "enable_dynamic_icons_and_badging"
+  state: ENABLED
+  permission: READ_ONLY
+}

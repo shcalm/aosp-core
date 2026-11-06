@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.telecom.flags"
+  name: "request_focus_for_set_active"
+  state: ENABLED
+  permission: READ_WRITE
+}

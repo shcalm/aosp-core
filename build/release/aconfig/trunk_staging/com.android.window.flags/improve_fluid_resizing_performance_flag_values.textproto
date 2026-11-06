@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "improve_fluid_resizing_performance"
+  state: ENABLED
+  permission: READ_WRITE
+}

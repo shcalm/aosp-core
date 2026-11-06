@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.audio"
+  name: "check_route_in_get_audio_mix_port"
+  state: ENABLED
+  permission: READ_WRITE
+}

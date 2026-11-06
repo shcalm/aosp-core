@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "encrypted_client_hello_configuration"
+  state: ENABLED
+  permission: READ_WRITE
+}

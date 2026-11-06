@@ -1,0 +1,4 @@
+name: "ap3a"
+prior_stages: "trunk"
+aconfig_value_sets: "aconfig_value_set-platform_build_release-ap3a"
+disallow_lunch_use: true

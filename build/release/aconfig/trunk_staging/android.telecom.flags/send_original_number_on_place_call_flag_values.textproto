@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "send_original_number_on_place_call"
+  state: ENABLED
+  permission: READ_WRITE
+}

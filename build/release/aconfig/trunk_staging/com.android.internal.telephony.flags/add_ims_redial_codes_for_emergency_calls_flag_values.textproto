@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "add_ims_redial_codes_for_emergency_calls"
+  state: ENABLED
+  permission: READ_WRITE
+}

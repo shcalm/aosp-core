@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.flags"
+  name: "enable_windowless_window_focus_navigation"
+  state: ENABLED
+  permission: READ_ONLY
+}

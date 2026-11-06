@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_camera_compat_sandbox_display_rotation_on_external_displays_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

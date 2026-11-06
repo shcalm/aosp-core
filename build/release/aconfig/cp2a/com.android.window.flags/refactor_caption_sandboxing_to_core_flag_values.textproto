@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "refactor_caption_sandboxing_to_core"
+  state: ENABLED
+  permission: READ_ONLY
+}

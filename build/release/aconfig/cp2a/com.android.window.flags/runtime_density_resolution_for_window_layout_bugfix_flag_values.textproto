@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "runtime_density_resolution_for_window_layout_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

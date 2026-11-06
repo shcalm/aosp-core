@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "hold_conference_call_from_remote"
+  state: ENABLED
+  permission: READ_WRITE
+}

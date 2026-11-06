@@ -1,0 +1,11 @@
+name: "RELEASE_SOONG_NINJA"
+namespace: "build"
+description: "The default value for SOONG_NINJA"
+value: {
+  string_value: "ninja"
+}
+workflow: MANUAL
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

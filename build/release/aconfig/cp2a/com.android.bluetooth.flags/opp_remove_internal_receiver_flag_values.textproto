@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "opp_remove_internal_receiver"
+  state: ENABLED
+  permission: READ_ONLY
+}

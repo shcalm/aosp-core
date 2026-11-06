@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.text.flags"
+  name: "lazy_hyphenator_mmap_init"
+  state: ENABLED
+  permission: READ_WRITE
+}

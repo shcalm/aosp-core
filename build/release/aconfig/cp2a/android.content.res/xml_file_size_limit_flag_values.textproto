@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.res"
+  name: "xml_file_size_limit"
+  state: ENABLED
+  permission: READ_ONLY
+}

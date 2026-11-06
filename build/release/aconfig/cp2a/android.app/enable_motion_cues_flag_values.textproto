@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "enable_motion_cues"
+  state: ENABLED
+  permission: READ_ONLY
+}

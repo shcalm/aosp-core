@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.sdksandbox.flags"
+  name: "sdk_sandbox_no_op_impl"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "powerhal.flags"
+  name: "gpu_load_up_for_blurs"
+  state: ENABLED
+  permission: READ_WRITE
+}

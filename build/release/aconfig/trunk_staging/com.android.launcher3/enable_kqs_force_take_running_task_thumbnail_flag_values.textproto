@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_kqs_force_take_running_task_thumbnail"
+  state: ENABLED
+  permission: READ_WRITE
+}

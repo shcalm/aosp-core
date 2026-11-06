@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "defer_resume_end_before_ensure_activity_configuration_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

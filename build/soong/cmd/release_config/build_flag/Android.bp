@@ -1,0 +1,37 @@
+package {
+    default_applicable_licenses: ["Android-Apache-2.0"],
+}
+
+blueprint_go_binary {
+    name: "build-flag-internal",
+    deps: [
+        "golang-protobuf-proto",
+        "golang-protobuf-encoding-prototext",
+        "golang-protobuf-reflect-protoreflect",
+        "golang-protobuf-runtime-protoimpl",
+        "soong-cmd-release_config-lib",
+        "soong-cmd-release_config-proto",
+    ],
+    srcs: [
+        "main.go",
+    ],
+}
+
+bootstrap_go_package {
+    name: "soong-cmd-release_config-build_flag",
+    pkgPath: "android/soong/cmd/release_config/build_flag",
+    deps: [
+        "golang-protobuf-proto",
+        "golang-protobuf-encoding-prototext",
+        "golang-protobuf-reflect-protoreflect",
+        "golang-protobuf-runtime-protoimpl",
+        "soong-cmd-release_config-lib",
+        "soong-cmd-release_config-proto",
+    ],
+    srcs: [
+        "main.go",
+    ],
+    testSrcs: [
+        "main_test.go",
+    ],
+}

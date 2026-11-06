@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "dsa_use_codec_extensibility"
+  state: ENABLED
+  permission: READ_ONLY
+}

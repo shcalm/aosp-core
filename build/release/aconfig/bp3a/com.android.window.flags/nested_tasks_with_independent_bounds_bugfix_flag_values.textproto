@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "nested_tasks_with_independent_bounds_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

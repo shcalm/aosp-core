@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.art.flags"
+  name: "virtual_thread_impl_v1"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "update_carrier_name_after_sim_ready"
+  state: ENABLED
+  permission: READ_ONLY
+}

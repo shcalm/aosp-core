@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_call_chip_use_is_hidden"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,8 @@
+name: "RELEASE_SRC_DIR_IS_READ_ONLY"
+namespace: "build"
+description: "Whether the source tree is read-only.  This can be overridden with BUILD_BROKEN_SRC_DIR_IS_WRITABLE."
+workflow: LAUNCH
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

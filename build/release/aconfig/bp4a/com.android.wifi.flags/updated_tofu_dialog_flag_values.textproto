@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "updated_tofu_dialog"
+  state: ENABLED
+  permission: READ_ONLY
+}

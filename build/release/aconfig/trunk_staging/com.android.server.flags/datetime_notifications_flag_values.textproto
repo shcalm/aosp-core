@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.flags"
+  name: "datetime_notifications"
+  state: ENABLED
+  permission: READ_WRITE
+}

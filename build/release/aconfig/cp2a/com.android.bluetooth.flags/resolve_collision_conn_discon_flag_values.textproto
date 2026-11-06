@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "resolve_collision_conn_discon"
+  state: ENABLED
+  permission: READ_ONLY
+}

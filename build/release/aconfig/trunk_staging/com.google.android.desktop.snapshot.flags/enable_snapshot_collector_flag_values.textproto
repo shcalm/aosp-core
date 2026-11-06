@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.google.android.desktop.snapshot.flags"
+  name: "enable_snapshot_collector"
+  state: ENABLED
+  permission: READ_WRITE
+}

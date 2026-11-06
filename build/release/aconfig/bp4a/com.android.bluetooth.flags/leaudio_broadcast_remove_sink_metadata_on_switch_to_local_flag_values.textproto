@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "leaudio_broadcast_remove_sink_metadata_on_switch_to_local"
+  state: ENABLED
+  permission: READ_ONLY
+}

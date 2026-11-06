@@ -1,0 +1,80 @@
+LIBEGL {
+  global:
+    eglBindAPI;
+    eglBindTexImage;
+    eglChooseConfig;
+    eglClientWaitSync; # introduced=29
+    eglClientWaitSyncKHR;
+    eglCopyBuffers;
+    eglCreateContext;
+    eglCreateImage; # introduced=29
+    eglCreateImageKHR;
+    eglCreateNativeClientBufferANDROID; # introduced=24
+    eglCreatePbufferFromClientBuffer;
+    eglCreatePbufferSurface;
+    eglCreatePixmapSurface;
+    eglCreatePlatformPixmapSurface; # introduced=29
+    eglCreatePlatformWindowSurface; # introduced=29
+    eglCreateStreamFromFileDescriptorKHR; # introduced=23
+    eglCreateStreamKHR; # introduced=23
+    eglCreateStreamProducerSurfaceKHR; # introduced=23
+    eglCreateSync; # introduced=29
+    eglCreateSyncKHR;
+    eglCreateWindowSurface;
+    eglDestroyContext;
+    eglDestroyImage; # introduced=29
+    eglDestroyImageKHR;
+    eglDestroyStreamKHR; # introduced=23
+    eglDestroySurface;
+    eglDestroySync; # introduced=29
+    eglDestroySyncKHR;
+    eglDupNativeFenceFDANDROID; # llndk
+    eglGetConfigAttrib;
+    eglGetConfigs;
+    eglGetCurrentContext;
+    eglGetCurrentDisplay;
+    eglGetCurrentSurface;
+    eglGetDisplay;
+    eglGetError;
+    eglGetNativeClientBufferANDROID; # introduced=26
+    eglGetPlatformDisplay; # introduced=29
+    eglGetProcAddress;
+    eglGetStreamFileDescriptorKHR; # introduced=23
+    eglGetSyncAttrib; # introduced=29
+    eglGetSyncAttribKHR;
+    eglGetSystemTimeFrequencyNV;
+    eglGetSystemTimeNV;
+    eglInitialize;
+    eglLockSurfaceKHR;
+    eglMakeCurrent;
+    eglPresentationTimeANDROID;
+    eglQueryAPI;
+    eglQueryContext;
+    eglQueryStreamKHR; # introduced=23
+    eglQueryStreamTimeKHR; # introduced=23
+    eglQueryStreamu64KHR; # introduced=23
+    eglQueryString;
+    eglQueryStringImplementationANDROID; # llndk
+    eglQuerySurface;
+    eglReleaseTexImage;
+    eglReleaseThread;
+    eglSetDamageRegionKHR; # introduced=23
+    eglSignalSyncKHR;
+    eglStreamAttribKHR; # introduced=23
+    eglStreamConsumerAcquireKHR; # introduced=23
+    eglStreamConsumerGLTextureExternalKHR; # introduced=23
+    eglStreamConsumerReleaseKHR; # introduced=23
+    eglSurfaceAttrib;
+    eglSwapBuffers;
+    eglSwapBuffersWithDamageKHR; # introduced=23
+    eglSwapInterval;
+    eglTerminate;
+    eglUnlockSurfaceKHR;
+    eglWaitClient;
+    eglWaitGL;
+    eglWaitNative;
+    eglWaitSync; # introduced=29
+    eglWaitSyncKHR;
+  local:
+    *;
+};

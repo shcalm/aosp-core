@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.display.feature.flags"
+  name: "set_brightness_by_unit"
+  state: ENABLED
+  permission: READ_ONLY
+}

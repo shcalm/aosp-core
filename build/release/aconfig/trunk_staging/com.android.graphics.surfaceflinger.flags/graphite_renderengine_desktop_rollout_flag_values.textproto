@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "graphite_renderengine_desktop_rollout"
+  state: ENABLED
+  permission: READ_WRITE
+}

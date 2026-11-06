@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_desktop_tab_tearing_launch_animation"
+  state: ENABLED
+  permission: READ_ONLY
+}

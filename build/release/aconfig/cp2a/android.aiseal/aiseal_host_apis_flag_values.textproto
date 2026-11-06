@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.aiseal"
+  name: "aiseal_host_apis"
+  state: ENABLED
+  permission: READ_ONLY
+}

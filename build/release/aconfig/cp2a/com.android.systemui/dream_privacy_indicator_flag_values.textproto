@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "dream_privacy_indicator"
+  state: ENABLED
+  permission: READ_ONLY
+}

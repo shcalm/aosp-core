@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "log_calls_answered_elsewhere"
+  state: ENABLED
+  permission: READ_ONLY
+}

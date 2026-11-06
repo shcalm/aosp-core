@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "enable_note_taking_keyboard_shortcut"
+  state: ENABLED
+  permission: READ_ONLY
+}

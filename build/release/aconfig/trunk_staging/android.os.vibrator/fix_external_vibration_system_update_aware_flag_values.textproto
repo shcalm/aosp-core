@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.vibrator"
+  name: "fix_external_vibration_system_update_aware"
+  state: ENABLED
+  permission: READ_WRITE
+}

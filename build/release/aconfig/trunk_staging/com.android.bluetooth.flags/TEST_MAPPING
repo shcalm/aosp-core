@@ -1,0 +1,13 @@
+{
+  "imports": [
+    {
+      "path": "packages/modules/Bluetooth"
+    },
+    {
+      "path": "packages/modules/Bluetooth/service"
+    },
+    {
+      "path": "packages/modules/Bluetooth/system"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "enable_emergency_sms_roaming_pdn_selection"
+  state: ENABLED
+  permission: READ_WRITE
+}

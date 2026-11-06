@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.surfaceflinger.flags"
+  name: "use_at_least_60_for_min_vote"
+  state: ENABLED
+  permission: READ_WRITE
+}

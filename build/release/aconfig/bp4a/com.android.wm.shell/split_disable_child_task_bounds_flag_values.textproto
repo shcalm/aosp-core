@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "split_disable_child_task_bounds"
+  state: ENABLED
+  permission: READ_ONLY
+}

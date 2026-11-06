@@ -1,0 +1,8 @@
+name: "RELEASE_ART_NOPRELOAD_CLASSES_IN_PROFILE"
+namespace: "art_performance"
+description: "b/383506474: Flag to enable preloaded classes denylist in the ART profile."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

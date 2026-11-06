@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.timezone.flags"
+  name: "enable_permanent_time_zone_correctness_telemetry_logging"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "remove_legacy_orientation_report"
+  state: ENABLED
+  permission: READ_ONLY
+}

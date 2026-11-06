@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "use_filter_for_each_manufacturer_data_block"
+  state: ENABLED
+  permission: READ_ONLY
+}

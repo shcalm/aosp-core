@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.os.profiling.anomaly.flags"
+  name: "anomaly_detector_core_c"
+  state: ENABLED
+  permission: READ_ONLY
+}

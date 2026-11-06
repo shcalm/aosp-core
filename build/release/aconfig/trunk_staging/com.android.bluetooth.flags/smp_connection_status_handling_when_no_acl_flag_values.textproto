@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "smp_connection_status_handling_when_no_acl"
+  state: ENABLED
+  permission: READ_WRITE
+}

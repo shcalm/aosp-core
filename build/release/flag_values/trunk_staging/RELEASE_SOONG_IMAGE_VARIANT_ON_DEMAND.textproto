@@ -1,0 +1,4 @@
+name: "RELEASE_SOONG_IMAGE_VARIANT_ON_DEMAND"
+value {
+  bool_value: true
+}

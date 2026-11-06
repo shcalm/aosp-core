@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "enable_select_to_speak_key_gestures"
+  state: ENABLED
+  permission: READ_ONLY
+}

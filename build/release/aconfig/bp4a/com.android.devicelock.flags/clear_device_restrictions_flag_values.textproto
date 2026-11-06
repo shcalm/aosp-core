@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.devicelock.flags"
+  name: "clear_device_restrictions"
+  state: ENABLED
+  permission: READ_ONLY
+}

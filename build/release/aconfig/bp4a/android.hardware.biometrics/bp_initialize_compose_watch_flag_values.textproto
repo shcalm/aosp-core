@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.hardware.biometrics"
+  name: "bp_initialize_compose_watch"
+  state: ENABLED
+  permission: READ_ONLY
+}

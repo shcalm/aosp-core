@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.net.flags"
+  name: "qos_filter_ip_range_matching"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app"
+  name: "postpone_wallpaper_change_notification_on_unlock_user"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.settings.accessibility"
+  name: "catalyst_audio_adjustment_screen"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.app.wearable"
+  name: "enable_wearable_sensing_manager_service_dump"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "gatt_use_better_start_handle_in_service_changed"
+  state: ENABLED
+  permission: READ_ONLY
+}

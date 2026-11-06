@@ -1,0 +1,11 @@
+name: "RELEASE_REMOVE_BETA_FLAGS_FROM_ACONFIG_FLAGS_PB"
+namespace: "android_UNKNOWN"
+description: "If true, remove mainline beta aconfig flags from aconfig_flags.pb file. This changes guarded by this flag is for build system only, not on device software."
+value: {
+  bool_value: false
+}
+workflow: MANUAL
+containers: "product"
+containers: "system"
+containers: "system_ext"
+containers: "vendor"

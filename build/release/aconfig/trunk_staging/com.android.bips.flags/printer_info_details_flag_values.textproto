@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bips.flags"
+  name: "printer_info_details"
+  state: ENABLED
+  permission: READ_ONLY
+}

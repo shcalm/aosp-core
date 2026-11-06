@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "safe_region_letterboxing_v1"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "user_switching_dialog_signout_message"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,8 @@
+name: "RELEASE_AISEAL_WITH_APPSEARCH"
+namespace: "appsearch"
+description: "Enables AiSeal VM with AppSearch tenant."
+value: {
+  bool_value: false
+}
+workflow: LAUNCH
+containers: "system"

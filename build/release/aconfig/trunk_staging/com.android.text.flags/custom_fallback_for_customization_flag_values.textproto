@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.text.flags"
+  name: "custom_fallback_for_customization"
+  state: ENABLED
+  permission: READ_WRITE
+}

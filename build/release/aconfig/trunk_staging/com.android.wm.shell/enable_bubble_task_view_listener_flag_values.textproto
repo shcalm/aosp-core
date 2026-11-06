@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "enable_bubble_task_view_listener"
+  state: ENABLED
+  permission: READ_WRITE
+}

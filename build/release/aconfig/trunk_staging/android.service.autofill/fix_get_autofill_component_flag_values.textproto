@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "fix_get_autofill_component"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.org.conscrypt.net.flags"
+  name: "certificate_transparency_default_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

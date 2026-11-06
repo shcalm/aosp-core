@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "remove_tethering_condition_when_enabling_indications"
+  state: ENABLED
+  permission: READ_ONLY
+}

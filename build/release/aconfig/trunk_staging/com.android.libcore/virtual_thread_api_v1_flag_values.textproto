@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.libcore"
+  name: "virtual_thread_api_v1"
+  state: ENABLED
+  permission: READ_ONLY
+}

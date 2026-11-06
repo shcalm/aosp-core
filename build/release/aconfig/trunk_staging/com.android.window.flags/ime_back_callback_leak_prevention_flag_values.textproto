@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "ime_back_callback_leak_prevention"
+  state: ENABLED
+  permission: READ_WRITE
+}

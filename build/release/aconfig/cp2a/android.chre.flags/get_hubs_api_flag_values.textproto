@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.chre.flags"
+  name: "get_hubs_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

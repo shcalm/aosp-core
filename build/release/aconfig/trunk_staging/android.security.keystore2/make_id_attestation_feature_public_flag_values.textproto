@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security.keystore2"
+  name: "make_id_attestation_feature_public"
+  state: ENABLED
+  permission: READ_ONLY
+}

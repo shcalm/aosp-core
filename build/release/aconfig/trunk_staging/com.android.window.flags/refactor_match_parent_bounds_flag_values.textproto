@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "refactor_match_parent_bounds"
+  state: ENABLED
+  permission: READ_WRITE
+}

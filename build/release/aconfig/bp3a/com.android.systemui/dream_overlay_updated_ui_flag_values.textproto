@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "dream_overlay_updated_ui"
+  state: ENABLED
+  permission: READ_ONLY
+}

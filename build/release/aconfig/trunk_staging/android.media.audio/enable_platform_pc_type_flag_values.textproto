@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.media.audio"
+  name: "enable_platform_pc_type"
+  state: ENABLED
+  permission: READ_WRITE
+}

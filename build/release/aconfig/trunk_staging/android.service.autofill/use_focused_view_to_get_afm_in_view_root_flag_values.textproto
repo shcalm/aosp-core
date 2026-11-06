@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.autofill"
+  name: "use_focused_view_to_get_afm_in_view_root"
+  state: ENABLED
+  permission: READ_WRITE
+}

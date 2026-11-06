@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "manage_default_notes_role_package_enabled"
+  state: ENABLED
+  permission: READ_ONLY
+}

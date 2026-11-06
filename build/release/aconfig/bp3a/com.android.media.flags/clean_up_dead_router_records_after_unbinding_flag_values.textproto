@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "clean_up_dead_router_records_after_unbinding"
+  state: ENABLED
+  permission: READ_ONLY
+}

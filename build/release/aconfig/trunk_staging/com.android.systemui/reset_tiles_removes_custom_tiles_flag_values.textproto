@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "reset_tiles_removes_custom_tiles"
+  state: ENABLED
+  permission: READ_WRITE
+}

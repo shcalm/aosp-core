@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "lockscreen_larger_timeout_time_units"
+  state: ENABLED
+  permission: READ_ONLY
+}

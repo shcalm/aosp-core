@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.flags"
+  name: "gradient_drawable_shape_arc_for_rounded_cap"
+  state: ENABLED
+  permission: READ_ONLY
+}

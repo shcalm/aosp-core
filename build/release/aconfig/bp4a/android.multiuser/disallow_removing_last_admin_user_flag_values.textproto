@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.multiuser"
+  name: "disallow_removing_last_admin_user"
+  state: ENABLED
+  permission: READ_ONLY
+}

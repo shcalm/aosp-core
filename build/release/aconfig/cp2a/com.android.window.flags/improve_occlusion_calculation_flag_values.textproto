@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "improve_occlusion_calculation"
+  state: ENABLED
+  permission: READ_ONLY
+}

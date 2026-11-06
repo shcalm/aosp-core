@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.launcher3"
+  name: "enable_files_on_home_screen_decoupled_init"
+  state: ENABLED
+  permission: READ_WRITE
+}

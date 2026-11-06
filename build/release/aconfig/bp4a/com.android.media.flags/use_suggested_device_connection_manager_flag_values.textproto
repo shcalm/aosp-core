@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.media.flags"
+  name: "use_suggested_device_connection_manager"
+  state: ENABLED
+  permission: READ_ONLY
+}

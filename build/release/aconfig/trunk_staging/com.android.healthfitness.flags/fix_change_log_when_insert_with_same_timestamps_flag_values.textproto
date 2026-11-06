@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "fix_change_log_when_insert_with_same_timestamps"
+  state: ENABLED
+  permission: READ_ONLY
+}

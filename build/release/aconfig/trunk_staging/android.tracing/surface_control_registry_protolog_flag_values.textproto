@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.tracing"
+  name: "surface_control_registry_protolog"
+  state: ENABLED
+  permission: READ_WRITE
+}

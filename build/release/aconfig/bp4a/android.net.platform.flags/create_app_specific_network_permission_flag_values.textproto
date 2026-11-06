@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.net.platform.flags"
+  name: "create_app_specific_network_permission"
+  state: ENABLED
+  permission: READ_ONLY
+}

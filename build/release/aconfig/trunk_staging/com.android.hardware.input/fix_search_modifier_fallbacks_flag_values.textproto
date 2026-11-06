@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "fix_search_modifier_fallbacks"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,61 @@
+package: "com.android.bluetooth.flags"
+container: "com.android.bt"
+
+flag {
+    name: "reject_enable_from_unknown_requester"
+    namespace: "bluetooth"
+    description: "Sometimes, the requester of enable/enableBle is unknown, making investigation impossible. Let's reject them to trace and properly identify the caller"
+    bug: "453047643"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "system_server_migrate_bms_to_kotlin"
+    namespace: "bluetooth"
+    description: "The entire Bluetooth System Server is now in Kotlin, except BluetoothManagerService. Let's finish it"
+    bug: "478056203"
+}
+
+flag {
+    name: "system_server_no_longer_provide_process_exemption"
+    namespace: "bluetooth"
+    description: "Calling in process must have appropriate permissions."
+    bug: "483470879"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "concurrent_user_instances"
+    namespace: "bluetooth"
+    description: "Allow concurrent stack instances given multiple published hci instances"
+    bug: "444519431"
+}
+
+flag {
+    name: "br_settings"
+    namespace: "bluetooth"
+    description: "Backup and restore airplane mode and auto on bluetooth settings"
+    bug: "450288332"
+}
+
+flag {
+    name: "switch_when_current_user_stop"
+    namespace: "bluetooth"
+    description: "Due to race condition in user controller we may receive a user_stop prior to a user_switch. This enable a fallback workaround to emulate an user switch when receiving an user stop on the current user"
+    bug: "469419496"
+    metadata {
+        purpose: PURPOSE_BUGFIX
+    }
+}
+
+flag {
+    name: "validate_bluetooth_name_in_platform_config"
+    namespace: "bluetooth"
+    description: "Validate that the platform config match the installed bluetooth package"
+    bug: "467963541"
+}
+

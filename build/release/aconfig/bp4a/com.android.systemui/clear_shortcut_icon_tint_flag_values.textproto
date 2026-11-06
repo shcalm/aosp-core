@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "clear_shortcut_icon_tint"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.telecom.flags"
+  name: "deprecate_self_managed_cs"
+  state: ENABLED
+  permission: READ_ONLY
+}

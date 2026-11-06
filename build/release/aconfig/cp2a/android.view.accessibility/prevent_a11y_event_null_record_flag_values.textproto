@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "prevent_a11y_event_null_record"
+  state: ENABLED
+  permission: READ_ONLY
+}

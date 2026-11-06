@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wm.shell"
+  name: "remove_app_bubble_overflow_dupes"
+  state: ENABLED
+  permission: READ_ONLY
+}

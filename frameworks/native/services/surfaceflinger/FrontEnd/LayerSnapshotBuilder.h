@@ -1,0 +1,204 @@
+/*
+ * Copyright 2022 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#pragma once
+
+#include <cstdint>
+
+#include "FrontEnd/DisplayInfo.h"
+#include "FrontEnd/LayerLifecycleManager.h"
+#include "LayerHierarchy.h"
+#include "LayerSnapshot.h"
+#include "RequestedLayerState.h"
+
+namespace android::surfaceflinger {
+class RenderResourceCache;
+class ShaderRegistry;
+}
+
+namespace android::surfaceflinger::frontend {
+
+namespace caching {
+
+class MergeableHierarchyManager;
+class MergeableHierarchy;
+
+} // namespace caching
+
+// Walks through the layer hierarchy to build an ordered list
+// of LayerSnapshots that can be passed on to CompositionEngine.
+// This builder does a minimum amount of work to update
+// an existing set of snapshots based on hierarchy changes
+// and RequestedLayerState changes.
+
+// The builder also uses a fast path to update
+// snapshots when there are only buffer updates.
+class LayerSnapshotBuilder {
+private:
+    static LayerSnapshot getRootSnapshot();
+
+public:
+    enum class ForceUpdateFlags {
+        NONE,
+        ALL,
+        HIERARCHY,
+    };
+    struct Args {
+        LayerHierarchy root;
+        const LayerLifecycleManager& layerLifecycleManager;
+        ForceUpdateFlags forceUpdate = ForceUpdateFlags::NONE;
+        bool includeMetadata = false;
+        const DisplayInfos& displays;
+        // Set to true if there were display changes since last update.
+        bool displayChanges = false;
+        const ShadowSettings& globalShadowSettings;
+        bool supportsBlur = true;
+        bool forceFullDamage = false;
+        std::optional<FloatRect> parentCrop = std::nullopt;
+        std::unordered_set<uint32_t> excludeLayerIds;
+        const std::unordered_map<std::string, bool>& supportedLayerGenericMetadata;
+        const std::unordered_map<std::string, uint32_t>& genericLayerMetadataKeyMap;
+        bool skipRoundCornersWhenProtected = false;
+        LayerSnapshot rootSnapshot = getRootSnapshot();
+        caching::MergeableHierarchyManager* mergeableHierarchyManager = nullptr;
+        RenderResourceCache* renderResourceCache = nullptr;
+        uint32_t exclusionMask = 0;
+        ShaderRegistry* shaderRegistry = nullptr;
+    };
+    LayerSnapshotBuilder();
+
+    // Rebuild the snapshots from scratch.
+    LayerSnapshotBuilder(Args);
+
+    // Update an existing set of snapshot using change flags in RequestedLayerState
+    // and LayerLifecycleManager. This needs to be called before
+    // LayerLifecycleManager.commitChanges is called as that function will clear all
+    // change flags.
+    void update(const Args&);
+    std::vector<std::unique_ptr<LayerSnapshot>>& getSnapshots();
+    LayerSnapshot* getSnapshot(uint32_t layerId) const;
+    LayerSnapshot* getSnapshot(const LayerHierarchy::TraversalPath& id) const;
+
+    typedef std::function<void(const LayerSnapshot& snapshot)> ConstVisitor;
+
+    // Visit each visible snapshot in z-order
+    void forEachVisibleSnapshot(const ConstVisitor& visitor) const;
+
+    // Visit each visible snapshot in z-order
+    void forEachVisibleSnapshot(const ConstVisitor& visitor, const LayerHierarchy& root) const;
+
+    typedef std::function<void(std::unique_ptr<LayerSnapshot>& snapshot)> Visitor;
+    // Visit each visible snapshot in z-order and move the snapshot if needed
+    void forEachVisibleSnapshot(const Visitor& visitor);
+
+    typedef std::function<bool(const LayerSnapshot& snapshot)> ConstPredicate;
+    // Visit each snapshot that satisfies the predicate and move the snapshot if needed with visible
+    // snapshots in z-order
+    void forEachNonNullSnapshot(const Visitor& visitor, const ConstPredicate& predicate);
+
+    // Visit each snapshot
+    void forEachSnapshot(const ConstVisitor& visitor) const;
+
+    void forEachMergedSnapshot(const ConstVisitor& visitor) const;
+
+    bool hasMergedSnapshots() const { return !mMergedSnapshots.empty(); }
+
+    // Visit each snapshot interesting to input reverse z-order
+    void forEachInputSnapshot(const ConstVisitor& visitor) const;
+
+    uint32_t getPrimaryDisplayRotationFlags(
+            const ui::DisplayMap<ui::LayerStack, frontend::DisplayInfo>& displays) const;
+
+private:
+    friend class LayerSnapshotTest;
+
+    // For updateSnapshot
+    friend class caching::MergeableHierarchy;
+
+    // return true if we were able to successfully update the snapshots via
+    // the fast path.
+    bool tryFastUpdate(const Args& args);
+
+    void updateSnapshots(const Args& args);
+
+    const LayerSnapshot& updateSnapshotsInHierarchy(
+            const Args&, const LayerHierarchy& hierarchy,
+            const LayerHierarchy::TraversalPath& traversalPath, const LayerSnapshot& parentSnapshot,
+            int depth);
+    void updateSnapshot(LayerSnapshot&, const Args&, const RequestedLayerState&,
+                        const LayerSnapshot& parentSnapshot, const LayerHierarchy::TraversalPath&,
+                        bool forMergedSnapshot = false);
+    static void updateRelativeState(LayerSnapshot& snapshot, const LayerSnapshot& parentSnapshot,
+                                    bool parentIsRelative, const Args& args);
+    static void resetRelativeState(LayerSnapshot& snapshot);
+    static void updateRoundedCorner(LayerSnapshot& snapshot, const RequestedLayerState& layerState,
+                                    const LayerSnapshot& parentSnapshot, const Args& args);
+    static void scaleRadii(gui::CornerRadii& radii, float scaleX, float scaleY);
+
+    static bool shouldDisableCornerRounding(LayerSnapshot& snapshot,
+                                            const RequestedLayerState& requested);
+    static RoundedCornerState calculateLayerRoundedCornerSettings(
+            LayerSnapshot& snapshot, const RequestedLayerState& requested);
+    static RoundedCornerState calculateParentRoundedCornerSettings(
+            const LayerSnapshot& parentSnapshot, const LayerSnapshot& snapshot);
+    static gui::CornerRadii getClippedClientRadii(const gui::CornerRadii& requestedRadii,
+                                                  const FloatRect& layerCropRect,
+                                                  const FloatRect& layerBounds);
+    static bool childOverlapsParentCornerRegion(const FloatRect& childCropRect,
+                                                const FloatRect& parentCropRect,
+                                                const gui::CornerRadii& parentRadii);
+    static void updateBoundsForEdgeExtension(LayerSnapshot& snapshot);
+    void updateLayerBounds(LayerSnapshot& snapshot, const RequestedLayerState& layerState,
+                           const LayerSnapshot& parentSnapshot, uint32_t displayRotationFlags);
+    static void updateShadows(LayerSnapshot& snapshot, const RequestedLayerState& requested,
+                              const ShadowSettings& globalShadowSettings);
+    void updateInput(LayerSnapshot& snapshot, const RequestedLayerState& requested,
+                     const LayerSnapshot& parentSnapshot, const LayerHierarchy::TraversalPath& path,
+                     const Args& args, bool forMergedSnapshot = false);
+    // Return true if there are unreachable snapshots
+    bool sortSnapshotsByZ(const Args& args);
+    LayerSnapshot* createSnapshot(const LayerHierarchy::TraversalPath& id,
+                                  const RequestedLayerState& layer,
+                                  const LayerSnapshot& parentSnapshot);
+    void updateFrameRateFromChildSnapshot(LayerSnapshot& snapshot,
+                                          const LayerSnapshot& childSnapshot,
+                                          const RequestedLayerState& requestedCHildState,
+                                          const Args& args, bool* outChildHasValidFrameRate);
+    void updateTouchableRegionCrop(const Args& args);
+    bool updateMirrorLayerCrops(const Args& args);
+
+    void applyStopLayers(const LayerHierarchy&, const LayerHierarchy::TraversalPath&);
+    void applyStopLayersInternal(const LayerHierarchy&, const LayerHierarchy::TraversalPath&,
+                                 ftl::SmallVector<uint32_t, 5>& stopLayers,
+                                 ftl::SmallVector<uint32_t, 5>& activeStopLayers);
+
+    std::unordered_map<LayerHierarchy::TraversalPath, LayerSnapshot*,
+                       LayerHierarchy::TraversalPathHash>
+            mPathToSnapshot;
+    std::multimap<uint32_t, LayerSnapshot*> mIdToSnapshots;
+
+    // Track snapshots that needs touchable region crop from other snapshots
+    std::unordered_set<LayerHierarchy::TraversalPath, LayerHierarchy::TraversalPathHash>
+            mNeedsTouchableRegionCrop;
+    std::vector<std::unique_ptr<LayerSnapshot>> mSnapshots;
+    std::vector<std::unique_ptr<LayerSnapshot>> mMergedSnapshots;
+    bool mResortSnapshots = false;
+    int mNumInterestingSnapshots = 0;
+    bool mHasMirrorRequests = false;
+    bool mSnapshotsHaveMirrorCrop = false;
+};
+
+} // namespace android::surfaceflinger::frontend

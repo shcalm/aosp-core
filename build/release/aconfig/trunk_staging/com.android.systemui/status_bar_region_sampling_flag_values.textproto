@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_region_sampling"
+  state: ENABLED
+  permission: READ_WRITE
+}

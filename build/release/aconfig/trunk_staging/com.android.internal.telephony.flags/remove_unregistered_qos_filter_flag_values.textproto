@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.internal.telephony.flags"
+  name: "remove_unregistered_qos_filter"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "unfold_latency_tracking_fix"
+  state: ENABLED
+  permission: READ_WRITE
+}

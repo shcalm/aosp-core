@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "window_magnification_move_with_mouse_on_edge"
+  state: ENABLED
+  permission: READ_WRITE
+}

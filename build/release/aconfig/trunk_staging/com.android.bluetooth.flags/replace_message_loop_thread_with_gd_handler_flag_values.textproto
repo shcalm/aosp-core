@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "replace_message_loop_thread_with_gd_handler"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "status_bar_universal_battery_data_source"
+  state: ENABLED
+  permission: READ_WRITE
+}

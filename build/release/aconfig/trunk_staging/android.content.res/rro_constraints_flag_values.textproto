@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.content.res"
+  name: "rro_constraints"
+  state: ENABLED
+  permission: READ_WRITE
+}

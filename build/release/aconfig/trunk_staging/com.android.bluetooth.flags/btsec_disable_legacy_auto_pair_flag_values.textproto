@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "btsec_disable_legacy_auto_pair"
+  state: ENABLED
+  permission: READ_WRITE
+}

@@ -1,0 +1,2 @@
+# Additional owner/reviewers for rust rules, including parent directory owners.
+per-file * = chiw@google.com, jamesfarrell@google.com, nobelbarakat@google.com, pirama@google.com, ivanlozano@google.com, jeffv@google.com, mmaurer@google.com

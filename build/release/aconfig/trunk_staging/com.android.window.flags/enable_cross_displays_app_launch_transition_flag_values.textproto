@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_cross_displays_app_launch_transition"
+  state: ENABLED
+  permission: READ_WRITE
+}

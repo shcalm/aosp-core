@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.networkstack.mainline.beta"
+  name: "ipclient_populate_link_address_lifetime"
+  state: ENABLED
+  permission: READ_ONLY
+}

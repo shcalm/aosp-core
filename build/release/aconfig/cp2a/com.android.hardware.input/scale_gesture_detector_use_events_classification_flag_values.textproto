@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.hardware.input"
+  name: "scale_gesture_detector_use_events_classification"
+  state: ENABLED
+  permission: READ_ONLY
+}

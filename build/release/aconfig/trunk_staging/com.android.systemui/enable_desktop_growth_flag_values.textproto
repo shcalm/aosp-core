@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "enable_desktop_growth"
+  state: ENABLED
+  permission: READ_WRITE
+}

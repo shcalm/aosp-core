@@ -1,0 +1,116 @@
+# This file is locked and should not be changed. Use surfaceflinger_flags_new.aconfig
+
+package: "com.android.graphics.surfaceflinger.flags"
+container: "system"
+
+flag {
+  name: "multithreaded_present"
+  namespace: "core_graphics"
+  description: "Controls whether to offload present calls to another thread"
+  bug: "259132483"
+  is_fixed_read_only: true
+}
+
+# This file is locked and should not be changed. Use surfaceflinger_flags_new.aconfig
+
+flag {
+  name: "hotplug2"
+  namespace: "core_graphics"
+  description: "Feature flag for using hotplug2 HAL API"
+  bug: "303460805"
+  is_fixed_read_only: true
+}
+
+# This file is locked and should not be changed. Use surfaceflinger_flags_new.aconfig
+
+flag {
+  name: "refresh_rate_overlay_on_external_display"
+  namespace: "core_graphics"
+  description: "enable refresh rate indicator on the external display"
+  bug: "301647974"
+}
+
+# This flag is broken.
+# See alternative one: cache_when_source_crop_layer_only_moved
+# flag {
+#   name: "cache_if_source_crop_layer_only_moved"
+#   namespace: "core_graphics"
+#   description: "do not flatten layers if source crop is only moved"
+#   bug: "305718400"
+#   is_fixed_read_only: true
+# }
+
+# This file is locked and should not be changed. Use surfaceflinger_flags_new.aconfig
+
+flag {
+  name: "cache_when_source_crop_layer_only_moved"
+  namespace: "core_graphics"
+  description: "do not flatten layers if source crop is only moved"
+  bug: "305718400"
+  is_fixed_read_only: true
+}
+
+# This file is locked and should not be changed. Use surfaceflinger_flags_new.aconfig
+
+flag {
+  name: "vulkan_renderengine"
+  namespace: "core_graphics"
+  description: "Use Vulkan backend in RenderEngine prior to switching to Graphite."
+  bug: "293371537"
+  is_fixed_read_only: true
+}
+
+flag {
+  name: "graphite_renderengine"
+  namespace: "core_graphics"
+  description: "Compile AND enable Skia's Graphite Vulkan backend in RenderEngine. See also: force_compile_graphite_renderengine."
+  bug: "293371537"
+  is_fixed_read_only: true
+}
+
+flag {
+  name: "screenshot_fence_preservation"
+  namespace: "core_graphics"
+  description: "Bug fix around screenshot fences"
+  bug: "302703346"
+  is_fixed_read_only: true
+}
+
+# This file is locked and should not be changed. Use surfaceflinger_flags_new.aconfig
+
+flag {
+  name: "renderable_buffer_usage"
+  namespace: "core_graphics"
+  description: "Decide whether an ExternalTexture isRenderable based on its buffer's usage."
+  bug: "305445199"
+  is_fixed_read_only: true
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+flag {
+  name: "restore_blur_step"
+  namespace: "core_graphics"
+  description: "Restore drawing the blur input prior to drawing blurred content."
+  bug: "255921628"
+  is_fixed_read_only: true
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+# This file is locked and should not be changed. Use surfaceflinger_flags_new.aconfig
+
+flag {
+  name: "protected_if_client"
+  namespace: "core_graphics"
+  description: "Only set the RenderSurface to protected if protected layers are in client composition."
+  bug: "307674749"
+  is_fixed_read_only: true
+  metadata {
+    purpose: PURPOSE_BUGFIX
+  }
+}
+
+# This file is locked and should not be changed. Use surfaceflinger_flags_new.aconfig

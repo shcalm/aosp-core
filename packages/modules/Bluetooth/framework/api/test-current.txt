@@ -1,0 +1,10 @@
+// Signature format: 6.0
+// - style=java
+package android.bluetooth {
+
+  public final class BluetoothClass implements android.os.Parcelable {
+    method public int getClassOfDevice();
+  }
+
+}
+

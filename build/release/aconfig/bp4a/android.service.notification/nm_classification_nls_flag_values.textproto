@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.service.notification"
+  name: "nm_classification_nls"
+  state: ENABLED
+  permission: READ_ONLY
+}

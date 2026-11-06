@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.healthfitness.flags"
+  name: "permissions_grouping_settings_fitness_app_screen"
+  state: ENABLED
+  permission: READ_ONLY
+}

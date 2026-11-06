@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "move_task_to_front_on_drag_resizing_bugfix"
+  state: ENABLED
+  permission: READ_ONLY
+}

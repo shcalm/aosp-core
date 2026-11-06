@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "adapter_suspend_discoverability"
+  state: ENABLED
+  permission: READ_ONLY
+}

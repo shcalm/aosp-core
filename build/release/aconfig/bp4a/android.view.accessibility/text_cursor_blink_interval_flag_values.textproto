@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.view.accessibility"
+  name: "text_cursor_blink_interval"
+  state: ENABLED
+  permission: READ_ONLY
+}

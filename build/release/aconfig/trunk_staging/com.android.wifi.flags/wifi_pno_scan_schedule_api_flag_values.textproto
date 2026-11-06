@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.wifi.flags"
+  name: "wifi_pno_scan_schedule_api"
+  state: ENABLED
+  permission: READ_ONLY
+}

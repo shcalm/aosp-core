@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.graphics.libgui.flags"
+  name: "surface_texture_updateteximage_stop_early"
+  state: ENABLED
+  permission: READ_ONLY
+}

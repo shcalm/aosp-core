@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.provider.flags"
+  name: "aflags_list_proto"
+  state: ENABLED
+  permission: READ_WRITE
+}

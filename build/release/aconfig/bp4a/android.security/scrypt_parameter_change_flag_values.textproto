@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.security"
+  name: "scrypt_parameter_change"
+  state: ENABLED
+  permission: READ_ONLY
+}

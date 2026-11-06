@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.systemui"
+  name: "hearing_device_status_notification"
+  state: ENABLED
+  permission: READ_WRITE
+}

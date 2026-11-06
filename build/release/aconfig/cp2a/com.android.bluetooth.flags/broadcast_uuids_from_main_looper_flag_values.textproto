@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "broadcast_uuids_from_main_looper"
+  state: ENABLED
+  permission: READ_ONLY
+}

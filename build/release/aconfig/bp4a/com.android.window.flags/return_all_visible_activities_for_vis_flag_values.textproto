@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "return_all_visible_activities_for_vis"
+  state: ENABLED
+  permission: READ_ONLY
+}

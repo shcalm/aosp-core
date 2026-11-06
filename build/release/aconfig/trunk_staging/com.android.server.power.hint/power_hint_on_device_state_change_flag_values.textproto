@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.server.power.hint"
+  name: "power_hint_on_device_state_change"
+  state: ENABLED
+  permission: READ_WRITE
+}

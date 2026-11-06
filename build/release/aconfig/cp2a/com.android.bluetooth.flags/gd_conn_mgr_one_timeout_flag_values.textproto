@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "gd_conn_mgr_one_timeout"
+  state: ENABLED
+  permission: READ_ONLY
+}

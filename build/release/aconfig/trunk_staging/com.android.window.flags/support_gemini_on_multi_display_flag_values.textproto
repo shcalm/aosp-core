@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "support_gemini_on_multi_display"
+  state: ENABLED
+  permission: READ_ONLY
+}

@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.window.flags"
+  name: "enable_launcher_handle_go_home_keyboard_shortcut"
+  state: ENABLED
+  permission: READ_ONLY
+}

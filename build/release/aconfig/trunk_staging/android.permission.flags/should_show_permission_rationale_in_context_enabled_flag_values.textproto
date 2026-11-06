@@ -1,0 +1,6 @@
+flag_value {
+  package: "android.permission.flags"
+  name: "should_show_permission_rationale_in_context_enabled"
+  state: ENABLED
+  permission: READ_WRITE
+}

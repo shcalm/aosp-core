@@ -1,0 +1,6 @@
+flag_value {
+  package: "com.android.bluetooth.flags"
+  name: "unrelated_device_smp_cancellation"
+  state: ENABLED
+  permission: READ_ONLY
+}
